@@ -4,9 +4,13 @@ using UnityEngine;
 
 public class InputEnabledUserInterface_Master : InputEnabledUserInterface
 {
-    protected override void Update ()
+    protected override void Update()
     {
         base.Update();
+    }
+
+    protected override void ProcessInput()
+    {
         if (Application.isMobilePlatform)
         {
             MobileInput();
@@ -16,12 +20,14 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
             PCInput();
         }
 
+
         Shared();
+        base.ProcessInput();
     }
 
-    void PCInput ()
+    void PCInput()
     {
-        currentInputPosition.screen = new Vector2( Input.mousePosition.x, Input.mousePosition.y );
+        currentInputPosition.screen = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
 
         if (beginPress)
         {
@@ -29,7 +35,7 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
         }
         else
         {
-            beginPress = Input.GetMouseButtonDown( 0 );
+            beginPress = Input.GetMouseButtonDown(0);
         }
 
         if (endPress)
@@ -38,23 +44,23 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
         }
         else
         {
-            endPress = Input.GetMouseButtonUp( 0 );
+            endPress = Input.GetMouseButtonUp(0);
         }
-        pressed = Input.GetMouseButton( 0 );
+        pressed = Input.GetMouseButton(0);
 
-        inputPoints = Input.GetKey( KeyCode.Space ) ? 2 : 1;
+        inputPoints = Input.GetKey(KeyCode.Space) ? 2 : 1;
     }
 
 
     bool lastState;
-    void MobileInput ()
+    void MobileInput()
     {
         inputPoints = Input.touchCount;
         if (Input.touchCount > 0)
         {
             pressed = true;
-            Touch touch = Input.GetTouch( 0 );
-            currentInputPosition.screen = new Vector3( touch.position.x, touch.position.y );
+            Touch touch = Input.GetTouch(0);
+            currentInputPosition.screen = new Vector3(touch.position.x, touch.position.y);
         }
         else
         {
@@ -83,7 +89,7 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
         lastState = pressed;
     }
 
-    void Shared ()
+    void Shared()
     {
         if (beginPress)
         {

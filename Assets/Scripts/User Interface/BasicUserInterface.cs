@@ -14,19 +14,19 @@ public class BasicUserInterface : MonoBehaviour
 {
     public UIState state;
 
-    protected virtual void AEnable ()
+    public virtual void AEnable()
     {
-        gameObject.SetActive( true );
-        state = UIState.ENABLED;
+        gameObject.SetActive(true);
+        state = UIState.ENABLING;
     }
 
-    protected virtual void ADisable ()
+    public virtual void ADisable()
     {
-        gameObject.SetActive( false );
-        state = UIState.DISABLED;
+        //gameObject.SetActive(false);
+        state = UIState.DISABLING;
     }
 
-    protected virtual void Update ()
+    protected virtual void Update()
     {
 
     }
