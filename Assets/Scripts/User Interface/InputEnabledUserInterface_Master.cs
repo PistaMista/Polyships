@@ -23,6 +23,13 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
 
         Shared();
         base.ProcessInput();
+
+        if (dragging)
+        {
+            dragVelocity = (currentInputPosition - lastFrameInputPosition) / Time.deltaTime;
+        }
+
+        lastFrameInputPosition = currentInputPosition;
     }
 
     void PCInput()

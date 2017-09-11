@@ -6,7 +6,6 @@ public class SlidingUserInterface : InputEnabledUserInterface
 {
     public int position;
     public int width;
-    public RectTransform rect;
 
     public override void AEnable()
     {
@@ -21,10 +20,13 @@ public class SlidingUserInterface : InputEnabledUserInterface
     protected override void Update()
     {
         base.Update();
-        if (state == UIState.DISABLING && SlidingUserInterface_Master.transitionDistance < Screen.width * 0.05f)
+        if ((state == UIState.DISABLING || state == UIState.ENABLING) && SlidingUserInterface_Master.transitionDistance < Screen.width * 0.05f)
         {
-            gameObject.SetActive(false);
-            state = UIState.DISABLED;
+            state = state == UIState.ENABLING ? UIState.ENABLED : UIState.DISABLED;
+            if (state == UIState.DISABLED)
+            {
+                gameObject.SetActive(false);
+            }
         }
     }
 }

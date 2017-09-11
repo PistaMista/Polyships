@@ -13,6 +13,7 @@ public enum UIState
 public class BasicUserInterface : MonoBehaviour
 {
     public UIState state;
+    public RectTransform rect;
 
     public virtual void AEnable()
     {
