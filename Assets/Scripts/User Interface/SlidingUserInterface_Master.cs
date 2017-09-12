@@ -6,9 +6,9 @@ using UnityEngine;
 public class SlidingUserInterface_Master : InputEnabledUserInterface
 {
     SlidingUserInterface[] interfaces;
-    public int selectedPosition;
-    public int lastPosition;
-    int defaultPosition;
+    public static int selectedPosition;
+    public static int lastPosition;
+    public static int defaultPosition;
     float transitionVelocity;
     public static float transitionDistance;
     RectTransform rectTransform;
@@ -18,6 +18,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
     void Start()
     {
         interfaces = gameObject.GetComponentsInChildren<SlidingUserInterface>(true);
+        RecalculateChildrenPositions();
         rectTransform = gameObject.GetComponent<RectTransform>();
         defaultPosition = selectedPosition;
     }
