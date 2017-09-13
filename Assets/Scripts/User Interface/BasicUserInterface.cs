@@ -12,23 +12,34 @@ public enum UIState
 
 public class BasicUserInterface : MonoBehaviour
 {
-    public UIState state;
+    public UIState defaultState;
+    UIState state;
     public RectTransform rect;
 
-    public virtual void AEnable()
+    public UIState State
     {
-        gameObject.SetActive(true);
-        state = UIState.ENABLING;
+        get
+        {
+            return state;
+        }
+        set
+        {
+            ChangeState(value);
+        }
     }
 
-    public virtual void ADisable()
+    protected virtual void Start()
     {
-        //gameObject.SetActive(false);
-        state = UIState.DISABLING;
+        State = defaultState;
     }
-
     protected virtual void Update()
     {
 
+    }
+
+    protected virtual void ChangeState(UIState state)
+    {
+        this.state = state;
+        gameObject.SetActive(state != UIState.DISABLED);
     }
 }

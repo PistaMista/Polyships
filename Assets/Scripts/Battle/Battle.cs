@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
+using System;
 public class Battle : MonoBehaviour
 {
     public struct TurnInfo
@@ -27,10 +29,10 @@ public class Battle : MonoBehaviour
             aircraftTargetChanged = false;
         }
     }
-
+    [Serializable]
     public struct BattleData
     {
-        public static implicit operator BattleData(Ship battle)
+        public static implicit operator BattleData(Battle battle)
         {
             return null;
         }
@@ -40,4 +42,15 @@ public class Battle : MonoBehaviour
     public Player attacker;
     public Player attacked;
     public List<TurnInfo> log;
+    public int saveSlot;
+
+    public void SaveToDisk()
+    {
+        BinaryFormatter formatter = new BinaryFormatter();
+        FileStream stream = new FileStream(Path.Combine(Application.persistentDataPath, saveSlot.ToString()), FileMode.Create);
+
+        formatter.Serialize(stream, (BattleData)this);
+
+        stream.Close();
+    }
 }

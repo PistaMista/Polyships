@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InputEnabledUserInterface : BasicUserInterface
 {
@@ -46,7 +47,7 @@ public class InputEnabledUserInterface : BasicUserInterface
     protected override void Update()
     {
         base.Update();
-        if (state == UIState.ENABLED || state == UIState.ENABLING && processInputWhenEnabling)
+        if (State == UIState.ENABLED || State == UIState.ENABLING && processInputWhenEnabling)
         {
             ProcessInput();
         }
@@ -64,6 +65,15 @@ public class InputEnabledUserInterface : BasicUserInterface
         else
         {
             dragging = false;
+        }
+    }
+
+    protected override void ChangeState(UIState state)
+    {
+        base.ChangeState(state);
+        foreach (Selectable selectable in GetComponentsInChildren<Selectable>())
+        {
+            selectable.interactable = state == UIState.ENABLED || (processInputWhenEnabling && state == UIState.ENABLING);
         }
     }
 }

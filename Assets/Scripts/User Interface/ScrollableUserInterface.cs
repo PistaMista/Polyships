@@ -9,18 +9,6 @@ public class ScrollableUserInterface : SlidingUserInterface
     public float scrollDecceleration;
     public float scrollVelocity;
 
-
-    public override void AEnable()
-    {
-        base.AEnable();
-        scrollVelocity = 0.0f;
-    }
-
-    public override void ADisable()
-    {
-        base.ADisable();
-    }
-
     protected override void Update()
     {
         base.Update();
@@ -53,14 +41,23 @@ public class ScrollableUserInterface : SlidingUserInterface
     protected override void ProcessInput()
     {
         base.ProcessInput();
-        SlidingUserInterface_Master.locked = false;
+        SlidingUserInterface_Master.lockedDirections = new bool[] { false, false };
         if (dragging)
         {
             scrollVelocity = dragVelocity.screen.y;
             if (scrollVelocity / Screen.height > 0.2f)
             {
-                SlidingUserInterface_Master.locked = true;
+                SlidingUserInterface_Master.lockedDirections = new bool[] { true, true };
             }
+        }
+    }
+
+    protected override void ChangeState(UIState state)
+    {
+        base.ChangeState(state);
+        if (state == UIState.ENABLING)
+        {
+            scrollVelocity = 0.0f;
         }
     }
 }
