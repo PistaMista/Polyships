@@ -5,7 +5,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
 
-enum BattleStage 
+public enum BattleStage
 {
     NOT_INITIALIZED,
     SHIP_PLACEMENT,
@@ -38,13 +38,79 @@ public class Battle : MonoBehaviour
             aircraftTargetChanged = false;
         }
     }
-    
+
+    [Serializable]
+    public struct TurnInfoData
+    {
+        public int attacker;
+        public int attacked;
+        public int[,] artilleryImpacts;
+        public int[,] torpedoImpacts;
+        public int[,] damagedTiles;
+        public int[] damagedShips;
+        public int[] destroyedShips;
+        public bool aircraftTargetChanged;
+
+        public static implicit operator TurnInfoData(TurnInfo info)
+        {
+            TurnInfoData result = new TurnInfoData();
+            result.attacker = info.attacker.index;
+            result.attacked = info.attacked.index;
+            result.artilleryImpacts = ConvertTileArray(info.artilleryImpacts.ToArray());
+            result.torpedoImpacts = ConvertTileArray(info.torpedoImpacts.ToArray());
+            result.damagedTiles = ConvertTileArray(info.damagedTiles.ToArray());
+            result.damagedShips = ConvertShipArray(info.damagedShips.ToArray());
+            result.destroyedShips = ConvertShipArray(info.destroyedShips.ToArray());
+            result.aircraftTargetChanged = info.aircraftTargetChanged;
+            return result;
+        }
+
+        static int[,] ConvertTileArray(Tile[] array)
+        {
+            int[,] result = new int[array.Length, 2];
+            for (int i = 0; i < array.Length; i++)
+            {
+                result[i, 0] = (int)array[i].coordinates.x;
+                result[i, 1] = (int)array[i].coordinates.y;
+            }
+
+            return result;
+        }
+
+        static int[] ConvertShipArray(Ship[] array)
+        {
+            int[] result = new int[array.Length];
+            for (int i = 0; i < array.Length; i++)
+            {
+                result[i] = array[i].index;
+            }
+
+            return result;
+        }
+    }
+
     [Serializable]
     public struct BattleData
     {
+        public Player.PlayerData attacker;
+        public Player.PlayerData attacked;
+        public int saveSlot;
+        public BattleStage stage;
+        public TurnInfoData[] log;
+
         public static implicit operator BattleData(Battle battle)
         {
-            return null;
+            BattleData result = new BattleData();
+            result.attacker = battle.attacker;
+            result.attacked = battle.attacked;
+            result.saveSlot = battle.saveSlot;
+            result.stage = battle.stage;
+            result.log = new TurnInfoData[battle.log.Count];
+            for (int i = 0; i < battle.log.Count; i++)
+            {
+                result.log[i] = battle.log[i];
+            }
+            return result;
         }
     }
 

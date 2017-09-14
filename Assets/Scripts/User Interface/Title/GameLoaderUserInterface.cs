@@ -8,7 +8,8 @@ using System;
 
 public class GameLoaderUserInterface : SlidingUserInterface
 {
-    public int selectedSlot;
+    public int selectedSlotID;
+    public Battle.BattleData loadedData;
     public Button[] saveSlotButtons;
     public Text[] saveSlotLabels;
     Battle.BattleData[] saveSlotContents;
@@ -23,7 +24,7 @@ public class GameLoaderUserInterface : SlidingUserInterface
         base.ChangeState(state);
         if (state == UIState.ENABLING)
         {
-            selectedSlot = -1;
+            selectedSlotID = -1;
             saveSlotContents = new Battle.BattleData[saveSlotButtons.Length];
 
             for (int i = 0; i < saveSlotContents.Length; i++)
@@ -47,6 +48,7 @@ public class GameLoaderUserInterface : SlidingUserInterface
 
     public void SelectSlot(int slot)
     {
-
+        selectedSlotID = slot;
+        loadedData = saveSlotContents[slot];
     }
 }

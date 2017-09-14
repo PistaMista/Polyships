@@ -22,6 +22,8 @@ public class Ship : MonoBehaviour
         }
     }
 
+    public int index;
+
     // Use this for initialization
     void Start()
     {
