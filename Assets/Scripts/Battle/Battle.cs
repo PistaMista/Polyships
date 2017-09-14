@@ -53,6 +53,7 @@ public class Battle : MonoBehaviour
     public Player attacked;
     public List<TurnInfo> log;
     public int saveSlot;
+    public BattleStage stage;
 
     public void SaveToDisk()
     {
