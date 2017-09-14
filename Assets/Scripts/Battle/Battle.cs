@@ -4,6 +4,15 @@ using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
+
+enum BattleStage 
+{
+    NOT_INITIALIZED,
+    SHIP_PLACEMENT,
+    FIGHTING,
+    FINISHED
+}
+
 public class Battle : MonoBehaviour
 {
     public struct TurnInfo
@@ -29,6 +38,7 @@ public class Battle : MonoBehaviour
             aircraftTargetChanged = false;
         }
     }
+    
     [Serializable]
     public struct BattleData
     {
