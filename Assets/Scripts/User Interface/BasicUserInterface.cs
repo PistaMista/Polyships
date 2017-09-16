@@ -12,9 +12,9 @@ public enum UIState
 
 public class BasicUserInterface : MonoBehaviour
 {
-    public UIState defaultState;
-    UIState state;
+    public UIState state;
     public RectTransform rect;
+    public bool enableOnStart;
 
     public UIState State
     {
@@ -27,10 +27,12 @@ public class BasicUserInterface : MonoBehaviour
             ChangeState(value);
         }
     }
-
     protected virtual void Start()
     {
-        State = defaultState;
+        if (enableOnStart)
+        {
+            State = UIState.ENABLED;
+        }
     }
     protected virtual void Update()
     {

@@ -11,24 +11,23 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
     public int lastPosition;
     public int defaultPosition;
     float transitionVelocity;
-    RectTransform rectTransform;
     public static float transitionDistance;
     public static bool[] lockedDirections;
     bool afterDragLock;
 
+
     protected override void Start()
     {
-        base.Start();
         interfaces = gameObject.GetComponentsInChildren<SlidingUserInterface>(true);
         RecalculateChildrenPositions();
-        rectTransform = gameObject.GetComponent<RectTransform>();
         defaultPosition = selectedPosition;
         lockedDirections = new bool[2];
+        base.Start();
     }
 
     protected override void Update()
     {
-        rectTransform.anchoredPosition = Vector2.right * Mathf.SmoothDamp(rectTransform.anchoredPosition.x, (defaultPosition - selectedPosition) * Screen.width, ref transitionVelocity, 0.65f, Mathf.Infinity);
+        rect.anchoredPosition = Vector2.right * Mathf.SmoothDamp(rect.anchoredPosition.x, (defaultPosition - selectedPosition) * Screen.width, ref transitionVelocity, 0.65f, Mathf.Infinity);
 
         base.Update();
 
@@ -37,7 +36,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
             afterDragLock = false;
         }
 
-        transitionDistance = Mathf.Abs(rectTransform.anchoredPosition.x - (defaultPosition - selectedPosition) * Screen.width);
+        transitionDistance = Mathf.Abs(rect.anchoredPosition.x - (defaultPosition - selectedPosition) * Screen.width);
         //ManageSwipeHint();
     }
 
@@ -117,12 +116,17 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
 
             if (relativePosition <= 0 && relativePosition > -interfaces[i].width)
             {
-                interfaces[i].State = UIState.ENABLING;
-                // chevronParent.anchoredPosition = Vector2.right * interfaces[i].rect.anchoredPosition.x;
+                if (interfaces[i].State != UIState.ENABLED)
+                {
+                    interfaces[i].State = UIState.ENABLING;
+                }
             }
             else
             {
-                interfaces[i].State = UIState.DISABLING;
+                if (interfaces[i].State != UIState.DISABLED)
+                {
+                    interfaces[i].State = UIState.DISABLING;
+                }
             }
 
             interfaces[i].rect.anchoredPosition = Vector2.right * absolutePosition * Screen.width;
@@ -130,5 +134,24 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
         }
 
         lastPosition = widthOffset + interfaces.Length - 1;
+    }
+
+    protected override void ChangeState(UIState state)
+    {
+        base.ChangeState(state);
+        if ((int)state <= 2)
+        {
+            foreach (SlidingUserInterface i in interfaces)
+            {
+                i.OnMasterDisable();
+            }
+        }
+        else
+        {
+            foreach (SlidingUserInterface i in interfaces)
+            {
+                i.OnMasterEnable();
+            }
+        }
     }
 }

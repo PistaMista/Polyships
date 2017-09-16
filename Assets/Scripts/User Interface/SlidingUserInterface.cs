@@ -15,4 +15,14 @@ public class SlidingUserInterface : InputEnabledUserInterface
             State = State == UIState.ENABLING ? UIState.ENABLED : UIState.DISABLED;
         }
     }
+
+    public virtual void OnMasterEnable()
+    {
+
+    }
+
+    public virtual void OnMasterDisable()
+    {
+
+    }
 }
