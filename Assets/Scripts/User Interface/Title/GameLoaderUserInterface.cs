@@ -9,11 +9,12 @@ using System;
 public class GameLoaderUserInterface : SlidingUserInterface
 {
     public int selectedSlotID;
-    public Battle.BattleData loadedData;
+    public static Battle.BattleData saveSlotData;
+    public static Battle.BattleData newBattleData;
     public Button[] saveSlotButtons;
     public Text[] saveSlotLabels;
     Battle.BattleData[] saveSlotContents;
-    ColorBlock buttonColors;
+    public static ColorBlock buttonColors;
 
     protected override void ChangeState(UIState state)
     {
@@ -71,23 +72,32 @@ public class GameLoaderUserInterface : SlidingUserInterface
 
     public void SelectSlot(int slot)
     {
-        selectedSlotID = slot;
-        loadedData = saveSlotContents[slot];
-        for (int i = 0; i < saveSlotButtons.Length; i++)
+        if (slot != selectedSlotID)
         {
-            ColorBlock block = saveSlotButtons[i].colors;
-            if (i == slot)
+            selectedSlotID = slot;
+            saveSlotData = saveSlotContents[slot];
+
+            for (int i = 0; i < saveSlotButtons.Length; i++)
             {
-                block.normalColor = buttonColors.pressedColor;
-                block.highlightedColor = buttonColors.pressedColor;
-                block.disabledColor = buttonColors.pressedColor;
+                ColorBlock block = saveSlotButtons[i].colors;
+                if (i == slot)
+                {
+                    block.normalColor = buttonColors.pressedColor;
+                    block.highlightedColor = buttonColors.pressedColor;
+                    block.disabledColor = buttonColors.pressedColor;
+                }
+                else
+                {
+                    block = buttonColors;
+                }
+                saveSlotButtons[i].colors = block;
             }
-            else
-            {
-                block = buttonColors;
-            }
-            saveSlotButtons[i].colors = block;
+            SlidingUserInterface_Master.lockedDirections = new bool[2];
+
+            GameModeSelectorUserInterface.selectedMode = -1;
+
+            newBattleData = new Battle.BattleData();
+            newBattleData.saveSlot = slot;
         }
-        SlidingUserInterface_Master.lockedDirections = new bool[2];
     }
 }
