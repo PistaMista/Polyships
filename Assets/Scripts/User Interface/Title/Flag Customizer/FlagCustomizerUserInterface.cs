@@ -6,25 +6,41 @@ using UnityEngine.UI;
 public class FlagCustomizerUserInterface : SlidingUserInterface
 {
     public Text firstPlayerText;
-    public FlagCustomizationWidget[] flagCustomizationWidgets;
+    public FlagCustomizationModuleUserInterface[] flagCustomizationModules;
+    public Vector2 flagResolution;
 
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
-        if (state == UIState.ENABLING)
+        switch (state)
         {
-            if (GameModeSelectorUserInterface.selectedMode == 0)
-            {
-                width = 2;
-                flagCustomizationWidgets[1].gameObject.SetActive(true);
-                firstPlayerText.text = "FIRST PLAYER\nDRAW YOUR FLAG";
-            }
-            else
-            {
-                width = 1;
-                flagCustomizationWidgets[1].gameObject.SetActive(false);
-                firstPlayerText.text = "DRAW YOUR FLAG";
-            }
+            case UIState.ENABLING:
+                if (GameLoaderUserInterface.newBattleData.attacker.flag == null)
+                {
+                    GameLoaderUserInterface.newBattleData.attacker.flag = new float[(int)flagResolution.x, (int)flagResolution.y, 3];
+                    GameLoaderUserInterface.newBattleData.attacked.flag = new float[(int)flagResolution.x, (int)flagResolution.y, 3];
+                }
+
+                flagCustomizationModules[0].State = UIState.ENABLED;
+                if (GameModeSelectorUserInterface.selectedMode == 0)
+                {
+                    width = 2;
+                    flagCustomizationModules[1].State = UIState.ENABLED;
+                    firstPlayerText.text = "FIRST PLAYER\nDRAW YOUR FLAG";
+                }
+                else
+                {
+                    width = 1;
+                    flagCustomizationModules[1].State = UIState.DISABLED;
+                    firstPlayerText.text = "DRAW YOUR FLAG";
+                }
+
+                break;
         }
+    }
+
+    public override void OnMasterEnable()
+    {
+        base.OnMasterEnable();
     }
 }

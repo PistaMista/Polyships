@@ -10,9 +10,13 @@ public class SlidingUserInterface : InputEnabledUserInterface
     protected override void Update()
     {
         base.Update();
-        if ((State == UIState.DISABLING || State == UIState.ENABLING) && SlidingUserInterface_Master.transitionDistance < Screen.width * 0.05f)
+        if (State == UIState.ENABLING && SlidingUserInterface_Master.transitionDistance < Screen.width * 0.05f)
         {
-            State = State == UIState.ENABLING ? UIState.ENABLED : UIState.DISABLED;
+            State = UIState.ENABLED;
+        }
+        else if (State == UIState.DISABLING && SlidingUserInterface_Master.transitionDistance < Screen.width * 0.01f)
+        {
+            State = UIState.DISABLED;
         }
     }
 

@@ -14,10 +14,12 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
     public static float transitionDistance;
     public static bool[] lockedDirections;
     bool afterDragLock;
+    public Vector2 defaultReferenceResolution;
 
 
     protected override void Start()
     {
+        referenceResolution = defaultReferenceResolution;
         interfaces = gameObject.GetComponentsInChildren<SlidingUserInterface>(true);
         RecalculateChildrenPositions();
         defaultPosition = selectedPosition;
@@ -27,7 +29,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
 
     protected override void Update()
     {
-        rect.anchoredPosition = Vector2.right * Mathf.SmoothDamp(rect.anchoredPosition.x, (defaultPosition - selectedPosition) * Screen.width, ref transitionVelocity, 0.65f, Mathf.Infinity);
+        rect.anchoredPosition = Vector2.right * Mathf.SmoothDamp(rect.anchoredPosition.x, (defaultPosition - selectedPosition) * referenceResolution.x, ref transitionVelocity, 0.65f, Mathf.Infinity);
 
         base.Update();
 
@@ -36,7 +38,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
             afterDragLock = false;
         }
 
-        transitionDistance = Mathf.Abs(rect.anchoredPosition.x - (defaultPosition - selectedPosition) * Screen.width);
+        transitionDistance = Mathf.Abs(rect.anchoredPosition.x - (defaultPosition - selectedPosition) * referenceResolution.x);
         //ManageSwipeHint();
     }
 
@@ -50,7 +52,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
     // public RectTransform chevronParent;
     // void ManageSwipeHint()
     // {
-    //     if (transitionDistance < Screen.width * 0.1f)
+    //     if (transitionDistance < referenceWidth * 0.1f)
     //     {
     //         cluelessTime += Time.deltaTime;
     //         hintEnabled = cluelessTime > maximumCluelessTime * successRating;
@@ -83,7 +85,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
         base.ProcessInput();
         if (!afterDragLock)
         {
-            int moveDirection = dragging && Mathf.Abs(initialInputPosition.screen.x - currentInputPosition.screen.x) > Screen.width / 3.0f ? (int)Mathf.Sign(initialInputPosition.screen.x - currentInputPosition.screen.x) : 0;
+            int moveDirection = dragging && Mathf.Abs(initialInputPosition.screen.x - currentInputPosition.screen.x) > referenceResolution.x / 3.0f ? (int)Mathf.Sign(initialInputPosition.screen.x - currentInputPosition.screen.x) : 0;
             if (moveDirection != 0 && !lockedDirections[(moveDirection + 1) / 2])
             {
                 RecalculateChildrenPositions();
@@ -129,7 +131,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
                 }
             }
 
-            interfaces[i].rect.anchoredPosition = Vector2.right * absolutePosition * Screen.width;
+            interfaces[i].rect.anchoredPosition = Vector2.right * absolutePosition * referenceResolution.x;
             widthOffset += interfaces[i].width - 1;
         }
 

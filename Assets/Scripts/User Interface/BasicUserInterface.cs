@@ -15,6 +15,7 @@ public class BasicUserInterface : MonoBehaviour
     public UIState state;
     public RectTransform rect;
     public bool enableOnStart;
+    public static Vector2 referenceResolution;
 
     public UIState State
     {
