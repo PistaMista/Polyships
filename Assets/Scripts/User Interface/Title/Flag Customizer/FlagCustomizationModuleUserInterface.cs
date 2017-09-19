@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
 {
+    public FlagCustomizationColorSelector[] colorSelectors;
     public GameObject borderPrefab;
     public GameObject pixelPrefab;
     public bool secondPlayer;
@@ -12,6 +13,7 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
     public Color borderColor;
     public Color selectedColor;
     int pixelDimensions;
+    bool editingPalette;
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
@@ -19,6 +21,7 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
         {
             case UIState.ENABLED:
                 RefreshFlag();
+                SelectColor(0);
                 break;
         }
     }
@@ -78,44 +81,72 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
     protected override void ProcessInput()
     {
         base.ProcessInput();
-        Vector2 lowerLeftCorner = (Vector2)pixels[0, 0].rectTransform.position - Vector2.one * pixelDimensions / 2.0f;
-        Vector2 upperRightCorner = (Vector2)pixels[pixels.GetLength(0) - 1, pixels.GetLength(1) - 1].rectTransform.position + Vector2.one * pixelDimensions / 2.0f;
-        Vector2 size = upperRightCorner - lowerLeftCorner;
-
-        if (beginPress)
+        if (!editingPalette)
         {
-            if (currentInputPosition.screen.x > lowerLeftCorner.x && currentInputPosition.screen.y > lowerLeftCorner.y && currentInputPosition.screen.x < upperRightCorner.x && currentInputPosition.screen.y < upperRightCorner.y)
+            Vector2 lowerLeftCorner = (Vector2)pixels[0, 0].rectTransform.position - Vector2.one * pixelDimensions / 2.0f;
+            Vector2 upperRightCorner = (Vector2)pixels[pixels.GetLength(0) - 1, pixels.GetLength(1) - 1].rectTransform.position + Vector2.one * pixelDimensions / 2.0f;
+            Vector2 size = upperRightCorner - lowerLeftCorner;
+
+            if (beginPress)
             {
-                SlidingUserInterface_Master.lockedDirections = new bool[] { true, true };
-                focused = true;
+                if (currentInputPosition.screen.x > lowerLeftCorner.x && currentInputPosition.screen.y > lowerLeftCorner.y && currentInputPosition.screen.x < upperRightCorner.x && currentInputPosition.screen.y < upperRightCorner.y)
+                {
+                    SlidingUserInterface_Master.lockedDirections = new bool[] { true, true };
+                    focused = true;
+                }
+            }
+
+            if (focused && currentInputPosition.screen.x > lowerLeftCorner.x && currentInputPosition.screen.y > lowerLeftCorner.y && currentInputPosition.screen.x < upperRightCorner.x && currentInputPosition.screen.y < upperRightCorner.y)
+            {
+                int x = Mathf.FloorToInt(((currentInputPosition.screen.x - lowerLeftCorner.x) / size.x) * pixels.GetLength(0));
+                int y = Mathf.FloorToInt(((currentInputPosition.screen.y - lowerLeftCorner.y) / size.y) * pixels.GetLength(1));
+
+                float[,,] flagData = secondPlayer ? GameLoaderUserInterface.newBattleData.attacked.flag : GameLoaderUserInterface.newBattleData.attacker.flag;
+                flagData[x, y, 0] = selectedColor.r;
+                flagData[x, y, 1] = selectedColor.g;
+                flagData[x, y, 2] = selectedColor.b;
+                if (secondPlayer)
+                {
+                    GameLoaderUserInterface.newBattleData.attacked.flag = flagData;
+                }
+                else
+                {
+                    GameLoaderUserInterface.newBattleData.attacker.flag = flagData;
+                }
+
+                RefreshFlag();
+            }
+
+            if (endPress)
+            {
+                SlidingUserInterface_Master.lockedDirections = new bool[2];
+                focused = false;
             }
         }
 
-        if (focused && currentInputPosition.screen.x > lowerLeftCorner.x && currentInputPosition.screen.y > lowerLeftCorner.y && currentInputPosition.screen.x < upperRightCorner.x && currentInputPosition.screen.y < upperRightCorner.y)
+    }
+
+    public void SelectColor(int colorSelectorID)
+    {
+        FlagCustomizationColorSelector selector = colorSelectors[colorSelectorID];
+        selectedColor = selector.Color;
+
+        for (int i = 0; i < colorSelectors.Length; i++)
         {
-            int x = Mathf.FloorToInt(((currentInputPosition.screen.x - lowerLeftCorner.x) / size.x) * pixels.GetLength(0));
-            int y = Mathf.FloorToInt(((currentInputPosition.screen.y - lowerLeftCorner.y) / size.y) * pixels.GetLength(1));
-
-            float[,,] flagData = secondPlayer ? GameLoaderUserInterface.newBattleData.attacked.flag : GameLoaderUserInterface.newBattleData.attacker.flag;
-            flagData[x, y, 0] = selectedColor.r;
-            flagData[x, y, 1] = selectedColor.g;
-            flagData[x, y, 2] = selectedColor.b;
-            if (secondPlayer)
-            {
-                GameLoaderUserInterface.newBattleData.attacked.flag = flagData;
-            }
-            else
-            {
-                GameLoaderUserInterface.newBattleData.attacker.flag = flagData;
-            }
-
-            RefreshFlag();
+            colorSelectors[i].SetHighlight(i == colorSelectorID);
         }
+    }
 
-        if (endPress)
+    public void EditColorPalette()
+    {
+        editingPalette = !editingPalette;
+        if (editingPalette)
+        {
+            SlidingUserInterface_Master.lockedDirections = new bool[2] { true, true };
+        }
+        else
         {
             SlidingUserInterface_Master.lockedDirections = new bool[2];
-            focused = false;
         }
     }
 }
