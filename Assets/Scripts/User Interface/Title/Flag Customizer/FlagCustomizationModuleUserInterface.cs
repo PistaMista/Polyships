@@ -85,8 +85,8 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
         {
             Vector2 lowerLeftFlagCorner = (Vector2)pixels[0, 0].rectTransform.position - Vector2.one * pixelDimensions / 2.0f;
             Vector2 upperRightFlagCorner = (Vector2)pixels[pixels.GetLength(0) - 1, pixels.GetLength(1) - 1].rectTransform.position + Vector2.one * pixelDimensions / 2.0f;
-            Vector2 lowerLeftPaletteCorner = (Vector2)colorPalette.rectTransform.position - colorPalette.rectTransform.sizeDelta / 2.0f;
-            Vector2 upperRightPaletteCorner = (Vector2)colorPalette.rectTransform.position + colorPalette.rectTransform.sizeDelta / 2.0f;
+            Vector2 lowerLeftPaletteCorner = (Vector2)colorPalette.rectTransform.position - colorPalette.rectTransform.sizeDelta * Screen.width / referenceResolution.x / 2.0f;
+            Vector2 upperRightPaletteCorner = (Vector2)colorPalette.rectTransform.position + colorPalette.rectTransform.sizeDelta * Screen.width / referenceResolution.x / 2.0f;
 
             if (beginPress)
             {
