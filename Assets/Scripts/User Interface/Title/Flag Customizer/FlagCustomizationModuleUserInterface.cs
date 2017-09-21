@@ -131,7 +131,7 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
                     intersection = GetIntersection(lowerLeftPaletteCorner, upperRightPaletteCorner, currentInputPosition.screen);
                     if (CheckIntersection(intersection))
                     {
-                        colorSelectors[selectedColorID].Color = colorPalette.sprite.texture.GetPixel((int)(colorPalette.sprite.texture.width * intersection.x), 0);
+                        colorSelectors[selectedColorID].Color = colorPalette.sprite.texture.GetPixel((int)(colorPalette.sprite.texture.width * intersection.x), (int)(colorPalette.sprite.texture.height * intersection.y));
                     }
                 }
             }

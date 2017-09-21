@@ -15,6 +15,7 @@ public class GameLoaderUserInterface : SlidingUserInterface
     public Text[] saveSlotLabels;
     Battle.BattleData[] saveSlotContents;
     public static ColorBlock buttonColors;
+    public static bool neverPlayed;
 
     protected override void ChangeState(UIState state)
     {
@@ -42,7 +43,7 @@ public class GameLoaderUserInterface : SlidingUserInterface
 
         buttonColors = saveSlotButtons[0].colors;
 
-
+        neverPlayed = true;
         for (int i = 0; i < saveSlotContents.Length; i++)
         {
             try
@@ -52,6 +53,7 @@ public class GameLoaderUserInterface : SlidingUserInterface
 
                 saveSlotContents[i] = (Battle.BattleData)formatter.Deserialize(stream);
                 saveSlotLabels[i].text = "SAVED BATTLE - " + saveSlotContents[i].log.Length + " TURNS PLAYED";
+                neverPlayed = false;
             }
             catch
             {
