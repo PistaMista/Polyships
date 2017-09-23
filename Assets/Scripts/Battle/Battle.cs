@@ -37,6 +37,42 @@ public class Battle : MonoBehaviour
             destroyedShips = new List<Ship>();
             aircraftTargetChanged = false;
         }
+
+        public static implicit operator TurnInfo(TurnInfoData data)
+        {
+            TurnInfo result = new TurnInfo(1);
+            result.attacker = Battle.main.attacker.index == data.attacker ? Battle.main.attacker : Battle.main.attacked;
+            result.attacked = Battle.main.attacked.index == data.attacked ? Battle.main.attacked : Battle.main.attacker;
+            result.artilleryImpacts = ConvertTileArray(data.artilleryImpacts, result.attacked);
+            result.torpedoImpacts = ConvertTileArray(data.torpedoImpacts, result.attacked);
+            result.damagedTiles = ConvertTileArray(data.damagedTiles, result.attacked);
+            result.damagedShips = ConvertShipArray(data.damagedShips, result.attacked);
+            result.destroyedShips = ConvertShipArray(data.destroyedShips, result.attacked);
+            result.aircraftTargetChanged = data.aircraftTargetChanged;
+            return result;
+        }
+
+        static List<Tile> ConvertTileArray(int[,] array, Player owner)
+        {
+            List<Tile> result = new List<Tile>();
+            for (int i = 0; i < array.GetLength(0); i++)
+            {
+                result.Add(owner.board.tiles[array[i, 0], array[i, 1]]);
+            }
+
+            return result;
+        }
+
+        static List<Ship> ConvertShipArray(int[] array, Player owner)
+        {
+            List<Ship> result = new List<Ship>();
+            for (int i = 0; i < array.Length; i++)
+            {
+                result.Add(owner.ships[array[i]]);
+            }
+
+            return result;
+        }
     }
 
     [Serializable]
@@ -97,6 +133,7 @@ public class Battle : MonoBehaviour
         public int saveSlot;
         public BattleStage stage;
         public TurnInfoData[] log;
+        public bool tutorialMode;
 
         public static implicit operator BattleData(Battle battle)
         {
@@ -120,6 +157,7 @@ public class Battle : MonoBehaviour
     public List<TurnInfo> log;
     public int saveSlot;
     public BattleStage stage;
+    public bool tutorialMode;
 
     public void SaveToDisk()
     {
@@ -129,5 +167,51 @@ public class Battle : MonoBehaviour
         formatter.Serialize(stream, (BattleData)this);
 
         stream.Close();
+    }
+
+    public void Initialize(BattleData data)
+    {
+        main = this;
+
+        attacker = new GameObject("Attacker").AddComponent<Player>();
+        attacker.gameObject.transform.SetParent(transform);
+        attacker.Initialize(data.attacker);
+
+        attacked = new GameObject("Attacked").AddComponent<Player>();
+        attacked.gameObject.transform.SetParent(transform);
+        attacked.Initialize(data.attacker);
+
+        //LOG - REF
+
+        saveSlot = data.saveSlot;
+        stage = data.stage;
+        tutorialMode = data.tutorialMode;
+    }
+
+    public void AssignReferences(BattleData data)
+    {
+        attacker.AssignReferences(data.attacker);
+        attacked.AssignReferences(data.attacked);
+
+        log = new List<TurnInfo>();
+        if (data.log != null)
+        {
+            for (int i = 0; i < data.log.Length; i++)
+            {
+                TurnInfo turn = data.log[i];
+
+                log.Add(turn);
+            }
+        }
+    }
+
+    void OnApplicationPause(bool pauseStatus)
+    {
+        SaveToDisk();
+    }
+
+    void OnApplicationQuit()
+    {
+        SaveToDisk();
     }
 }

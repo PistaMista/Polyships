@@ -1,9 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Player : MonoBehaviour
 {
+    [Serializable]
     public struct PlayerData
     {
         public int index;
@@ -29,12 +31,17 @@ public class Player : MonoBehaviour
                 }
             }
 
-            result.ships = new Ship.ShipData[player.ships.Length];
-            for (int i = 0; i < player.ships.Length; i++)
+            if (player.ships != null)
             {
-                result.ships[i] = player.ships[i];
+                result.ships = new Ship.ShipData[player.ships.Length];
+                for (int i = 0; i < player.ships.Length; i++)
+                {
+                    result.ships[i] = player.ships[i];
+                }
             }
-            return null;
+
+
+            return result;
         }
     }
     public int index;
@@ -42,4 +49,45 @@ public class Player : MonoBehaviour
     public bool computerControlled;
     public Color[,] flag;
     public Ship[] ships;
+
+    public void Initialize(PlayerData data)
+    {
+        index = data.index;
+
+        board = new GameObject("Board").AddComponent<Board>();
+        board.transform.SetParent(transform);
+        board.Initialize(data.board);
+
+        computerControlled = data.computerControlled;
+
+        flag = new Color[data.flag.GetLength(0), data.flag.GetLength(1)];
+        for (int x = 0; x < flag.GetLength(0); x++)
+        {
+            for (int y = 0; y < flag.GetLength(1); y++)
+            {
+                flag[x, y] = new Color(data.flag[x, y, 0], data.flag[x, y, 1], data.flag[x, y, 2]);
+            }
+        }
+        if (data.ships != null)
+        {
+            for (int i = 0; i < data.ships.Length; i++)
+            {
+                Ship ship = Instantiate(MiscellaneousVariables.it.shipPrefabs[(int)data.ships[i].type]).GetComponent<Ship>();
+                ship.transform.SetParent(transform);
+                ship.Initialize(data.ships[i]);
+            }
+        }
+    }
+
+    public void AssignReferences(PlayerData data)
+    {
+        board.AssignReferences(data.board);
+        if (data.ships != null)
+        {
+            for (int i = 0; i < ships.Length; i++)
+            {
+                ships[i].AssignReferences(data.ships[i]);
+            }
+        }
+    }
 }

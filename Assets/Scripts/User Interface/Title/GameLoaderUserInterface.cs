@@ -11,10 +11,9 @@ public class GameLoaderUserInterface : SlidingUserInterface
     public int selectedSlotID;
     public static Battle.BattleData saveSlotData;
     public static Battle.BattleData newBattleData;
-    public Button[] saveSlotButtons;
+    public ExclusiveTogglingButtonGroup toggleGroup;
     public Text[] saveSlotLabels;
     Battle.BattleData[] saveSlotContents;
-    public static ColorBlock buttonColors;
     public static bool neverPlayed;
 
     protected override void ChangeState(UIState state)
@@ -39,9 +38,7 @@ public class GameLoaderUserInterface : SlidingUserInterface
     {
         base.OnMasterEnable();
         selectedSlotID = -1;
-        saveSlotContents = new Battle.BattleData[saveSlotButtons.Length];
-
-        buttonColors = saveSlotButtons[0].colors;
+        saveSlotContents = new Battle.BattleData[toggleGroup.buttons.Length];
 
         neverPlayed = true;
         for (int i = 0; i < saveSlotContents.Length; i++)
@@ -66,10 +63,7 @@ public class GameLoaderUserInterface : SlidingUserInterface
     public override void OnMasterDisable()
     {
         base.OnMasterDisable();
-        for (int i = 0; i < saveSlotButtons.Length; i++)
-        {
-            saveSlotButtons[i].colors = buttonColors;
-        }
+        toggleGroup.ResetColors();
     }
 
     public void SelectSlot(int slot)
@@ -78,28 +72,14 @@ public class GameLoaderUserInterface : SlidingUserInterface
         {
             selectedSlotID = slot;
             saveSlotData = saveSlotContents[slot];
-
-            for (int i = 0; i < saveSlotButtons.Length; i++)
-            {
-                ColorBlock block = saveSlotButtons[i].colors;
-                if (i == slot)
-                {
-                    block.normalColor = buttonColors.pressedColor;
-                    block.highlightedColor = buttonColors.pressedColor;
-                    block.disabledColor = buttonColors.pressedColor;
-                }
-                else
-                {
-                    block = buttonColors;
-                }
-                saveSlotButtons[i].colors = block;
-            }
             SlidingUserInterface_Master.lockedDirections = new bool[2];
 
             GameModeSelectorUserInterface.selectedMode = -1;
 
             newBattleData = new Battle.BattleData();
             newBattleData.saveSlot = slot;
+            newBattleData.attacker.index = 0;
+            newBattleData.attacked.index = 1;
         }
     }
 }

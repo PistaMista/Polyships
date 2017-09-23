@@ -7,6 +7,7 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
 {
     public Image colorPalette;
     public FlagCustomizationColorSelector[] colorSelectors;
+    public ExclusiveTogglingButtonGroup colorSelectorGroup;
     public GameObject borderPrefab;
     public GameObject pixelPrefab;
     public bool secondPlayer;
@@ -149,22 +150,6 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
     {
         FlagCustomizationColorSelector selector = colorSelectors[colorSelectorID];
         selectedColorID = colorSelectorID;
-
-        for (int i = 0; i < colorSelectors.Length; i++)
-        {
-            colorSelectors[i].SetHighlight(i == colorSelectorID);
-        }
-    }
-
-    Vector4 GetIntersection(Vector2 lowerLeftCorner, Vector2 upperRightCorner, Vector2 position)
-    {
-        Vector2 size = upperRightCorner - lowerLeftCorner;
-        Vector4 result = new Vector4((position.x - lowerLeftCorner.x) / size.x, (position.y - lowerLeftCorner.y) / size.y, position.x - lowerLeftCorner.x, position.y - lowerLeftCorner.y);
-        return result;
-    }
-
-    bool CheckIntersection(Vector2 intersection)
-    {
-        return intersection.x >= 0 && intersection.x <= 1 && intersection.y >= 0 && intersection.y <= 1;
+        colorSelectorGroup.ResetColors(colorSelectorID);
     }
 }

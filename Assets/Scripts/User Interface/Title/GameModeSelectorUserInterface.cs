@@ -6,9 +6,11 @@ using UnityEngine.UI;
 public class GameModeSelectorUserInterface : SlidingUserInterface
 {
     public static int selectedMode;
-    public Button[] modeSelectionButtons;
+    //public Button[] modeSelectionButtons;
+    public ExclusiveTogglingButtonGroup toggleGroup;
     public RectTransform battleResumerParent;
     public RectTransform battleCreatorParent;
+    public SlidingUserInterface[] toSkip;
 
     protected override void ChangeState(UIState state)
     {
@@ -21,21 +23,22 @@ public class GameModeSelectorUserInterface : SlidingUserInterface
                     SlidingUserInterface_Master.lockedDirections[1] = true;
                 }
 
-                for (int i = 0; i < modeSelectionButtons.Length; i++)
-                {
-                    ColorBlock block = modeSelectionButtons[i].colors;
-                    if (i == selectedMode)
-                    {
-                        block.normalColor = GameLoaderUserInterface.buttonColors.pressedColor;
-                        block.highlightedColor = GameLoaderUserInterface.buttonColors.pressedColor;
-                        block.disabledColor = GameLoaderUserInterface.buttonColors.pressedColor;
-                    }
-                    else
-                    {
-                        block = GameLoaderUserInterface.buttonColors;
-                    }
-                    modeSelectionButtons[i].colors = block;
-                }
+                // for (int i = 0; i < modeSelectionButtons.Length; i++)
+                // {
+                //     ColorBlock block = modeSelectionButtons[i].colors;
+                //     if (i == selectedMode)
+                //     {
+                //         block.normalColor = GameLoaderUserInterface.buttonColors.pressedColor;
+                //         block.highlightedColor = GameLoaderUserInterface.buttonColors.pressedColor;
+                //         block.disabledColor = GameLoaderUserInterface.buttonColors.pressedColor;
+                //     }
+                //     else
+                //     {
+                //         block = GameLoaderUserInterface.buttonColors;
+                //     }
+                //     modeSelectionButtons[i].colors = block;
+                // }
+                toggleGroup.ResetColors(selectedMode);
 
                 if (GameLoaderUserInterface.saveSlotData.stage == BattleStage.NOT_INITIALIZED)
                 {
@@ -65,30 +68,27 @@ public class GameModeSelectorUserInterface : SlidingUserInterface
     public override void OnMasterDisable()
     {
         base.OnMasterDisable();
-        for (int i = 0; i < modeSelectionButtons.Length; i++)
-        {
-            modeSelectionButtons[i].colors = GameLoaderUserInterface.buttonColors;
-        }
+        toggleGroup.ResetColors();
     }
 
     public void SelectMode(int mode)
     {
         selectedMode = mode;
-        for (int i = 0; i < modeSelectionButtons.Length; i++)
-        {
-            ColorBlock block = modeSelectionButtons[i].colors;
-            if (i == mode)
-            {
-                block.normalColor = GameLoaderUserInterface.buttonColors.pressedColor;
-                block.highlightedColor = GameLoaderUserInterface.buttonColors.pressedColor;
-                block.disabledColor = GameLoaderUserInterface.buttonColors.pressedColor;
-            }
-            else
-            {
-                block = GameLoaderUserInterface.buttonColors;
-            }
-            modeSelectionButtons[i].colors = block;
-        }
+        // for (int i = 0; i < modeSelectionButtons.Length; i++)
+        // {
+        //     ColorBlock block = modeSelectionButtons[i].colors;
+        //     if (i == mode)
+        //     {
+        //         block.normalColor = GameLoaderUserInterface.buttonColors.pressedColor;
+        //         block.highlightedColor = GameLoaderUserInterface.buttonColors.pressedColor;
+        //         block.disabledColor = GameLoaderUserInterface.buttonColors.pressedColor;
+        //     }
+        //     else
+        //     {
+        //         block = GameLoaderUserInterface.buttonColors;
+        //     }
+        //     modeSelectionButtons[i].colors = block;
+        // }
         SlidingUserInterface_Master.lockedDirections = new bool[2];
 
         Battle.BattleData mod = GameLoaderUserInterface.newBattleData;
@@ -97,6 +97,11 @@ public class GameModeSelectorUserInterface : SlidingUserInterface
             mod.attacked.computerControlled = mode == 1;
         }
         GameLoaderUserInterface.newBattleData = mod;
+
+        for (int i = 0; i < toSkip.Length; i++)
+        {
+            toSkip[i].width = mode == 2 ? 0 : 1;
+        }
     }
 
 }

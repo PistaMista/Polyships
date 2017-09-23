@@ -4,18 +4,16 @@ using UnityEngine;
 
 public class MiscellaneousVariables : MonoBehaviour
 {
-
+    public int[] boardSizes;
+    public GameObject[] shipPrefabs;
     public static MiscellaneousVariables it;
 
     void Start()
     {
         it = this;
-        for (int x = 0; x < 2; x++)
+        if (boardSizes.Length != 3)
         {
-            if (true)
-            {
-
-            }
+            Debug.LogError("Board size array is not the correct size!");
         }
     }
 
