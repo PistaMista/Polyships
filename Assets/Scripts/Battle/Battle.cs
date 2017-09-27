@@ -133,7 +133,8 @@ public class Battle : MonoBehaviour
         public int saveSlot;
         public BattleStage stage;
         public TurnInfoData[] log;
-        public bool tutorialMode;
+        public int tutorialStage;
+        public BattleUIType lastOpenUserInterface;
 
         public static implicit operator BattleData(Battle battle)
         {
@@ -147,6 +148,8 @@ public class Battle : MonoBehaviour
             {
                 result.log[i] = battle.log[i];
             }
+            result.tutorialStage = battle.tutorialStage;
+            result.lastOpenUserInterface = battle.lastOpenUserInterface;
             return result;
         }
     }
@@ -157,7 +160,8 @@ public class Battle : MonoBehaviour
     public List<TurnInfo> log;
     public int saveSlot;
     public BattleStage stage;
-    public bool tutorialMode;
+    public int tutorialStage;
+    public BattleUIType lastOpenUserInterface;
 
     public void SaveToDisk()
     {
@@ -179,13 +183,15 @@ public class Battle : MonoBehaviour
 
         attacked = new GameObject("Attacked").AddComponent<Player>();
         attacked.gameObject.transform.SetParent(transform);
-        attacked.Initialize(data.attacker);
+        attacked.Initialize(data.attacked);
 
         //LOG - REF
 
         saveSlot = data.saveSlot;
         stage = data.stage;
-        tutorialMode = data.tutorialMode;
+        tutorialStage = data.tutorialStage;
+        lastOpenUserInterface = data.lastOpenUserInterface;
+        BattleUserInterface_Master.EnableUI(lastOpenUserInterface);
     }
 
     public void AssignReferences(BattleData data)
@@ -207,11 +213,17 @@ public class Battle : MonoBehaviour
 
     void OnApplicationPause(bool pauseStatus)
     {
-        SaveToDisk();
+        QuitBattle();
     }
 
     void OnApplicationQuit()
     {
+        QuitBattle();
+    }
+
+    public void QuitBattle()
+    {
         SaveToDisk();
+        BattleUserInterface_Master.Disable();
     }
 }

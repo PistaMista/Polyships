@@ -43,11 +43,11 @@ public class InputEnabledUserInterface : BasicUserInterface
     protected static bool pressed;
     [Range(0.0f, 1.0f)]
     public float dragRegisterDistanceInScreenHeightPercentage;
-    public bool processInputWhenEnabling;
+    public bool interactable;
     protected override void Update()
     {
         base.Update();
-        if (State == UIState.ENABLED || State == UIState.ENABLING && processInputWhenEnabling)
+        if (interactable)
         {
             ProcessInput();
         }
@@ -68,12 +68,16 @@ public class InputEnabledUserInterface : BasicUserInterface
         }
     }
 
-    protected override void ChangeState(UIState state)
+    public void SetInteractable(bool enabled)
     {
-        base.ChangeState(state);
         foreach (Selectable selectable in GetComponentsInChildren<Selectable>())
         {
-            selectable.interactable = state == UIState.ENABLED || (processInputWhenEnabling && state == UIState.ENABLING);
+            selectable.interactable = enabled;
+        }
+
+        foreach (InputEnabledUserInterface i in GetComponentsInChildren<InputEnabledUserInterface>())
+        {
+            i.interactable = enabled;
         }
     }
 }

@@ -6,7 +6,7 @@ public class SlidingUserInterface : InputEnabledUserInterface
 {
     public int position;
     public int width;
-
+    public bool interactableWhileEnabling;
     protected override void Update()
     {
         base.Update();
@@ -28,5 +28,11 @@ public class SlidingUserInterface : InputEnabledUserInterface
     public virtual void OnMasterDisable()
     {
 
+    }
+
+    protected override void ChangeState(UIState state)
+    {
+        base.ChangeState(state);
+        SetInteractable(state == UIState.ENABLED || (interactableWhileEnabling && state == UIState.ENABLING));
     }
 }

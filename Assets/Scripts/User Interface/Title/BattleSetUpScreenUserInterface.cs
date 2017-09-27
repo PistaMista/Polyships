@@ -17,7 +17,7 @@ public class BattleSetUpScreenUserInterface : SlidingUserInterface
     }
     public void SetTutorialMode(int enabled)
     {
-        GameLoaderUserInterface.newBattleData.tutorialMode = enabled == 1;
+        GameLoaderUserInterface.newBattleData.tutorialStage = enabled;
         tutorialButtonGroup.ResetColors(enabled);
     }
 
@@ -27,6 +27,20 @@ public class BattleSetUpScreenUserInterface : SlidingUserInterface
         boardSizeButtonGroup.ResetColors(size);
 
         Board.BoardData boardData = new Board.BoardData();
+        boardData.ownedByAttacker = true;
+        boardData.tiles = new Tile.TileData[actualDimensions, actualDimensions];
+        for (int x = 0; x < actualDimensions; x++)
+        {
+            for (int y = 0; y < actualDimensions; y++)
+            {
+                boardData.tiles[x, y].coordinates = new int[] { x, y };
+                boardData.tiles[x, y].ownedByAttacker = true;
+            }
+        }
+
+        GameLoaderUserInterface.newBattleData.attacker.board = boardData;
+
+        boardData = new Board.BoardData();
         boardData.tiles = new Tile.TileData[actualDimensions, actualDimensions];
         for (int x = 0; x < actualDimensions; x++)
         {
@@ -36,7 +50,6 @@ public class BattleSetUpScreenUserInterface : SlidingUserInterface
             }
         }
 
-        GameLoaderUserInterface.newBattleData.attacker.board = boardData;
         GameLoaderUserInterface.newBattleData.attacked.board = boardData;
     }
 

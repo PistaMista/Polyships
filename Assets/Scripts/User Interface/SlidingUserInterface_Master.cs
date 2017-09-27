@@ -85,7 +85,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
         base.ProcessInput();
         if (!afterDragLock)
         {
-            int moveDirection = dragging && Mathf.Abs(initialInputPosition.screen.x - currentInputPosition.screen.x) > Screen.width / 3.0f ? (int)Mathf.Sign(initialInputPosition.screen.x - currentInputPosition.screen.x) : 0;
+            int moveDirection = dragging && Mathf.Abs(initialInputPosition.screen.x - currentInputPosition.screen.x) > Screen.width / 10.0f ? (int)Mathf.Sign(initialInputPosition.screen.x - currentInputPosition.screen.x) : 0;
             if (moveDirection != 0 && !lockedDirections[(moveDirection + 1) / 2])
             {
                 RecalculateChildrenPositions();
