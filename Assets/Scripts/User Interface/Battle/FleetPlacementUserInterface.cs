@@ -4,15 +4,18 @@ using UnityEngine;
 
 public class FleetPlacementUserInterface : BoardViewUserInterface
 {
-    public static FleetPlacementUserInterface it;
-
-    void Awake()
+    protected override void ChangeState(UIState state)
     {
-        it = this;
-    }
-
-    public static void SetState(UIState state)
-    {
-        it.State = state;
+        base.ChangeState(state);
+        switch (state)
+        {
+            case UIState.DISABLING:
+                SetInteractable(false);
+                break;
+            case UIState.ENABLING:
+                SetInteractable(true);
+                CameraControl.GoToWaypoint(Battle.main.attacker.cameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
+                break;
+        }
     }
 }

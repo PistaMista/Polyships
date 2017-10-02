@@ -14,6 +14,7 @@ public enum BattleUIType
 public class BattleUserInterface : InputEnabledUserInterface
 {
     public TutorialUserInterface[] tutorials;
+    public SecondaryBattleUserInterface[] secondaries;
     public MaskableGraphicFader[] graphicFaders;
     public int beginningTutorialStage;
     public void Tutorial()
@@ -35,8 +36,6 @@ public class BattleUserInterface : InputEnabledUserInterface
                 }
             }
         }
-
-
     }
 
     protected override void ChangeState(UIState state)
@@ -54,6 +53,14 @@ public class BattleUserInterface : InputEnabledUserInterface
         for (int i = 0; i < graphicFaders.Length; i++)
         {
             graphicFaders[i].SetTargetColor(state == UIState.ENABLING ? Color.black : Color.clear, new Vector4(1, 1, 1, 0));
+        }
+
+        if (state == UIState.ENABLING || state == UIState.DISABLING)
+        {
+            for (int i = 0; i < secondaries.Length; i++)
+            {
+                secondaries[i].State = state;
+            }
         }
     }
 

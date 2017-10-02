@@ -50,6 +50,10 @@ public class Player : MonoBehaviour
     public Color[,] flag;
     public Ship[] ships;
 
+
+
+
+    public Waypoint cameraPoint;
     public void Initialize(PlayerData data)
     {
         index = data.index;
@@ -77,6 +81,12 @@ public class Player : MonoBehaviour
                 ship.Initialize(data.ships[i]);
             }
         }
+
+        cameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
+        cameraPoint.transform.SetParent(transform);
+        float height = Mathf.Tan(Mathf.Rad2Deg * (90 - Camera.main.fieldOfView / 2.0f)) * (board.tiles.GetLength(0) / 2.0f);
+        cameraPoint.transform.localPosition = Vector3.up * height;
+        cameraPoint.transform.LookAt(transform);
     }
 
     public void AssignReferences(PlayerData data)

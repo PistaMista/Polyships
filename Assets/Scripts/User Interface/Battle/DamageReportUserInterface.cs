@@ -5,15 +5,16 @@ using UnityEngine;
 public class DamageReportUserInterface : BoardViewUserInterface
 {
 
-    public static DamageReportUserInterface it;
-
-    void Awake()
+    protected override void ChangeState(UIState state)
     {
-        it = this;
-    }
-
-    public static void SetState(UIState state)
-    {
-        it.State = state;
+        base.ChangeState(state);
+        switch (state)
+        {
+            case UIState.DISABLING:
+                break;
+            case UIState.ENABLING:
+                CameraControl.GoToWaypoint(Battle.main.attacked.cameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
+                break;
+        }
     }
 }

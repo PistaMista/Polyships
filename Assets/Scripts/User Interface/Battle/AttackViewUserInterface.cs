@@ -5,16 +5,20 @@ using UnityEngine;
 public class AttackViewUserInterface : BoardViewUserInterface
 {
 
-    public static AttackViewUserInterface it;
     bool attackConfirmed;
-    void Awake()
+    protected override void ChangeState(UIState state)
     {
-        it = this;
-    }
-
-    public static void SetState(UIState state)
-    {
-        it.State = state;
+        base.ChangeState(state);
+        switch (state)
+        {
+            case UIState.DISABLING:
+                SetInteractable(false);
+                break;
+            case UIState.ENABLING:
+                SetInteractable(true);
+                CameraControl.GoToWaypoint(Battle.main.attacked.cameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
+                break;
+        }
     }
 
     public void ConfirmAttack()
