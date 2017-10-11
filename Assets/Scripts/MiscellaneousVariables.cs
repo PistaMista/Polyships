@@ -7,6 +7,10 @@ public class MiscellaneousVariables : MonoBehaviour
     public int[] boardSizes;
     public GameObject[] shipPrefabs;
     public float playerCameraTransitionTime;
+    [Range(0.00f, 1.00f)]
+    public float boardTileSideLength;
+    public float boardUIRenderHeight;
+    public float boardCameraHeightModifier;
     public static MiscellaneousVariables it;
 
     void Start()

@@ -22,16 +22,13 @@ public class CameraControl : MonoBehaviour
 
     public delegate float RotationCalculator();
 
-    public Waypoint test;
-    void Start()
-    {
-        GoToWaypoint(test, 10f);
-    }
-
     void Update()
     {
-        transform.position = Vector3.SmoothDamp(transform.position, currentWaypoint.transform.position, ref transitionVelocity, transitionTime);
-        transform.rotation = Quaternion.RotateTowards(Camera.main.transform.rotation, currentWaypoint.transform.rotation, rotationCalculator());
+        if (currentWaypoint != null)
+        {
+            transform.position = Vector3.SmoothDamp(transform.position, currentWaypoint.transform.position, ref transitionVelocity, transitionTime);
+            transform.rotation = Quaternion.RotateTowards(Camera.main.transform.rotation, currentWaypoint.transform.rotation, rotationCalculator());
+        }
     }
 
     public static void GoToWaypoint(Waypoint waypoint, float transitionTime, RotationCalculator rotationProgressCalculator)

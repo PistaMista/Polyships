@@ -10,6 +10,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
     public int selectedPosition;
     public int lastPosition;
     public int defaultPosition;
+    public float screenTransitionTime;
     float transitionVelocity;
     public static float transitionDistance;
     public static bool[] lockedDirections;
@@ -29,7 +30,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
 
     protected override void Update()
     {
-        rect.anchoredPosition = Vector2.right * Mathf.SmoothDamp(rect.anchoredPosition.x, (defaultPosition - selectedPosition) * referenceResolution.x, ref transitionVelocity, 0.65f, Mathf.Infinity);
+        rect.anchoredPosition = Vector2.right * Mathf.SmoothDamp(rect.anchoredPosition.x, (defaultPosition - selectedPosition) * referenceResolution.x, ref transitionVelocity, screenTransitionTime, Mathf.Infinity);
 
         base.Update();
 

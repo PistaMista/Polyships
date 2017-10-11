@@ -13,7 +13,7 @@ public class DamageReportUserInterface : BoardViewUserInterface
             case UIState.DISABLING:
                 break;
             case UIState.ENABLING:
-                CameraControl.GoToWaypoint(Battle.main.attacked.cameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
+                CameraControl.GoToWaypoint(Battle.main.attacked.boardCameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
                 break;
         }
     }

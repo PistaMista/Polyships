@@ -2,21 +2,39 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum BattleUIType
-{
-    ATTACKER_INFO,
-    ATTACK_VIEW,
-    BATTLE_OVERVIEW,
-    DAMAGE_REPORT,
-    TURN_NOTIFIER,
-    FLEET_PLACEMENT
-}
+
 public class BattleUserInterface : InputEnabledUserInterface
 {
     public TutorialUserInterface[] tutorials;
     public SecondaryBattleUserInterface[] secondaries;
     public MaskableGraphicFader[] graphicFaders;
     public int beginningTutorialStage;
+    public Transform worldSpaceParent;
+
+    void Awake()
+    {
+        ResetWorldSpaceParent();
+    }
+
+    public void SetWorldSpaceParent(bool enabled)
+    {
+        worldSpaceParent.gameObject.SetActive(enabled);
+        for (int i = 0; i < secondaries.Length; i++)
+        {
+            secondaries[i].SetWorldSpaceParent(enabled);
+        }
+    }
+
+    protected void ResetWorldSpaceParent()
+    {
+        if (worldSpaceParent != null)
+        {
+            Destroy(worldSpaceParent.gameObject);
+        }
+        worldSpaceParent = new GameObject("World Space Parent").transform;
+        worldSpaceParent.SetParent(transform);
+    }
+
     public void Tutorial()
     {
         int candidateTutorial = Battle.main.tutorialStage - beginningTutorialStage;

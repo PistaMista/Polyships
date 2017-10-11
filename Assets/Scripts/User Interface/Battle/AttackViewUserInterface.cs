@@ -16,7 +16,7 @@ public class AttackViewUserInterface : BoardViewUserInterface
                 break;
             case UIState.ENABLING:
                 SetInteractable(true);
-                CameraControl.GoToWaypoint(Battle.main.attacked.cameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
+                CameraControl.GoToWaypoint(Battle.main.attacked.boardCameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
                 break;
         }
     }

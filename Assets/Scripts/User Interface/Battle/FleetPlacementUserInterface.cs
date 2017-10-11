@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class FleetPlacementUserInterface : BoardViewUserInterface
 {
+    public Waypoint cameraWaypoint;
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
@@ -14,7 +15,9 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 break;
             case UIState.ENABLING:
                 SetInteractable(true);
-                CameraControl.GoToWaypoint(Battle.main.attacker.cameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
+                cameraWaypoint.transform.position = Battle.main.attacker.boardCameraPoint.transform.position + Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) / 2.0f * 0.85f;
+                cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
+                CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
                 break;
         }
     }

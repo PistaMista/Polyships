@@ -19,7 +19,7 @@ public class Player : MonoBehaviour
             result.index = player.index;
             result.board = player.board;
             result.computerControlled = player.computerControlled;
-            result.flag = new float[player.flag.GetLength(0), player.flag.GetLength(0), 3];
+            result.flag = new float[player.flag.GetLength(0), player.flag.GetLength(1), 3];
             for (int x = 0; x < player.flag.GetLength(0); x++)
             {
                 for (int y = 0; y < player.flag.GetLength(1); y++)
@@ -53,7 +53,9 @@ public class Player : MonoBehaviour
 
 
 
-    public Waypoint cameraPoint;
+    public Waypoint boardCameraPoint;
+    public Waypoint flagCameraPoint;
+    public PlayerSecondaryBUI secondaryBUI;
     public void Initialize(PlayerData data)
     {
         index = data.index;
@@ -82,11 +84,17 @@ public class Player : MonoBehaviour
             }
         }
 
-        cameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
-        cameraPoint.transform.SetParent(transform);
-        float height = Mathf.Tan(Mathf.Rad2Deg * (90 - Camera.main.fieldOfView / 2.0f)) * (board.tiles.GetLength(0) / 2.0f);
-        cameraPoint.transform.localPosition = Vector3.up * height;
-        cameraPoint.transform.LookAt(transform);
+        boardCameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
+        boardCameraPoint.transform.SetParent(transform);
+        float height = Mathf.Tan(Mathf.Rad2Deg * (90 - Camera.main.fieldOfView * Camera.main.aspect / 2.0f)) * (board.tiles.GetLength(0) / 2.0f) * MiscellaneousVariables.it.boardCameraHeightModifier;
+        boardCameraPoint.transform.localPosition = Vector3.up * (height + MiscellaneousVariables.it.boardUIRenderHeight);
+        boardCameraPoint.transform.LookAt(transform);
+
+        flagCameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
+        flagCameraPoint.transform.SetParent(transform);
+        height = Mathf.Tan(Mathf.Rad2Deg * (90 - Camera.main.fieldOfView / 2.0f)) * (flag.GetLength(0) / 2.0f);
+        flagCameraPoint.transform.localPosition = Vector3.up * (height + MiscellaneousVariables.it.boardUIRenderHeight);
+        flagCameraPoint.transform.LookAt(transform);
     }
 
     public void AssignReferences(PlayerData data)
