@@ -14,11 +14,15 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 SetInteractable(false);
                 break;
             case UIState.ENABLING:
-                SetInteractable(true);
-                cameraWaypoint.transform.position = Battle.main.attacker.boardCameraPoint.transform.position + Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) / 2.0f * 0.85f;
-                cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
-                CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
                 break;
         }
+    }
+
+    protected override void DeployWorldElements()
+    {
+        base.DeployWorldElements();
+        cameraWaypoint.transform.position = Battle.main.attacker.boardCameraPoint.transform.position;
+        cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
+        CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
     }
 }

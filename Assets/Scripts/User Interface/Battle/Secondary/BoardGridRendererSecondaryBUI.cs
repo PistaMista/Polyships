@@ -5,6 +5,7 @@ using UnityEngine;
 public class BoardGridRendererSecondaryBUI : PlayerSecondaryBUI
 {
     public Material gridMaterial;
+    public FlagRendererSecondaryBUI flagRenderer;
 
     protected override void ChangeState(UIState state)
     {
@@ -13,12 +14,20 @@ public class BoardGridRendererSecondaryBUI : PlayerSecondaryBUI
         {
             case UIState.ENABLING:
                 ResetWorldSpaceParent();
-                AddGrid();
+                if (flagRenderer.gameObject.activeInHierarchy)
+                {
+                    flagRenderer.onCameraOcclusion += AddGrid;
+                }
+                else
+                {
+                    AddGrid();
+                }
+
                 break;
         }
     }
 
-    void AddGrid()
+    public void AddGrid()
     {
         float lineWidth = 1.00f - MiscellaneousVariables.it.boardTileSideLength;
         float lineLength = managedPlayer.board.tiles.GetLength(0);
@@ -31,6 +40,8 @@ public class BoardGridRendererSecondaryBUI : PlayerSecondaryBUI
             line.transform.localScale = new Vector3(lineWidth, lineLength, 1.0f);
             line.transform.localRotation = new Quaternion(1, 0, 0, 1);
             line.transform.localPosition = Vector3.right * (startingPosition + x) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+
+            line.GetComponent<Renderer>().material = gridMaterial;
         }
 
         lineLength = managedPlayer.board.tiles.GetLength(1);
@@ -43,6 +54,8 @@ public class BoardGridRendererSecondaryBUI : PlayerSecondaryBUI
             line.transform.localScale = new Vector3(lineLength, lineWidth, 1.0f);
             line.transform.localRotation = new Quaternion(1, 0, 0, 1);
             line.transform.localPosition = Vector3.forward * (startingPosition + y) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+
+            line.GetComponent<Renderer>().material = gridMaterial;
         }
     }
 }

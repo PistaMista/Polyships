@@ -84,15 +84,21 @@ public class Player : MonoBehaviour
             }
         }
 
+        float fov = Camera.main.fieldOfView;
+        float aspect = Camera.main.aspect;
+
+        // float halfScreenWidthNormal = Mathf.Tan(fov / 2.0f * Mathf.Deg2Rad);
+        // float modifiedFov = Mathf.Atan(halfScreenWidthNormal) * Mathf.Rad2Deg;
+
         boardCameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
         boardCameraPoint.transform.SetParent(transform);
-        float height = Mathf.Tan(Mathf.Rad2Deg * (90 - Camera.main.fieldOfView * Camera.main.aspect / 2.0f)) * (board.tiles.GetLength(0) / 2.0f) * MiscellaneousVariables.it.boardCameraHeightModifier;
-        boardCameraPoint.transform.localPosition = Vector3.up * (height + MiscellaneousVariables.it.boardUIRenderHeight);
+        float height = (1 / Mathf.Tan(Mathf.Deg2Rad * fov / 2.0f)) * (board.tiles.GetLength(0) / 2.0f) * MiscellaneousVariables.it.boardCameraHeightModifier + MiscellaneousVariables.it.boardUIRenderHeight;
+        boardCameraPoint.transform.localPosition = Vector3.up * height;
         boardCameraPoint.transform.LookAt(transform);
 
-        flagCameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
+        flagCameraPoint = new GameObject("Flag Camera Point").AddComponent<Waypoint>();
         flagCameraPoint.transform.SetParent(transform);
-        height = Mathf.Tan(Mathf.Rad2Deg * (90 - Camera.main.fieldOfView / 2.0f)) * (flag.GetLength(0) / 2.0f);
+        height = Mathf.Tan(Mathf.Rad2Deg * (90 - fov / 2.0f)) * (flag.GetLength(0) / 2.0f);
         flagCameraPoint.transform.localPosition = Vector3.up * (height + MiscellaneousVariables.it.boardUIRenderHeight);
         flagCameraPoint.transform.LookAt(transform);
     }
