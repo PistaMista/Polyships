@@ -224,48 +224,41 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                     for (int quadrantID = 0; quadrantID < 4; quadrantID++)
                     {
                         Vector2 quadrantDirectional = new Vector2((quadrantID == 0 || quadrantID == 1) ? 1 : -1, (quadrantID == 1 || quadrantID == 3) ? 1 : -1);
+                        Vector2 size = Vector2.one * Mathf.Infinity;
 
-                        //X COORDINATE SWEEP
-                        float xDistance = Mathf.Infinity;
-                        foreach (int potentialIntersectorID in addedGroupIDs)
+                        foreach (int potentialIntersectorIndex in addedGroupIDs)
                         {
+                            ShipRectangleGroup potentialIntersector = groups[potentialIntersectorIndex];
+                            Vector2[] intersectorCorners = CalculateCorners(potentialIntersector.rect, potentialIntersector.vertical);
 
-                            ShipRectangleGroup potentialIntersector = groups[potentialIntersectorID];
-                            Vector2[] intersectorCorners = CalculateCorners(groups[potentialIntersectorID].rect, groups[potentialIntersectorID].vertical);
-                            if ((quadrantDirectional.x == 1 ? (potentialIntersector.rect.x + intersectorCorners[0].x) >= potentialAttachmentPoint.position.x : (potentialIntersector.rect.x + intersectorCorners[2].x) <= potentialAttachmentPoint.position.x))
+                            for (int intersectorCornerIndex = 0; intersectorCornerIndex < 4; intersectorCornerIndex++)
                             {
-                                if (potentialAttachmentPoint.position.y > (potentialIntersector.rect.y + intersectorCorners[1].y) && potentialAttachmentPoint.position.y < (potentialIntersector.rect.y + intersectorCorners[0].y))
+                                Vector2 cornerGlobalPosition = potentialIntersector.rect.position + intersectorCorners[intersectorCornerIndex];
+                                Vector2 cornerPositionRelativeToAttachmentPoint = cornerGlobalPosition - potentialAttachmentPoint.position;
+                                Vector2 cornerNormalizedQuadrantPosition = Vector2.Scale(cornerPositionRelativeToAttachmentPoint, quadrantDirectional);
+
+                                if (cornerNormalizedQuadrantPosition.x >= 0 && cornerNormalizedQuadrantPosition.y >= 0 && cornerNormalizedQuadrantPosition.x < size.x && cornerNormalizedQuadrantPosition.y < size.y)
                                 {
-                                    float distance = Mathf.Abs(potentialAttachmentPoint.position.x - (potentialIntersector.rect.x + quadrantDirectional.x == 1 ? intersectorCorners[0].x : intersectorCorners[2].x));
-                                    xDistance = distance < xDistance ? distance : xDistance;
+                                    Vector2 oppositeCornerNormalizedQuadrantPosition = Vector2.Scale(potentialIntersector.rect.position - intersectorCorners[intersectorCornerIndex] - potentialAttachmentPoint.position, quadrantDirectional);
+                                    Vector2 sides = oppositeCornerNormalizedQuadrantPosition - cornerNormalizedQuadrantPosition;
+                                    sides = sides + new Vector2(Mathf.Clamp(-oppositeCornerNormalizedQuadrantPosition.x, 0, Mathf.Abs(sides.x)), Mathf.Clamp(-oppositeCornerNormalizedQuadrantPosition.y, 0, Mathf.Abs(sides.y)));
+
+                                    if (sides.y != 0 && sides.x != 0)
+                                    {
+                                        if (sides.x > 0)
+                                        {
+                                            size.x = cornerNormalizedQuadrantPosition.x < size.x ? cornerNormalizedQuadrantPosition.x : size.x;
+                                        }
+                                        else
+                                        {
+                                            size.y = cornerNormalizedQuadrantPosition.y < size.y ? cornerNormalizedQuadrantPosition.y : size.y;
+                                        }
+                                    }
                                 }
                             }
-
                         }
 
-                        //Y COORDINATE SWEEP
-                        float yDistance = Mathf.Infinity;
-                        foreach (int potentialIntersectorID in addedGroupIDs)
-                        {
-
-                            ShipRectangleGroup potentialIntersector = groups[potentialIntersectorID];
-                            Vector2[] intersectorCorners = CalculateCorners(groups[potentialIntersectorID].rect, groups[potentialIntersectorID].vertical);
-                            if ((quadrantDirectional.y == 1 ? (potentialIntersector.rect.y + intersectorCorners[1].y) >= potentialAttachmentPoint.position.y : (potentialIntersector.rect.y + intersectorCorners[0].y) <= potentialAttachmentPoint.position.y))
-                            {
-                                float leftCornerX = intersectorCorners[0].x + potentialIntersector.rect.x;
-                                float rightCornerX = intersectorCorners[2].x + potentialIntersector.rect.x;
-                                float leftSweepX = quadrantDirectional.x == 1 ? potentialAttachmentPoint.position.x : potentialAttachmentPoint.position.x - xDistance;
-                                float rightSweepX = quadrantDirectional.x == 1 ? potentialAttachmentPoint.position.x + xDistance : potentialAttachmentPoint.position.x;
-                                if ((leftSweepX > leftCornerX && leftSweepX < rightCornerX) || (rightSweepX > leftCornerX && rightSweepX < rightCornerX) || (leftCornerX > leftSweepX && leftCornerX < rightSweepX) || (rightCornerX > leftSweepX && rightCornerX < rightSweepX))
-                                {
-                                    float distance = Mathf.Abs(potentialAttachmentPoint.position.y - (potentialIntersector.rect.y + quadrantDirectional.y == 1 ? intersectorCorners[1].y : intersectorCorners[0].y));
-                                    yDistance = distance < yDistance ? distance : yDistance;
-                                }
-                            }
-
-                        }
-
-                        calculatedQuadrants[quadrantID] = new Vector2(xDistance, yDistance);
+                        calculatedQuadrants[quadrantID] = size;
                     }
 
                     potentialAttachmentPoint.sizeLimitsX = new Vector4(calculatedQuadrants[0].x, calculatedQuadrants[1].x, calculatedQuadrants[2].x, calculatedQuadrants[3].x);
