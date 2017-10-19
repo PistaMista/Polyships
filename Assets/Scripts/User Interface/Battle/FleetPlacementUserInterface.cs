@@ -36,6 +36,12 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         public bool vertical;
         public Ship[] ships;
         public Rect rect;
+        public Vector2[] horizontalCorners;
+        public Vector2[] verticalCorners;
+        public Vector2[] Corners
+        {
+            get { return vertical ? verticalCorners : horizontalCorners; }
+        }
     }
 
     ShipRectangleGroup[] groups;
@@ -81,6 +87,8 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         {
             groups[i].rect.height = groups[i].ships[0].health + shipPaletteGroupPadding;
             groups[i].rect.width = (groups[i].ships[0].transform.localScale.x + shipPaletteGroupPadding) * groups[i].ships.Length + shipPaletteGroupPadding;
+            groups[i].horizontalCorners = CalculateCorners(groups[i].rect, false);
+            groups[i].verticalCorners = CalculateCorners(groups[i].rect, true);
         }
 
         ArrangeShipGroupsOnSquarePlane();
@@ -90,14 +98,12 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     struct AttachmentPoint
     {
         public Vector2 position;
-        public Vector4 sizeLimitsX;
-        public Vector4 sizeLimitsY;
+        public Vector2[] quadrantSizeLimits;
 
-        public AttachmentPoint(Vector2 position, Vector4 sizeLimitsX, Vector4 sizeLimitsY)
+        public AttachmentPoint(Vector2 position, Vector2[] quadrantSizeLimits)
         {
             this.position = position;
-            this.sizeLimitsX = sizeLimitsX;
-            this.sizeLimitsY = sizeLimitsY;
+            this.quadrantSizeLimits = quadrantSizeLimits;
         }
     }
 
@@ -125,7 +131,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         List<int> addedGroupIDs = new List<int>();
 
         List<AttachmentPoint> attachmentPoints = new List<AttachmentPoint>();
-        attachmentPoints.Add(new AttachmentPoint(Vector2.zero, Vector4.one * Mathf.Infinity, Vector4.one * Mathf.Infinity));
+        attachmentPoints.Add(new AttachmentPoint(Vector2.zero, new Vector2[] { Vector2.one * Mathf.Infinity, Vector2.one * Mathf.Infinity, Vector2.one * Mathf.Infinity, Vector2.one * Mathf.Infinity }));
 
         NextStepCandidate bestCandidate = new NextStepCandidate(0, Vector2.zero, false, Vector2.one, Mathf.Infinity);
         for (int i = 0; i < groups.Length; i++)
@@ -138,33 +144,18 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                     for (int verticalIndex = 0; verticalIndex < 2; verticalIndex++)
                     {
                         //CALCULATE CORNER POSITIONS
-                        Vector2[] groupCorners = CalculateCorners(groups[candidateGroupID].rect, verticalIndex == 1);
+                        Vector2[] groupCorners = verticalIndex == 1 ? groups[candidateGroupID].verticalCorners : groups[candidateGroupID].horizontalCorners;
                         //CALCULATE FOOTPRINT
-                        Vector2 groupFootprint = verticalIndex == 1 ? new Vector2(groups[candidateGroupID].rect.height, groups[candidateGroupID].rect.width) : new Vector2(groups[candidateGroupID].rect.width, groups[candidateGroupID].rect.height);
+                        Vector2 size = groupCorners[2] - groupCorners[1];
 
                         //TRY ALL POSITIONING OPTIONS
                         foreach (AttachmentPoint attachmentPoint in attachmentPoints)
                         {
                             for (int examinedCorner = 0; examinedCorner < 4; examinedCorner++)
                             {
-                                Vector2 sizeLimitation = Vector2.zero;
-                                switch (examinedCorner)
-                                {
-                                    case 0:
-                                        sizeLimitation = new Vector2(attachmentPoint.sizeLimitsX.x, attachmentPoint.sizeLimitsY.x);
-                                        break;
-                                    case 1:
-                                        sizeLimitation = new Vector2(attachmentPoint.sizeLimitsX.y, attachmentPoint.sizeLimitsY.y);
-                                        break;
-                                    case 2:
-                                        sizeLimitation = new Vector2(attachmentPoint.sizeLimitsX.z, attachmentPoint.sizeLimitsY.z);
-                                        break;
-                                    case 3:
-                                        sizeLimitation = new Vector2(attachmentPoint.sizeLimitsX.w, attachmentPoint.sizeLimitsY.w);
-                                        break;
-                                }
+                                Vector2 sizeLimitation = attachmentPoint.quadrantSizeLimits[examinedCorner];
 
-                                if (groupFootprint.x <= sizeLimitation.x && groupFootprint.y <= sizeLimitation.y)
+                                if (size.x <= sizeLimitation.x && size.y <= sizeLimitation.y)
                                 {
                                     NextStepCandidate newCandidate;
                                     newCandidate.groupID = candidateGroupID;
@@ -179,10 +170,10 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                                     foreach (int addedGroupID in addedGroupIDs)
                                     {
-                                        Vector2[] corners = CalculateCorners(groups[addedGroupID].rect, groups[addedGroupID].vertical);
+                                        Vector2[] addedGroupCorners = groups[addedGroupID].Corners;
                                         for (int cornerID = 0; cornerID < 4; cornerID++)
                                         {
-                                            boundaries = PushBoundaries(boundaries, groups[addedGroupID].rect.position + corners[cornerID]);
+                                            boundaries = PushBoundaries(boundaries, groups[addedGroupID].rect.position + addedGroupCorners[cornerID]);
                                         }
                                     }
 
@@ -192,6 +183,17 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                                     if (Mathf.Abs(1 - newCandidate.balance) < Mathf.Abs(1 - bestCandidate.balance))
                                     {
                                         bestCandidate = newCandidate;
+                                        if (i == 3 && attachmentPoint.position == new Vector2(1.4f, -2.2f))
+                                        {
+                                            Debug.Log("Conflicting Size Limit: " + sizeLimitation);
+                                            Debug.Log("Conflicting Size: " + size);
+                                            Debug.Log("Attachment Point Position: " + attachmentPoint.position);
+                                            foreach (int testGroupID in addedGroupIDs)
+                                            {
+                                                Debug.Log(testGroupID);
+                                            }
+                                            Debug.Log("BEST CANDIDATE GROUP " + candidateGroupID + ": " + attachmentPoint.position + " Corner: " + examinedCorner);
+                                        }
                                     }
                                 }
                             }
@@ -207,18 +209,25 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             positionedGroup.vertical = bestCandidate.vertical;
             groups[bestCandidate.groupID] = positionedGroup;
             footprint = bestCandidate.wholeFootprint;
+
+            // Debug.Log("Cycle: " + i);
+            // Debug.Log("Group ID: " + bestCandidate.groupID);
+            // Debug.Log("Position: " + positionedGroup.rect.position);
+            // Debug.Log("Vertical: " + positionedGroup.vertical);
+
             bestCandidate = new NextStepCandidate(0, Vector2.zero, false, Vector2.one, Mathf.Infinity);
+
+
 
             //RECALCULATE ATTACHMENT POINTS
             attachmentPoints = new List<AttachmentPoint>();
             foreach (int groupID in addedGroupIDs)
             {
                 ShipRectangleGroup managedGroup = groups[groupID];
-                Vector2[] corners = CalculateCorners(managedGroup.rect, managedGroup.vertical);
                 for (int cornerIndex = 0; cornerIndex < 4; cornerIndex++)
                 {
-                    AttachmentPoint potentialAttachmentPoint = new AttachmentPoint(Vector2.zero, Vector4.zero, Vector4.zero);
-                    potentialAttachmentPoint.position = managedGroup.rect.position + corners[cornerIndex];
+                    AttachmentPoint potentialAttachmentPoint = new AttachmentPoint(Vector2.zero, new Vector2[4]);
+                    potentialAttachmentPoint.position = managedGroup.rect.position + managedGroup.Corners[cornerIndex];
 
                     Vector2[] calculatedQuadrants = new Vector2[4];
                     for (int quadrantID = 0; quadrantID < 4; quadrantID++)
@@ -228,20 +237,23 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                         foreach (int potentialIntersectorIndex in addedGroupIDs)
                         {
-                            ShipRectangleGroup potentialIntersector = groups[potentialIntersectorIndex];
-                            Vector2[] intersectorCorners = CalculateCorners(potentialIntersector.rect, potentialIntersector.vertical);
+                            if (potentialIntersectorIndex == 0 && groupID == 0 && cornerIndex == 3 && quadrantID == 3)
+                            {
+                                Debug.Log("BREAK");
+                            }
 
+                            ShipRectangleGroup potentialIntersector = groups[potentialIntersectorIndex];
                             for (int intersectorCornerIndex = 0; intersectorCornerIndex < 4; intersectorCornerIndex++)
                             {
-                                Vector2 cornerGlobalPosition = potentialIntersector.rect.position + intersectorCorners[intersectorCornerIndex];
+                                Vector2 cornerGlobalPosition = potentialIntersector.rect.position + potentialIntersector.Corners[intersectorCornerIndex];
                                 Vector2 cornerPositionRelativeToAttachmentPoint = cornerGlobalPosition - potentialAttachmentPoint.position;
                                 Vector2 cornerNormalizedQuadrantPosition = Vector2.Scale(cornerPositionRelativeToAttachmentPoint, quadrantDirectional);
 
-                                if (cornerNormalizedQuadrantPosition.x >= 0 && cornerNormalizedQuadrantPosition.y >= 0 && cornerNormalizedQuadrantPosition.x < size.x && cornerNormalizedQuadrantPosition.y < size.y)
+                                if (cornerNormalizedQuadrantPosition.x >= -0.000015f && cornerNormalizedQuadrantPosition.y >= -0.000015f && cornerNormalizedQuadrantPosition.x <= size.x && cornerNormalizedQuadrantPosition.y <= size.y)
                                 {
-                                    Vector2 oppositeCornerNormalizedQuadrantPosition = Vector2.Scale(potentialIntersector.rect.position - intersectorCorners[intersectorCornerIndex] - potentialAttachmentPoint.position, quadrantDirectional);
+                                    Vector2 oppositeCornerNormalizedQuadrantPosition = Vector2.Scale(potentialIntersector.rect.position - potentialIntersector.Corners[intersectorCornerIndex] - potentialAttachmentPoint.position, quadrantDirectional);
                                     Vector2 sides = oppositeCornerNormalizedQuadrantPosition - cornerNormalizedQuadrantPosition;
-                                    sides = sides + new Vector2(Mathf.Clamp(-oppositeCornerNormalizedQuadrantPosition.x, 0, Mathf.Abs(sides.x)), Mathf.Clamp(-oppositeCornerNormalizedQuadrantPosition.y, 0, Mathf.Abs(sides.y)));
+                                    sides = sides - Vector2.Scale(new Vector2(Mathf.Clamp(-oppositeCornerNormalizedQuadrantPosition.x, 0, Mathf.Abs(sides.x)), Mathf.Clamp(-oppositeCornerNormalizedQuadrantPosition.y, 0, Mathf.Abs(sides.y))), new Vector2(Mathf.Sign(sides.x), Mathf.Sign(sides.y)));
 
                                     if (sides.y != 0 && sides.x != 0)
                                     {
@@ -258,16 +270,21 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                             }
                         }
 
+                        //TEST
+                        // Debug.Log("Cycle: " + i);
+                        // Debug.Log("Group: " + groupID + " Corner: " + cornerIndex + " Quadrant: " + quadrantID);
+                        // Debug.Log("Size: " + size);
+                        //TEST
+                        // if (groupID == 3 && cornerIndex == 2 && quadrantID == 2)
+                        // {
+                        //     Debug.Log("Conflicting Quadrant Size: " + size);
+                        // }
+
                         calculatedQuadrants[quadrantID] = size;
                     }
 
-                    potentialAttachmentPoint.sizeLimitsX = new Vector4(calculatedQuadrants[0].x, calculatedQuadrants[1].x, calculatedQuadrants[2].x, calculatedQuadrants[3].x);
-                    potentialAttachmentPoint.sizeLimitsY = new Vector4(calculatedQuadrants[0].y, calculatedQuadrants[1].y, calculatedQuadrants[2].y, calculatedQuadrants[3].y);
-
-                    if (potentialAttachmentPoint.sizeLimitsX != Vector4.zero && potentialAttachmentPoint.sizeLimitsY != Vector4.zero)
-                    {
-                        attachmentPoints.Add(potentialAttachmentPoint);
-                    }
+                    potentialAttachmentPoint.quadrantSizeLimits = calculatedQuadrants;
+                    attachmentPoints.Add(potentialAttachmentPoint);
                 }
             }
         }
