@@ -4,9 +4,11 @@ using UnityEngine;
 
 public class FleetPlacementUserInterface : BoardViewUserInterface
 {
+    public Material shipDrawerMaterial;
     public Waypoint cameraWaypoint;
     public GameObject[] defaultShipLoadout;
     public float shipPaletteGroupPadding;
+    public float shipDrawerFlatSize;
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
@@ -45,8 +47,13 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     }
 
     ShipRectangleGroup[] groups;
+    GameObject shipDrawer;
     void MakeShipDrawer()
     {
+        Destroy(shipDrawer);
+        shipDrawer = new GameObject("Ship Drawer");
+        shipDrawer.transform.SetParent(worldSpaceParent);
+
         List<ShipRectangleGroup> unfinishedGroups = new List<ShipRectangleGroup>();
         List<Ship> toAdd = new List<Ship>();
 
@@ -56,7 +63,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             Ship ship = Instantiate(defaultShipLoadout[i]).GetComponent<Ship>();
 
             ship.owner = Battle.main.attacker;
-            ship.transform.SetParent(worldSpaceParent);
+            ship.transform.SetParent(shipDrawer.transform);
 
             if (toAdd.Count == 0)
             {
@@ -86,13 +93,186 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         for (int i = 0; i < groups.Length; i++)
         {
             groups[i].rect.height = groups[i].ships[0].health + shipPaletteGroupPadding;
-            groups[i].rect.width = (groups[i].ships[0].transform.localScale.x + shipPaletteGroupPadding) * groups[i].ships.Length + shipPaletteGroupPadding;
+            groups[i].rect.width = (groups[i].ships[0].transform.localScale.x + 0.5f) * groups[i].ships.Length + shipPaletteGroupPadding;
             groups[i].horizontalCorners = CalculateCorners(groups[i].rect, false);
             groups[i].verticalCorners = CalculateCorners(groups[i].rect, true);
         }
 
+
         ArrangeShipGroupsOnSquarePlane();
 
+        GameObject drawerFlatpanel = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        drawerFlatpanel.transform.SetParent(shipDrawer.transform);
+        drawerFlatpanel.transform.localPosition = Vector3.zero;
+        drawerFlatpanel.transform.localScale = new Vector3(shipDrawerFlatSize, shipDrawerFlatSize, 1.0f);
+        drawerFlatpanel.transform.localRotation = new Quaternion(1, 0, 0, 1);
+
+        MoldShipMeshesIntoDrawer();
+    }
+
+    void MoldShipMeshesIntoDrawer()
+    {
+        for (int groupIndex = 0; groupIndex < groups.Length; groupIndex++)
+        {
+            for (int shipIndex = 0; shipIndex < groups[groupIndex].ships.Length; shipIndex++)
+            {
+                //Get the mesh we are going to be molding
+                MeshFilter moldedShipMesh = groups[groupIndex].ships[shipIndex].GetComponentInChildren<MeshFilter>();
+
+                Vector3 positionMod = moldedShipMesh.gameObject.transform.position - groups[groupIndex].ships[shipIndex].transform.position;
+                Vector3 scale = moldedShipMesh.gameObject.transform.lossyScale;
+
+                //Assemble the new mesh
+                Dictionary<int, int> newIDs = new Dictionary<int, int>();
+                Vector3[] originalVertices = moldedShipMesh.mesh.vertices;
+
+                //Scale the vertices correctly
+                for (int vertexID = 0; vertexID < originalVertices.Length; vertexID++)
+                {
+                    originalVertices[vertexID] = Vector3.Scale(originalVertices[vertexID], scale);
+                }
+
+                int[] originalTriangles = moldedShipMesh.mesh.triangles;
+
+
+                List<Vector3> newVerticesList = new List<Vector3>();
+                List<int> newTrianglesList = new List<int>();
+
+                //Add the vertices
+                for (int triangle = 0; triangle <= originalTriangles.Length - 3; triangle += 3)
+                {
+                    int[] triangleVertices = new int[] { originalTriangles[triangle], originalTriangles[triangle + 1], originalTriangles[triangle + 2] };
+
+                    List<int> acquiredVertexIDs = new List<int>();
+                    List<int> unacquiredVertexIDs = new List<int>();
+                    for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
+                    {
+                        Vector3 vertexPosition = originalVertices[triangleVertices[vertexID]] + positionMod;
+                        if (vertexPosition.y > 0)
+                        {
+                            acquiredVertexIDs.Add(vertexID);
+                        }
+                        else
+                        {
+                            unacquiredVertexIDs.Add(vertexID);
+                        }
+                    }
+
+                    //If the entire triangle is above the drawer surface dont add it
+                    if (acquiredVertexIDs.Count > 2)
+                    {
+                        continue;
+                    }
+
+                    //If one of the vertices is above the surface, cut off the top of the triangle by making a quad composed of two triangles
+                    if (acquiredVertexIDs.Count == 1)
+                    {
+                        Vector3 originalTipPosition = originalVertices[triangleVertices[acquiredVertexIDs[0]]];
+
+                        //Add the points
+                        List<Vector3> retractedPoints = new List<Vector3>();
+                        foreach (int vertexID in unacquiredVertexIDs)
+                        {
+                            Vector3 position = originalVertices[triangleVertices[vertexID]];
+
+                            Vector3 relativePosition = originalTipPosition - position;
+
+                            Vector3 normalizationAgent = relativePosition.normalized / relativePosition.normalized.y;
+                            float targetY = -positionMod.y;
+                            Vector3 retractedPointPosition = normalizationAgent * (targetY - position.y) + position;
+
+                            retractedPoints.Add(retractedPointPosition);
+
+                            if (!newIDs.ContainsKey(triangleVertices[vertexID]))
+                            {
+                                newIDs.Add(triangleVertices[vertexID], newVerticesList.Count);
+                                newVerticesList.Add(position);
+                            }
+                        }
+
+                        //Add one of the retracted points as a part of an original triangle
+                        if (!newIDs.ContainsKey(triangleVertices[acquiredVertexIDs[0]]))
+                        {
+                            newIDs.Add(triangleVertices[acquiredVertexIDs[0]], newVerticesList.Count);
+                            newVerticesList.Add(retractedPoints[0]);
+                        }
+
+                        //Add a triangle for the missing part of the quad using the last point
+                        newVerticesList.Add(retractedPoints[1]);
+
+
+
+                        newTrianglesList.Add(newVerticesList.Count - 1);
+
+                        newTrianglesList.Add(newIDs[triangleVertices[acquiredVertexIDs[0]]]);
+                        newTrianglesList.Add(newIDs[triangleVertices[unacquiredVertexIDs[1]]]);
+                    }
+                    //If two of the vertices are above the surface, cut off the top of the triangle by retracting the two vertices towards the point below
+                    else
+                    {
+                        for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
+                        {
+                            Vector3 finalPosition = originalVertices[triangleVertices[vertexID]];
+                            if (acquiredVertexIDs.Contains(vertexID))
+                            {
+                                Vector3 linkedPosition = originalVertices[triangleVertices[unacquiredVertexIDs[0]]];
+                                Vector3 relativePosition = finalPosition - linkedPosition;
+
+                                Vector3 normalizationAgent = relativePosition.normalized / relativePosition.normalized.y;
+                                float targetY = -positionMod.y;
+                                finalPosition = normalizationAgent * (targetY - linkedPosition.y) + linkedPosition;
+                            }
+
+                            if (!newIDs.ContainsKey(triangleVertices[vertexID]))
+                            {
+                                newIDs.Add(triangleVertices[vertexID], newVerticesList.Count);
+                                newVerticesList.Add(finalPosition);
+                            }
+                        }
+                    }
+                }
+
+
+                //Add the triangles
+                for (int triangle = 0; triangle <= originalTriangles.Length - 3; triangle += 3)
+                {
+                    int[] triangleVertices = new int[] { originalTriangles[triangle], originalTriangles[triangle + 1], originalTriangles[triangle + 2] };
+
+                    bool containsAll = true;
+                    for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
+                    {
+                        if (!newIDs.ContainsKey(triangleVertices[vertexID]))
+                        {
+                            containsAll = false;
+                            break;
+                        }
+                    }
+
+                    if (containsAll)
+                    {
+                        newTrianglesList.Add(newIDs[triangleVertices[0]]);
+                        newTrianglesList.Add(newIDs[triangleVertices[2]]);
+                        newTrianglesList.Add(newIDs[triangleVertices[1]]);
+                    }
+                }
+
+                Mesh finalMesh = new Mesh();
+                finalMesh.vertices = newVerticesList.ToArray();
+                finalMesh.triangles = newTrianglesList.ToArray();
+                finalMesh.RecalculateNormals();
+
+                GameObject shipMold = new GameObject("Ship Mold");
+                shipMold.transform.SetParent(shipDrawer.transform);
+                shipMold.transform.position = moldedShipMesh.gameObject.transform.position;
+                shipMold.transform.rotation = moldedShipMesh.gameObject.transform.rotation;
+
+                MeshFilter meshFilter = shipMold.AddComponent<MeshFilter>();
+                shipMold.AddComponent<MeshRenderer>();
+                meshFilter.mesh = finalMesh;
+
+                shipMold.GetComponent<Renderer>().material = shipDrawerMaterial;
+            }
+        }
     }
 
     struct AttachmentPoint
@@ -180,21 +360,14 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                                     newCandidate.wholeFootprint = new Vector2(Mathf.Abs(boundaries.x - boundaries.z), Mathf.Abs(boundaries.y - boundaries.w));
                                     newCandidate.balance = newCandidate.wholeFootprint.x / newCandidate.wholeFootprint.y;
 
-                                    if (Mathf.Abs(1 - newCandidate.balance) < Mathf.Abs(1 - bestCandidate.balance))
+                                    if (newCandidate.wholeFootprint.x < 0.9f * shipDrawerFlatSize && newCandidate.wholeFootprint.y < 0.9f * shipDrawerFlatSize)
                                     {
-                                        bestCandidate = newCandidate;
-                                        if (i == 3 && attachmentPoint.position == new Vector2(1.4f, -2.2f))
+                                        if (Mathf.Abs(1 - newCandidate.balance) < Mathf.Abs(1 - bestCandidate.balance))
                                         {
-                                            Debug.Log("Conflicting Size Limit: " + sizeLimitation);
-                                            Debug.Log("Conflicting Size: " + size);
-                                            Debug.Log("Attachment Point Position: " + attachmentPoint.position);
-                                            foreach (int testGroupID in addedGroupIDs)
-                                            {
-                                                Debug.Log(testGroupID);
-                                            }
-                                            Debug.Log("BEST CANDIDATE GROUP " + candidateGroupID + ": " + attachmentPoint.position + " Corner: " + examinedCorner);
+                                            bestCandidate = newCandidate;
                                         }
                                     }
+
                                 }
                             }
                         }
@@ -289,21 +462,49 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             }
         }
 
+
+        //NORMALIZE RECTANGLE POSITIONS
+        Vector2 topRightCorner = Vector2.one * Mathf.NegativeInfinity;
+        Vector2 bottomLeftCorner = Vector2.one * Mathf.Infinity;
+        for (int i = 0; i < groups.Length; i++)
+        {
+            Vector2[] corners = groups[i].Corners;
+            Vector2 groupTopRightCorner = corners[2] + groups[i].rect.position;
+            Vector2 groupBottomLeftCorner = corners[1] + groups[i].rect.position;
+
+            topRightCorner.x = groupTopRightCorner.x > topRightCorner.x ? groupTopRightCorner.x : topRightCorner.x;
+            topRightCorner.y = groupTopRightCorner.y > topRightCorner.y ? groupTopRightCorner.y : topRightCorner.y;
+
+            bottomLeftCorner.x = groupBottomLeftCorner.x < bottomLeftCorner.x ? groupBottomLeftCorner.x : bottomLeftCorner.x;
+            bottomLeftCorner.y = groupBottomLeftCorner.y < bottomLeftCorner.y ? groupBottomLeftCorner.y : bottomLeftCorner.y;
+        }
+
+        Vector2 positionAdjustment = (bottomLeftCorner + topRightCorner) / 2.0f;
+
+        for (int i = 0; i < groups.Length; i++)
+        {
+            groups[i].rect.position -= positionAdjustment;
+        }
+
+
+        //POSITION SHIPS ON RECTANGLE GROUPS
         for (int groupIndex = 0; groupIndex < groups.Length; groupIndex++)
         {
             ShipRectangleGroup group = groups[groupIndex];
-            // Vector3 startingPosition = new Vector3(group.rect.x, 0, group.rect.y) + (group.vertical ? Vector3.forward : Vector3.right) * (group.rect.width / 2.0f - shipPaletteGroupPadding);
-            // Vector3 positionStep = (group.vertical ? Vector3.back : Vector3.left) * shipPaletteGroupPadding * 2.0f;
-            // for (int shipIndex = 0; shipIndex < group.ships.Length; shipIndex++)
-            // {
-            //     Ship ship = group.ships[shipIndex];
-            //     ship.transform.position = startingPosition + positionStep * shipIndex;
-            //     ship.transform.rotation = new Quaternion(0, 1, 0, group.vertical ? 1 : 0);
-            // }
+            float shipSpacing = group.rect.width / group.ships.Length * 0.8f;
+            float reservedSpace = shipSpacing * (group.ships.Length - 1);
+            Vector3 startingPosition = new Vector3(group.rect.x, 0, group.rect.y) + (group.vertical ? Vector3.forward : Vector3.right) * (reservedSpace / 2.0f);
+            Vector3 positionStep = (group.vertical ? Vector3.back : Vector3.left) * shipSpacing;
+            for (int shipIndex = 0; shipIndex < group.ships.Length; shipIndex++)
+            {
+                Ship ship = group.ships[shipIndex];
+                ship.transform.position = startingPosition + positionStep * shipIndex;
+                ship.transform.rotation = new Quaternion(0, 1, 0, group.vertical ? 1 : 0);
+            }
 
-            GameObject tmp = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            tmp.transform.localScale = new Vector3(group.vertical ? group.rect.height : group.rect.width, 0.1f, group.vertical ? group.rect.width : group.rect.height);
-            tmp.transform.position = new Vector3(group.rect.x, groupIndex, group.rect.y);
+            // GameObject tmp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            // tmp.transform.localScale = new Vector3(group.vertical ? group.rect.height : group.rect.width, 0.1f, group.vertical ? group.rect.width : group.rect.height);
+            // tmp.transform.position = new Vector3(group.rect.x, 0, group.rect.y);
         }
     }
 
@@ -341,7 +542,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             for (int groupCornerID = 0; groupCornerID < corners.Length; groupCornerID++)
             {
                 Vector2 initialState = corners[groupCornerID];
-                corners[groupCornerID] = new Vector2(initialState.y, initialState.x);
+                corners[groupCornerID] = new Vector2(Mathf.Abs(initialState.y) * Mathf.Sign(initialState.x), Mathf.Abs(initialState.x) * Mathf.Sign(initialState.y));
             }
         }
 
