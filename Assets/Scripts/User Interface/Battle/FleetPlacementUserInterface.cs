@@ -123,13 +123,12 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 Vector3 scale = moldedShipMesh.gameObject.transform.lossyScale;
 
                 //Assemble the new mesh
-                Dictionary<int, int> newIDs = new Dictionary<int, int>();
                 Vector3[] originalVertices = moldedShipMesh.mesh.vertices;
 
                 //Scale the vertices correctly
                 for (int vertexID = 0; vertexID < originalVertices.Length; vertexID++)
                 {
-                    originalVertices[vertexID] = Vector3.Scale(originalVertices[vertexID], scale);
+                    originalVertices[vertexID] = Vector3.Scale(originalVertices[vertexID], scale) + positionMod;
                 }
 
                 int[] originalTriangles = moldedShipMesh.mesh.triangles;
@@ -138,123 +137,131 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 List<Vector3> newVerticesList = new List<Vector3>();
                 List<int> newTrianglesList = new List<int>();
 
-                //Add the vertices
+                //Add the triangles along with their vertices
                 for (int triangle = 0; triangle <= originalTriangles.Length - 3; triangle += 3)
                 {
                     int[] triangleVertices = new int[] { originalTriangles[triangle], originalTriangles[triangle + 1], originalTriangles[triangle + 2] };
 
-                    List<int> acquiredVertexIDs = new List<int>();
-                    List<int> unacquiredVertexIDs = new List<int>();
+                    List<int> upperVertexIDs = new List<int>();
+                    List<int> lowerVertexIDs = new List<int>();
                     for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
                     {
-                        Vector3 vertexPosition = originalVertices[triangleVertices[vertexID]] + positionMod;
+                        Vector3 vertexPosition = originalVertices[triangleVertices[vertexID]];
                         if (vertexPosition.y > 0)
                         {
-                            acquiredVertexIDs.Add(vertexID);
+                            upperVertexIDs.Add(vertexID);
                         }
                         else
                         {
-                            unacquiredVertexIDs.Add(vertexID);
+                            lowerVertexIDs.Add(vertexID);
                         }
                     }
 
-                    //If the entire triangle is above the drawer surface dont add it
-                    if (acquiredVertexIDs.Count > 2)
+                    switch (upperVertexIDs.Count)
                     {
-                        continue;
-                    }
-
-                    //If one of the vertices is above the surface, cut off the top of the triangle by making a quad composed of two triangles
-                    if (acquiredVertexIDs.Count == 1)
-                    {
-                        Vector3 originalTipPosition = originalVertices[triangleVertices[acquiredVertexIDs[0]]];
-
-                        //Add the points
-                        List<Vector3> retractedPoints = new List<Vector3>();
-                        foreach (int vertexID in unacquiredVertexIDs)
-                        {
-                            Vector3 position = originalVertices[triangleVertices[vertexID]];
-
-                            Vector3 relativePosition = originalTipPosition - position;
-
-                            Vector3 normalizationAgent = relativePosition.normalized / relativePosition.normalized.y;
-                            float targetY = -positionMod.y;
-                            Vector3 retractedPointPosition = normalizationAgent * (targetY - position.y) + position;
-
-                            retractedPoints.Add(retractedPointPosition);
-
-                            if (!newIDs.ContainsKey(triangleVertices[vertexID]))
+                        case 0:
+                            for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
                             {
-                                newIDs.Add(triangleVertices[vertexID], newVerticesList.Count);
-                                newVerticesList.Add(position);
-                            }
-                        }
+                                Vector3 finalPosition = originalVertices[triangleVertices[vertexID]];
 
-                        //Add one of the retracted points as a part of an original triangle
-                        if (!newIDs.ContainsKey(triangleVertices[acquiredVertexIDs[0]]))
-                        {
-                            newIDs.Add(triangleVertices[acquiredVertexIDs[0]], newVerticesList.Count);
-                            newVerticesList.Add(retractedPoints[0]);
-                        }
-
-                        //Add a triangle for the missing part of the quad using the last point
-                        newVerticesList.Add(retractedPoints[1]);
-
-
-
-                        newTrianglesList.Add(newVerticesList.Count - 1);
-
-                        newTrianglesList.Add(newIDs[triangleVertices[acquiredVertexIDs[0]]]);
-                        newTrianglesList.Add(newIDs[triangleVertices[unacquiredVertexIDs[1]]]);
-                    }
-                    //If two of the vertices are above the surface, cut off the top of the triangle by retracting the two vertices towards the point below
-                    else
-                    {
-                        for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
-                        {
-                            Vector3 finalPosition = originalVertices[triangleVertices[vertexID]];
-                            if (acquiredVertexIDs.Contains(vertexID))
-                            {
-                                Vector3 linkedPosition = originalVertices[triangleVertices[unacquiredVertexIDs[0]]];
-                                Vector3 relativePosition = finalPosition - linkedPosition;
-
-                                Vector3 normalizationAgent = relativePosition.normalized / relativePosition.normalized.y;
-                                float targetY = -positionMod.y;
-                                finalPosition = normalizationAgent * (targetY - linkedPosition.y) + linkedPosition;
-                            }
-
-                            if (!newIDs.ContainsKey(triangleVertices[vertexID]))
-                            {
-                                newIDs.Add(triangleVertices[vertexID], newVerticesList.Count);
                                 newVerticesList.Add(finalPosition);
                             }
-                        }
+
+                            newTrianglesList.Add(newVerticesList.Count - 1);
+                            newTrianglesList.Add(newVerticesList.Count - 2);
+                            newTrianglesList.Add(newVerticesList.Count - 3);
+                            break;
+                        case 1:
+                            Vector3 originalTipPosition = originalVertices[triangleVertices[upperVertexIDs[0]]];
+                            List<Vector3> retractedPoints = new List<Vector3>();
+
+                            //Add the points to and unordered list
+                            foreach (int vertexID in lowerVertexIDs)
+                            {
+                                Vector3 position = originalVertices[triangleVertices[vertexID]];
+
+                                Vector3 relativePosition = originalTipPosition - position;
+
+                                Vector3 normalizationAgent = relativePosition.normalized / relativePosition.normalized.y;
+                                Vector3 retractedPointPosition = -normalizationAgent * position.y + position;
+
+                                newVerticesList.Add(position);
+                                retractedPoints.Add(retractedPointPosition);
+                            }
+
+                            newVerticesList.AddRange(retractedPoints);
+
+
+                            Vector3 quadCenter = Vector3.zero;
+                            for (int i = 1; i <= 4; i++)
+                            {
+                                quadCenter += newVerticesList[newVerticesList.Count - i];
+                            }
+
+                            quadCenter /= 4.0f;
+                            Vector3 centerDirectional = -quadCenter;
+                            Vector3 quadFacing = Quaternion.AngleAxis(-90, (newVerticesList[newVerticesList.Count - 2] - newVerticesList[newVerticesList.Count - 1])) * (newVerticesList[newVerticesList.Count - 3] - newVerticesList[newVerticesList.Count - 1]);
+
+
+
+                            bool invert = Vector3.Angle(centerDirectional, quadFacing) > 90;
+                            //Add the first triangle of the quad
+                            newTrianglesList.Add(newVerticesList.Count - (invert ? 3 : 2));
+                            newTrianglesList.Add(newVerticesList.Count - (invert ? 2 : 3));
+                            newTrianglesList.Add(newVerticesList.Count - 4);
+
+                            //Add the seconds triangle of the quad
+                            newTrianglesList.Add(newVerticesList.Count - (invert ? 1 : 2));
+                            newTrianglesList.Add(newVerticesList.Count - (invert ? 2 : 1));
+                            newTrianglesList.Add(newVerticesList.Count - 3);
+                            break;
+                        case 2:
+                            for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
+                            {
+                                Vector3 finalPosition = originalVertices[triangleVertices[vertexID]];
+                                if (upperVertexIDs.Contains(vertexID))
+                                {
+                                    Vector3 linkedPosition = originalVertices[triangleVertices[lowerVertexIDs[0]]];
+                                    Vector3 relativePosition = finalPosition - linkedPosition;
+
+                                    Vector3 normalizationAgent = relativePosition.normalized / relativePosition.normalized.y;
+                                    finalPosition = -normalizationAgent * linkedPosition.y + linkedPosition;
+                                    // finalPosition += Vector3.up * 3;
+                                }
+
+                                newVerticesList.Add(finalPosition);
+                            }
+
+                            newTrianglesList.Add(newVerticesList.Count - 1);
+                            newTrianglesList.Add(newVerticesList.Count - 2);
+                            newTrianglesList.Add(newVerticesList.Count - 3);
+                            break;
                     }
                 }
 
 
                 //Add the triangles
-                for (int triangle = 0; triangle <= originalTriangles.Length - 3; triangle += 3)
-                {
-                    int[] triangleVertices = new int[] { originalTriangles[triangle], originalTriangles[triangle + 1], originalTriangles[triangle + 2] };
+                // for (int triangle = 0; triangle <= originalTriangles.Length - 3; triangle += 3)
+                // {
+                //     int[] triangleVertices = new int[] { originalTriangles[triangle], originalTriangles[triangle + 1], originalTriangles[triangle + 2] };
 
-                    bool containsAll = true;
-                    for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
-                    {
-                        if (!newIDs.ContainsKey(triangleVertices[vertexID]))
-                        {
-                            containsAll = false;
-                            break;
-                        }
-                    }
+                //     bool containsAll = true;
+                //     for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
+                //     {
+                //         if (!newIDs.ContainsKey(triangleVertices[vertexID]))
+                //         {
+                //             containsAll = false;
+                //             break;
+                //         }
+                //     }
 
-                    if (containsAll)
-                    {
-                        newTrianglesList.Add(newIDs[triangleVertices[0]]);
-                        newTrianglesList.Add(newIDs[triangleVertices[2]]);
-                        newTrianglesList.Add(newIDs[triangleVertices[1]]);
-                    }
-                }
+                //     if (containsAll)
+                //     {
+                //         newTrianglesList.Add(newIDs[triangleVertices[0]]);
+                //         newTrianglesList.Add(newIDs[triangleVertices[2]]);
+                //         newTrianglesList.Add(newIDs[triangleVertices[1]]);
+                //     }
+                // }
 
                 Mesh finalMesh = new Mesh();
                 finalMesh.vertices = newVerticesList.ToArray();
@@ -263,7 +270,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                 GameObject shipMold = new GameObject("Ship Mold");
                 shipMold.transform.SetParent(shipDrawer.transform);
-                shipMold.transform.position = moldedShipMesh.gameObject.transform.position;
+                shipMold.transform.position = moldedShipMesh.gameObject.transform.position + Vector3.up * 10;
                 shipMold.transform.rotation = moldedShipMesh.gameObject.transform.rotation;
 
                 MeshFilter meshFilter = shipMold.AddComponent<MeshFilter>();
