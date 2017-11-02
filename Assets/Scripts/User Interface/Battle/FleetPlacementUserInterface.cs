@@ -189,30 +189,32 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                                 retractedPoints.Add(retractedPointPosition);
                             }
 
-                            newVerticesList.AddRange(retractedPoints);
+                            newVerticesList.Add(retractedPoints[0]);
 
 
-                            Vector3 quadCenter = Vector3.zero;
-                            for (int i = 1; i <= 4; i++)
-                            {
-                                quadCenter += newVerticesList[newVerticesList.Count - i];
-                            }
+                            // Vector3 quadCenter = Vector3.zero;
+                            // for (int i = 1; i <= 4; i++)
+                            // {
+                            //    quadCenter += newVerticesList[newVerticesList.Count - i];
+                            // }
 
-                            quadCenter /= 4.0f;
-                            Vector3 centerDirectional = -quadCenter;
-                            Vector3 quadFacing = Quaternion.AngleAxis(-90, (newVerticesList[newVerticesList.Count - 2] - newVerticesList[newVerticesList.Count - 1])) * (newVerticesList[newVerticesList.Count - 3] - newVerticesList[newVerticesList.Count - 1]);
+                            // quadCenter /= 4.0f;
+                            // Vector3 centerDirectional = -quadCenter;
+                            // Vector3 quadFacing = Quaternion.AngleAxis(-90, (newVerticesList[newVerticesList.Count - 2] - newVerticesList[newVerticesList.Count - 1])) * (newVerticesList[newVerticesList.Count - 3] - newVerticesList[newVerticesList.Count - 1]);
 
 
 
-                            bool invert = Vector3.Angle(centerDirectional, quadFacing) > 90;
+                            // bool invert = Vector3.Angle(centerDirectional, quadFacing) > 90;
                             //Add the first triangle of the quad
-                            newTrianglesList.Add(newVerticesList.Count - (invert ? 3 : 2));
-                            newTrianglesList.Add(newVerticesList.Count - (invert ? 2 : 3));
-                            newTrianglesList.Add(newVerticesList.Count - 4);
-
+                            newTrianglesList.Add(newVerticesList.Count - 1);
+                            newTrianglesList.Add(newVerticesList.Count - 2);
+                            newTrianglesList.Add(newVerticesList.Count - 3);
+                            
+                            newVerticesList.Add(retractedPoints[1]);
+                            
                             //Add the seconds triangle of the quad
-                            newTrianglesList.Add(newVerticesList.Count - (invert ? 1 : 2));
-                            newTrianglesList.Add(newVerticesList.Count - (invert ? 2 : 1));
+                            newTrianglesList.Add(newVerticesList.Count - 1);
+                            newTrianglesList.Add(newVerticesList.Count - 2);
                             newTrianglesList.Add(newVerticesList.Count - 3);
                             break;
                         case 2:
