@@ -101,24 +101,28 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
         ArrangeShipGroupsOnSquarePlane();
 
-        GameObject drawerFlatpanel = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        drawerFlatpanel.transform.SetParent(shipDrawer.transform);
-        drawerFlatpanel.transform.localPosition = Vector3.zero;
-        drawerFlatpanel.transform.localScale = new Vector3(shipDrawerFlatSize, shipDrawerFlatSize, 1.0f);
-        drawerFlatpanel.transform.localRotation = new Quaternion(1, 0, 0, 1);
+        // GameObject drawerFlatpanel = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        // drawerFlatpanel.transform.SetParent(shipDrawer.transform);
+        // drawerFlatpanel.transform.localPosition = Vector3.zero;
+        // drawerFlatpanel.transform.localScale = new Vector3(shipDrawerFlatSize, shipDrawerFlatSize, 1.0f);
+        // drawerFlatpanel.transform.localRotation = new Quaternion(1, 0, 0, 1);
 
-        MoldShipMeshesIntoDrawer();
+        MoldDrawerMeshes();
     }
 
-    void MoldShipMeshesIntoDrawer()
+    void MoldDrawerMeshes()
     {
+        List<Dictionary<Vector3, List<Vector3>>> flatpanelHoles = new List<Dictionary<Vector3, List<Vector3>>>();
         for (int groupIndex = 0; groupIndex < groups.Length; groupIndex++)
         {
             for (int shipIndex = 0; shipIndex < groups[groupIndex].ships.Length; shipIndex++)
             {
+                //Initialize an object to store the hole this mesh is going to make in the flatpanel
+                Dictionary<Vector3, List<Vector3>> hole = new Dictionary<Vector3, List<Vector3>>();
                 //Get the mesh we are going to be molding
                 MeshFilter moldedShipMesh = groups[groupIndex].ships[shipIndex].GetComponentInChildren<MeshFilter>();
 
+                Vector3 positionRelativeToDrawer = groups[groupIndex].ships[shipIndex].transform.position - shipDrawer.transform.position;
                 Vector3 positionMod = moldedShipMesh.gameObject.transform.position - groups[groupIndex].ships[shipIndex].transform.position;
                 Vector3 scale = moldedShipMesh.gameObject.transform.lossyScale;
 
@@ -157,6 +161,8 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                         }
                     }
 
+                    Vector3[] surfacePair = new Vector3[2] { Vector3.up * 999, Vector3.up * 999 };
+
                     switch (upperVertexIDs.Count)
                     {
                         case 0:
@@ -176,6 +182,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                             List<Vector3> retractedPoints = new List<Vector3>();
 
                             //Add the points to and unordered list
+                            int surfaceID = 0;
                             foreach (int vertexID in lowerVertexIDs)
                             {
                                 Vector3 position = originalVertices[triangleVertices[vertexID]];
@@ -187,10 +194,13 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                                 newVerticesList.Add(position);
                                 retractedPoints.Add(retractedPointPosition);
+
+                                surfacePair[surfaceID] = retractedPointPosition + positionRelativeToDrawer;
                             }
 
                             newVerticesList.AddRange(retractedPoints);
 
+                            surfacePair = retractedPoints.ToArray();
 
                             bool invert = lowerVertexIDs[1] - lowerVertexIDs[0] > 1;
                             //Add the first triangle of the quad
@@ -204,6 +214,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                             newTrianglesList.Add(newVerticesList.Count - 3);
                             break;
                         case 2:
+                            surfaceID = 0;
                             for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
                             {
                                 Vector3 finalPosition = originalVertices[triangleVertices[vertexID]];
@@ -214,7 +225,9 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                                     Vector3 normalizationAgent = relativePosition.normalized / relativePosition.normalized.y;
                                     finalPosition = -normalizationAgent * linkedPosition.y + linkedPosition;
-                                    // finalPosition += Vector3.up * 3;
+
+                                    surfacePair[surfaceID] = finalPosition + positionRelativeToDrawer;
+                                    surfaceID++;
                                 }
 
                                 newVerticesList.Add(finalPosition);
@@ -225,31 +238,25 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                             newTrianglesList.Add(newVerticesList.Count - 3);
                             break;
                     }
+
+                    //If this triangle is on the surface add its intersection to the hole
+                    if (upperVertexIDs.Count > 0)
+                    {
+                        for (int point = 0; point < 2; point++)
+                        {
+                            int connection = (point + 1) % 2;
+                            if (!hole.ContainsKey(surfacePair[point]))
+                            {
+                                hole.Add(surfacePair[point], new List<Vector3>());
+                            }
+
+                            hole[surfacePair[point]].Add(surfacePair[connection]);
+                        }
+                    }
                 }
 
-
-                //Add the triangles
-                // for (int triangle = 0; triangle <= originalTriangles.Length - 3; triangle += 3)
-                // {
-                //     int[] triangleVertices = new int[] { originalTriangles[triangle], originalTriangles[triangle + 1], originalTriangles[triangle + 2] };
-
-                //     bool containsAll = true;
-                //     for (int vertexID = 0; vertexID < triangleVertices.Length; vertexID++)
-                //     {
-                //         if (!newIDs.ContainsKey(triangleVertices[vertexID]))
-                //         {
-                //             containsAll = false;
-                //             break;
-                //         }
-                //     }
-
-                //     if (containsAll)
-                //     {
-                //         newTrianglesList.Add(newIDs[triangleVertices[0]]);
-                //         newTrianglesList.Add(newIDs[triangleVertices[2]]);
-                //         newTrianglesList.Add(newIDs[triangleVertices[1]]);
-                //     }
-                // }
+                //Add the hole this mesh has made in the flatpanel
+                flatpanelHoles.Add(hole);
 
                 Mesh finalMesh = new Mesh();
                 finalMesh.vertices = newVerticesList.ToArray();
@@ -268,6 +275,53 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 shipMold.GetComponent<Renderer>().material = shipDrawerMaterial;
             }
         }
+
+        //Order all of the vertices of each hole in a counter-clockwise direction
+        Vector3[][] orderedHoles = new Vector3[flatpanelHoles.Count][];
+        int holeID = 0;
+        foreach (Dictionary<Vector3, List<Vector3>> hole in flatpanelHoles)
+        {
+            Vector3[] vertices = new Vector3[hole.Keys.Count];
+            hole.Keys.CopyTo(vertices, 0);
+
+            //Get a list of vertices, where each vertex connects to the next one in the list - a connected hole
+            List<Vector3> connectedHole = new List<Vector3>();
+            Vector3 currentPosition = vertices[0];
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                foreach (Vector3 connection in hole[currentPosition])
+                {
+                    if (!connectedHole.Contains(connection))
+                    {
+                        connectedHole.Add(connection);
+                        currentPosition = connection;
+                        break;
+                    }
+                }
+            }
+
+            //Determine if the connected hole is now clockwise or counter-clockwise
+            float deterministicSum = 0;
+            for (int i = 0; i < connectedHole.Count; i++)
+            {
+                Vector3 first = connectedHole[i];
+                Vector3 second = connectedHole[(i + 1) % connectedHole.Count];
+
+                deterministicSum += (second.x - first.x) * (second.z + first.z);
+            }
+
+            //If its clockwise make it counter-clockwise
+            if (deterministicSum > 0)
+            {
+                connectedHole.Reverse();
+            }
+
+            //Add it to the final array
+            orderedHoles[holeID] = connectedHole.ToArray();
+            holeID++;
+        }
+
+
     }
 
     struct AttachmentPoint
