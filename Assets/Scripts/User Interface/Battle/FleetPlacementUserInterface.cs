@@ -278,7 +278,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
         //Order all of the vertices of each hole in a counter-clockwise direction
         Vector3[][] orderedHoles = new Vector3[flatpanelHoles.Count][];
-        int holeID = 0;
+        int finalHoleID = 0;
         foreach (Dictionary<Vector3, List<Vector3>> hole in flatpanelHoles)
         {
             Vector3[] vertices = new Vector3[hole.Keys.Count];
@@ -317,11 +317,93 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             }
 
             //Add it to the final array
-            orderedHoles[holeID] = connectedHole.ToArray();
-            holeID++;
+            orderedHoles[finalHoleID] = connectedHole.ToArray();
+            finalHoleID++;
         }
 
+        //Assemble a simple polygon out of a plane and these ordered holes
+        float halfSize = shipDrawerFlatSize / 2.0f;
+        List<Vector3> processedPolygon = new List<Vector3>() { new Vector3(-halfSize, 0, halfSize), new Vector3(halfSize, 0, halfSize), new Vector3(halfSize, 0, -halfSize), new Vector3(-halfSize, 0, -halfSize) };
 
+        for (int holeID = 0; holeID < orderedHoles.Length; holeID++)
+        {
+            //Find the vertex of the hole, that is furthest to the right
+            int firstVertexInHoleID = 0;
+            Vector3 firstVertexInHolePosition = orderedHoles[holeID][0];
+            for (int holePointID = 0; holePointID < orderedHoles[holeID].Length; holePointID++)
+            {
+                Vector3 candidatePosition = orderedHoles[holeID][holePointID];
+                if (candidatePosition.x > firstVertexInHolePosition.x)
+                {
+                    firstVertexInHoleID = holePointID;
+                    firstVertexInHolePosition = candidatePosition;
+                }
+            }
+
+            //Find a vertex on the edge of the existing polygon to connect the hole with
+            int injectionPointID = 0;
+            Vector3 edgeConnector = Vector3.right * Mathf.Infinity;
+            for (int polygonVertexID = 0; polygonVertexID < processedPolygon.Count; polygonVertexID++)
+            {
+                Vector3 firstVertexRelative = processedPolygon[polygonVertexID] - firstVertexInHolePosition;
+                Vector3 secondVertexRelative = processedPolygon[(polygonVertexID + 1) % processedPolygon.Count] - firstVertexInHolePosition;
+
+                //If one point is below the line and the other above
+                if (firstVertexRelative.z * secondVertexRelative.z < 0)
+                {
+                    Vector3 directional = (secondVertexRelative - firstVertexRelative).normalized;
+                    Vector3 normalizationAgent = directional / directional.z;
+
+                    Vector3 potentialEdgeConnector = firstVertexRelative - normalizationAgent * firstVertexRelative.z;
+
+                    if (potentialEdgeConnector.x > 0 && potentialEdgeConnector.x < edgeConnector.x)
+                    {
+                        injectionPointID = polygonVertexID;
+                        edgeConnector = potentialEdgeConnector;
+                    }
+                }
+            }
+
+            //Inject the hole with a coincident edge defined by the two vertices
+            List<Vector3> toInject = new List<Vector3>();
+            toInject.Add(edgeConnector);
+            for (int holeIDOffset = 0; holeIDOffset < orderedHoles[holeID].Length + 1; holeIDOffset++)
+            {
+                int actualID = (firstVertexInHoleID + holeIDOffset) % orderedHoles[holeID].Length;
+                toInject.Add(orderedHoles[holeID][actualID]);
+            }
+            toInject.Add(edgeConnector);
+
+            processedPolygon.InsertRange((injectionPointID + 1) % processedPolygon.Count, toInject);
+        }
+
+        //Triangulate the resulting polygon
+        Vector3[] polygon = processedPolygon.ToArray();
+
+        List<Vector3> finalVertices = new List<Vector3>();
+        List<int> finalTriangles = new List<int>();
+
+        //Add the initial edges
+        List<int> edges = new List<int>();
+        for (int i = 0; i < polygon.Length; i++)
+        {
+            edges.Add(i);
+        }
+
+        do
+        {
+            for (int edge = 0; edge < edges.Count; edge++)
+            {
+                Vector3 previousPoint = polygon[edges[(edge + edges.Count - 1) % edges.Count]];
+                Vector3 currentPoint = polygon[edges[edge]];
+                Vector3 nextPoint = polygon[edges[(edge + 1) % edges.Count]];
+
+
+            }
+        } while (edges.Count > 0);
+
+
+        //Add this polygon into the drawer
     }
 
     struct AttachmentPoint
