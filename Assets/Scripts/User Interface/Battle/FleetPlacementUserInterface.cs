@@ -129,10 +129,10 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 //Assemble the new mesh
                 Vector3[] originalVertices = moldedShipMesh.mesh.vertices;
 
-                //Scale the vertices correctly
+                //Position the vertices correctly
                 for (int vertexID = 0; vertexID < originalVertices.Length; vertexID++)
                 {
-                    originalVertices[vertexID] = Vector3.Scale(originalVertices[vertexID], scale) + positionMod;
+                    originalVertices[vertexID] = moldedShipMesh.gameObject.transform.rotation * Vector3.Scale(originalVertices[vertexID], scale) + positionMod + positionRelativeToDrawer;
                 }
 
                 int[] originalTriangles = moldedShipMesh.mesh.triangles;
@@ -195,12 +195,11 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                                 newVerticesList.Add(position);
                                 retractedPoints.Add(retractedPointPosition);
 
-                                surfacePair[surfaceID] = retractedPointPosition + positionRelativeToDrawer;
+                                surfacePair[surfaceID] = retractedPointPosition;
+                                surfaceID++;
                             }
 
                             newVerticesList.AddRange(retractedPoints);
-
-                            surfacePair = retractedPoints.ToArray();
 
                             bool invert = lowerVertexIDs[1] - lowerVertexIDs[0] > 1;
                             //Add the first triangle of the quad
@@ -226,7 +225,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                                     Vector3 normalizationAgent = relativePosition.normalized / relativePosition.normalized.y;
                                     finalPosition = -normalizationAgent * linkedPosition.y + linkedPosition;
 
-                                    surfacePair[surfaceID] = finalPosition + positionRelativeToDrawer;
+                                    surfacePair[surfaceID] = finalPosition;
                                     surfaceID++;
                                 }
 
@@ -240,7 +239,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                     }
 
                     //If this triangle is on the surface add its intersection to the hole
-                    if (upperVertexIDs.Count > 0)
+                    if (upperVertexIDs.Count == 1 || upperVertexIDs.Count == 2)
                     {
                         for (int point = 0; point < 2; point++)
                         {
@@ -265,8 +264,8 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                 GameObject shipMold = new GameObject("Ship Mold");
                 shipMold.transform.SetParent(shipDrawer.transform);
-                shipMold.transform.position = moldedShipMesh.gameObject.transform.position + Vector3.up * 10;
-                shipMold.transform.rotation = moldedShipMesh.gameObject.transform.rotation;
+                //shipMold.transform.position = moldedShipMesh.gameObject.transform.position + Vector3.up * 10;
+                //shipMold.transform.rotation = moldedShipMesh.gameObject.transform.rotation;
 
                 MeshFilter meshFilter = shipMold.AddComponent<MeshFilter>();
                 shipMold.AddComponent<MeshRenderer>();
@@ -349,12 +348,12 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 Vector3 secondVertexRelative = processedPolygon[(polygonVertexID + 1) % processedPolygon.Count] - firstVertexInHolePosition;
 
                 //If one point is below the line and the other above
-                if (firstVertexRelative.z * secondVertexRelative.z < 0)
+                if (firstVertexRelative.z * secondVertexRelative.z <= 0)
                 {
                     Vector3 directional = (secondVertexRelative - firstVertexRelative).normalized;
                     Vector3 normalizationAgent = directional / directional.z;
 
-                    Vector3 potentialEdgeConnector = firstVertexRelative - normalizationAgent * firstVertexRelative.z;
+                    Vector3 potentialEdgeConnector = firstVertexRelative - normalizationAgent * firstVertexRelative.z + firstVertexInHolePosition;
 
                     if (potentialEdgeConnector.x > 0 && potentialEdgeConnector.x < edgeConnector.x)
                     {
@@ -390,20 +389,94 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             edges.Add(i);
         }
 
-        do
+
+        for (int i = 0; i < polygon.Length; i++)
         {
+            //TEST
+            Vector3 tcP = polygon[i];
+            Vector3 tnP = polygon[(i + 1) % polygon.Length];
+
+            Debug.DrawLine(tcP, tnP, Color.red, Mathf.Infinity, false);
+            //TEST
             for (int edge = 0; edge < edges.Count; edge++)
             {
-                Vector3 previousPoint = polygon[edges[(edge + edges.Count - 1) % edges.Count]];
-                Vector3 currentPoint = polygon[edges[edge]];
-                Vector3 nextPoint = polygon[edges[(edge + 1) % edges.Count]];
+                int currentPointID = edges[edge];
+                Vector3 currentPoint = polygon[currentPointID];
+
+                int previousPointID = edges[(edge + edges.Count - 1) % edges.Count];
+                Vector3 previousPointRelative = polygon[previousPointID] - currentPoint;
+
+                int nextPointID = edges[(edge + 1) % edges.Count];
+                Vector3 nextPointRelative = polygon[nextPointID] - currentPoint;
+
+                Vector3 previousPointNormal = new Vector3(-previousPointRelative.z, previousPointRelative.x).normalized;
+                Vector3 nextPointNormal = new Vector3(nextPointRelative.z, 0, -nextPointRelative.x).normalized;
 
 
+                //Determine whether this edge is convex
+                if (Vector3.Distance(previousPointRelative, nextPointNormal) < Vector3.Distance(previousPointRelative, previousPointNormal))
+                {
+                    float triangleArea = CalculateTriangleArea(Vector3.zero, nextPointRelative, previousPointRelative);
+
+                    bool intersected = false;
+                    //Determine whether this triangle has any edges intersecting into it
+                    foreach (int potentialIntersector in edges)
+                    {
+                        //If the potential intersector point is not one of the three points of the triangle
+                        if (potentialIntersector != currentPointID && potentialIntersector != previousPointID && potentialIntersector != nextPointID)
+                        {
+                            //Check if its inside the triangle - AREA TEST
+                            Vector3 intersectorRelativePosition = polygon[potentialIntersector] - currentPoint;
+
+                            float area1 = CalculateTriangleArea(intersectorRelativePosition, previousPointRelative, nextPointRelative);
+                            float area2 = CalculateTriangleArea(intersectorRelativePosition, Vector3.zero, previousPointRelative);
+                            float area3 = CalculateTriangleArea(intersectorRelativePosition, Vector3.zero, nextPointRelative);
+
+                            if (!((area1 + area2 + area3) > triangleArea))
+                            {
+                                intersected = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!intersected)
+                    {
+                        finalVertices.Add(previousPointRelative + currentPoint);
+                        finalVertices.Add(currentPoint);
+                        finalVertices.Add(nextPointRelative + currentPoint);
+
+                        finalTriangles.Add(finalVertices.Count - 3);
+                        finalTriangles.Add(finalVertices.Count - 2);
+                        finalTriangles.Add(finalVertices.Count - 1);
+
+                        edges.RemoveAt(edge);
+                        break;
+                    }
+                }
             }
-        } while (edges.Count > 0);
+        }
+
 
 
         //Add this polygon into the drawer
+        Mesh drawerFlatpanelMesh = new Mesh();
+        drawerFlatpanelMesh.vertices = finalVertices.ToArray();
+        drawerFlatpanelMesh.triangles = finalTriangles.ToArray();
+        drawerFlatpanelMesh.RecalculateNormals();
+
+        GameObject drawerFlatpanel = new GameObject("Drawer Flatpanel");
+        drawerFlatpanel.transform.SetParent(shipDrawer.transform);
+        Renderer flatpanelRenderer = drawerFlatpanel.AddComponent<MeshRenderer>();
+        flatpanelRenderer.material = shipDrawerMaterial;
+        drawerFlatpanel.AddComponent<MeshFilter>().mesh = drawerFlatpanelMesh;
+
+        drawerFlatpanel.transform.Translate(Vector3.up * 10);
+    }
+
+    float CalculateTriangleArea(Vector3 a, Vector3 b, Vector3 c)
+    {
+        return Mathf.Abs((a.x * (b.z - c.z) + b.x * (c.z - a.z) + c.x * (a.z - b.z)) / 2.0f);
     }
 
     struct AttachmentPoint
