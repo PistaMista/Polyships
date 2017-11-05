@@ -4,6 +4,14 @@ using UnityEngine;
 
 public class FleetPlacementUserInterface : BoardViewUserInterface
 {
+
+    // protected override void Start()
+    // {
+    //     base.Start();
+    //     float area1 = CalculateTriangleArea(Vector3.zero, Vector3.forward * 1, Vector3.right * 1);
+    //     float area2 = CalculateTriangleArea(Vector3.zero, Vector3.forward * 2, Vector3.right * 2);
+    //     float area3 = CalculateTriangleArea(Vector3.zero, Vector3.forward * 3, Vector3.right * 3);
+    // }
     public Material shipDrawerMaterial;
     public Waypoint cameraWaypoint;
     public GameObject[] defaultShipLoadout;
@@ -276,18 +284,21 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         }
 
         //Order all of the vertices of each hole in a counter-clockwise direction
-        Vector3[][] orderedHoles = new Vector3[flatpanelHoles.Count][];
-        int finalHoleID = 0;
+        List<Vector3[]> unsortedOrderedHoles = new List<Vector3[]>();
+        List<float> holeMaxXValues = new List<float>();
+
         foreach (Dictionary<Vector3, List<Vector3>> hole in flatpanelHoles)
         {
             Vector3[] vertices = new Vector3[hole.Keys.Count];
             hole.Keys.CopyTo(vertices, 0);
 
+            float highestXValue = -Mathf.Infinity;
             //Get a list of vertices, where each vertex connects to the next one in the list - a connected hole
             List<Vector3> connectedHole = new List<Vector3>();
             Vector3 currentPosition = vertices[0];
             for (int i = 0; i < vertices.Length; i++)
             {
+                highestXValue = currentPosition.x > highestXValue ? currentPosition.x : highestXValue;
                 foreach (Vector3 connection in hole[currentPosition])
                 {
                     if (!connectedHole.Contains(connection))
@@ -315,10 +326,22 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 connectedHole.Reverse();
             }
 
-            //Add it to the final array
-            orderedHoles[finalHoleID] = connectedHole.ToArray();
-            finalHoleID++;
+            //Determine where to insert this hole in the list such that the holes furthest to the right come first
+            int insertionPoint = unsortedOrderedHoles.Count;
+            for (int holeID = 0; holeID < unsortedOrderedHoles.Count; holeID++)
+            {
+                if (highestXValue > holeMaxXValues[holeID])
+                {
+                    insertionPoint = holeID;
+                    break;
+                }
+            }
+
+            unsortedOrderedHoles.Insert(insertionPoint, connectedHole.ToArray());
+            holeMaxXValues.Insert(insertionPoint, highestXValue);
         }
+
+        Vector3[][] orderedHoles = unsortedOrderedHoles.ToArray();
 
         //Assemble a simple polygon out of a plane and these ordered holes
         float halfSize = shipDrawerFlatSize / 2.0f;
@@ -355,7 +378,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                     Vector3 potentialEdgeConnector = firstVertexRelative - normalizationAgent * firstVertexRelative.z + firstVertexInHolePosition;
 
-                    if (potentialEdgeConnector.x > 0 && potentialEdgeConnector.x < edgeConnector.x)
+                    if (potentialEdgeConnector.x >= firstVertexInHolePosition.x && potentialEdgeConnector.x < edgeConnector.x)
                     {
                         injectionPointID = polygonVertexID;
                         edgeConnector = potentialEdgeConnector;
@@ -383,10 +406,10 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         List<int> finalTriangles = new List<int>();
 
         //Add the initial edges
-        List<int> edges = new List<int>();
+        List<int> edgeIDs = new List<int>();
         for (int i = 0; i < polygon.Length; i++)
         {
-            edges.Add(i);
+            edgeIDs.Add(i);
         }
 
 
@@ -396,17 +419,17 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             Vector3 tcP = polygon[i];
             Vector3 tnP = polygon[(i + 1) % polygon.Length];
 
-            Debug.DrawLine(tcP, tnP, Color.red, Mathf.Infinity, false);
+            Debug.DrawLine(tcP + Vector3.up * 0.1f * i, tnP + Vector3.up * 0.1f * i, Color.red, Mathf.Infinity, false);
             //TEST
-            for (int edge = 0; edge < edges.Count; edge++)
+            for (int edgeID = 0; edgeID < edgeIDs.Count; edgeID++)
             {
-                int currentPointID = edges[edge];
+                int currentPointID = edgeIDs[edgeID];
                 Vector3 currentPoint = polygon[currentPointID];
 
-                int previousPointID = edges[(edge + edges.Count - 1) % edges.Count];
+                int previousPointID = edgeIDs[(edgeID + edgeIDs.Count - 1) % edgeIDs.Count];
                 Vector3 previousPointRelative = polygon[previousPointID] - currentPoint;
 
-                int nextPointID = edges[(edge + 1) % edges.Count];
+                int nextPointID = edgeIDs[(edgeID + 1) % edgeIDs.Count];
                 Vector3 nextPointRelative = polygon[nextPointID] - currentPoint;
 
                 Vector3 previousPointNormal = new Vector3(-previousPointRelative.z, previousPointRelative.x).normalized;
@@ -416,23 +439,22 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 //Determine whether this edge is convex
                 if (Vector3.Distance(previousPointRelative, nextPointNormal) < Vector3.Distance(previousPointRelative, previousPointNormal))
                 {
-                    float triangleArea = CalculateTriangleArea(Vector3.zero, nextPointRelative, previousPointRelative);
-
                     bool intersected = false;
                     //Determine whether this triangle has any edges intersecting into it
-                    foreach (int potentialIntersector in edges)
+                    foreach (int potentialIntersector in edgeIDs)
                     {
                         //If the potential intersector point is not one of the three points of the triangle
                         if (potentialIntersector != currentPointID && potentialIntersector != previousPointID && potentialIntersector != nextPointID)
                         {
-                            //Check if its inside the triangle - AREA TEST
+                            //Check if its inside the triangle - PLANE TEST
                             Vector3 intersectorRelativePosition = polygon[potentialIntersector] - currentPoint;
 
-                            float area1 = CalculateTriangleArea(intersectorRelativePosition, previousPointRelative, nextPointRelative);
-                            float area2 = CalculateTriangleArea(intersectorRelativePosition, Vector3.zero, previousPointRelative);
-                            float area3 = CalculateTriangleArea(intersectorRelativePosition, Vector3.zero, nextPointRelative);
+                            bool b1, b2, b3;
+                            b1 = TriangleSign(intersectorRelativePosition, Vector3.zero, nextPointRelative) < 0.0f;
+                            b2 = TriangleSign(intersectorRelativePosition, nextPointRelative, previousPointRelative) < 0.0f;
+                            b3 = TriangleSign(intersectorRelativePosition, previousPointRelative, Vector3.zero) < 0.0f;
 
-                            if (!((area1 + area2 + area3) > triangleArea))
+                            if ((b1 == b2) && (b2 == b3))
                             {
                                 intersected = true;
                                 break;
@@ -450,7 +472,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                         finalTriangles.Add(finalVertices.Count - 2);
                         finalTriangles.Add(finalVertices.Count - 1);
 
-                        edges.RemoveAt(edge);
+                        edgeIDs.RemoveAt(edgeID);
                         break;
                     }
                 }
@@ -474,9 +496,9 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         drawerFlatpanel.transform.Translate(Vector3.up * 10);
     }
 
-    float CalculateTriangleArea(Vector3 a, Vector3 b, Vector3 c)
+    float TriangleSign(Vector3 p1, Vector3 p2, Vector3 p3)
     {
-        return Mathf.Abs((a.x * (b.z - c.z) + b.x * (c.z - a.z) + c.x * (a.z - b.z)) / 2.0f);
+        return (p1.x - p3.x) * (p2.z - p3.z) - (p2.x - p3.x) * (p1.z - p3.z);
     }
 
     struct AttachmentPoint
