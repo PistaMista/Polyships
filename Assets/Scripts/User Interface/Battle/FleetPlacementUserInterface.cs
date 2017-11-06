@@ -415,12 +415,12 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
         for (int i = 0; i < polygon.Length; i++)
         {
-            //TEST
-            Vector3 tcP = polygon[i];
-            Vector3 tnP = polygon[(i + 1) % polygon.Length];
+            // //TEST
+            // Vector3 tcP = polygon[i];
+            // Vector3 tnP = polygon[(i + 1) % polygon.Length];
 
-            Debug.DrawLine(tcP + Vector3.up * 0.1f * i, tnP + Vector3.up * 0.1f * i, Color.red, Mathf.Infinity, false);
-            //TEST
+            // Debug.DrawLine(tcP + Vector3.up * 0.1f * i, tnP + Vector3.up * 0.1f * i, Color.red, Mathf.Infinity, false);
+            // //TEST
             for (int edgeID = 0; edgeID < edgeIDs.Count; edgeID++)
             {
                 int currentPointID = edgeIDs[edgeID];
@@ -492,8 +492,6 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         Renderer flatpanelRenderer = drawerFlatpanel.AddComponent<MeshRenderer>();
         flatpanelRenderer.material = shipDrawerMaterial;
         drawerFlatpanel.AddComponent<MeshFilter>().mesh = drawerFlatpanelMesh;
-
-        drawerFlatpanel.transform.Translate(Vector3.up * 10);
     }
 
     float TriangleSign(Vector3 p1, Vector3 p2, Vector3 p3)
