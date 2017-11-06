@@ -432,7 +432,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 int nextPointID = edgeIDs[(edgeID + 1) % edgeIDs.Count];
                 Vector3 nextPointRelative = polygon[nextPointID] - currentPoint;
 
-                Vector3 previousPointNormal = new Vector3(-previousPointRelative.z, previousPointRelative.x).normalized;
+                Vector3 previousPointNormal = new Vector3(-previousPointRelative.z, 0, previousPointRelative.x).normalized;
                 Vector3 nextPointNormal = new Vector3(nextPointRelative.z, 0, -nextPointRelative.x).normalized;
 
 
