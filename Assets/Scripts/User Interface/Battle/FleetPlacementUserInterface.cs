@@ -13,6 +13,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     //     float area3 = CalculateTriangleArea(Vector3.zero, Vector3.forward * 3, Vector3.right * 3);
     // }
     public Material shipDrawerMaterial;
+    public GameObject shipDrawerDecorator;
     public Waypoint cameraWaypoint;
     public GameObject[] defaultShipLoadout;
     public float shipPaletteGroupPadding;
@@ -33,7 +34,11 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     protected override void DeployWorldElements()
     {
         base.DeployWorldElements();
-        cameraWaypoint.transform.position = Battle.main.attacker.boardCameraPoint.transform.position;
+
+        float offset = 0.4f;
+        Vector3 finalPosition = Battle.main.attacker.boardCameraPoint.transform.position + Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) * offset;
+        finalPosition.y = CameraControl.CalculateCameraWaypointHeight(new Vector2((Battle.main.attacker.board.tiles.GetLength(0)) * (1 + offset * 2.0f) + 3, Battle.main.attacker.board.tiles.GetLength(1)));
+        cameraWaypoint.transform.position = finalPosition;
         cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
         CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
 
@@ -492,6 +497,9 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         Renderer flatpanelRenderer = drawerFlatpanel.AddComponent<MeshRenderer>();
         flatpanelRenderer.material = shipDrawerMaterial;
         drawerFlatpanel.AddComponent<MeshFilter>().mesh = drawerFlatpanelMesh;
+
+        GameObject drawerDecorator = Instantiate(shipDrawerDecorator);
+        drawerDecorator.transform.SetParent(shipDrawer.transform);
     }
 
     float TriangleSign(Vector3 p1, Vector3 p2, Vector3 p3)

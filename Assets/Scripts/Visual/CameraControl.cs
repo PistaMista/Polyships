@@ -46,4 +46,16 @@ public class CameraControl : MonoBehaviour
         CameraControl.currentWaypoint = waypoint;
         initialPosition = Camera.main.transform.position;
     }
+
+    public static float CalculateCameraWaypointHeight(Vector2 size)
+    {
+        float aspect = Camera.main.aspect;
+        float verticalFov = Camera.main.fieldOfView;
+        float horizontalFov = Mathf.Atan(Mathf.Tan(verticalFov / 2.0f * Mathf.Deg2Rad) * aspect) * Mathf.Rad2Deg * 2.0f;
+
+        float verticalHeight = (1 / Mathf.Tan(Mathf.Deg2Rad * verticalFov / 2.0f)) * (size.y / 2.0f);
+        float horizontalHeight = (1 / Mathf.Tan(Mathf.Deg2Rad * horizontalFov / 2.0f)) * (size.x / 2.0f);
+
+        return verticalHeight > horizontalHeight ? verticalHeight : horizontalHeight;
+    }
 }
