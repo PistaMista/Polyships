@@ -16,6 +16,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     public GameObject shipDrawerDecorator;
     public Waypoint cameraWaypoint;
     public GameObject[] defaultShipLoadout;
+    public bool forceIdenticalShipTypesToGroupTogether;
     public float shipPaletteGroupPadding;
     public float shipDrawerFlatSize;
     protected override void ChangeState(UIState state)
@@ -35,7 +36,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     {
         base.DeployWorldElements();
 
-        float offset = 0.4f;
+        float offset = 0.5f;
         Vector3 finalPosition = Battle.main.attacker.boardCameraPoint.transform.position + Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) * offset;
         finalPosition.y = CameraControl.CalculateCameraWaypointHeight(new Vector2((Battle.main.attacker.board.tiles.GetLength(0)) * (1 + offset * 2.0f) + 3, Battle.main.attacker.board.tiles.GetLength(1)));
         cameraWaypoint.transform.position = finalPosition;
@@ -84,7 +85,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 continue;
             }
 
-            if (toAdd[0].type == ship.type)
+            if (toAdd[0].type == ship.type && forceIdenticalShipTypesToGroupTogether)
             {
                 toAdd.Add(ship);
             }
@@ -121,6 +122,8 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         // drawerFlatpanel.transform.localRotation = new Quaternion(1, 0, 0, 1);
 
         MoldDrawerMeshes();
+
+        shipDrawer.transform.Translate(Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) * 1.05f);
     }
 
     void MoldDrawerMeshes()
@@ -421,10 +424,10 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         for (int i = 0; i < polygon.Length; i++)
         {
             // //TEST
-            // Vector3 tcP = polygon[i];
-            // Vector3 tnP = polygon[(i + 1) % polygon.Length];
+            Vector3 tcP = polygon[i];
+            Vector3 tnP = polygon[(i + 1) % polygon.Length];
 
-            // Debug.DrawLine(tcP + Vector3.up * 0.1f * i, tnP + Vector3.up * 0.1f * i, Color.red, Mathf.Infinity, false);
+            Debug.DrawLine(tcP + Vector3.up * 0.1f * i, tnP + Vector3.up * 0.1f * i, Color.red, Mathf.Infinity, false);
             // //TEST
             for (int edgeID = 0; edgeID < edgeIDs.Count; edgeID++)
             {
@@ -442,7 +445,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
 
                 //Determine whether this edge is convex
-                if (Vector3.Distance(previousPointRelative, nextPointNormal) < Vector3.Distance(previousPointRelative, previousPointNormal))
+                if (Vector3.Distance(nextPointRelative, previousPointNormal) < Vector3.Distance(nextPointRelative, nextPointNormal))
                 {
                     bool intersected = false;
                     //Determine whether this triangle has any edges intersecting into it
