@@ -43,9 +43,44 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
         CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
 
+        occupiedTiles = new List<Tile>();
+        notplacedShips = new List<Ship>();
+        placedShips = new Dictionary<Ship, PlacedShipInfo>();
+
         ResetWorldSpaceParent();
         MakeShipDrawer();
     }
+
+    struct PlacedShipInfo
+    {
+        Vector3 boardPosition;
+        Quaternion boardRotation;
+        Tile[] occupiedTiles;
+    }
+
+    List<Tile> selectedTiles;
+    List<Tile> occupiedTiles;
+    List<Tile> validTiles;
+    List<Tile> invalidTiles;
+    List<Tile> evaluatedTiles;
+
+    Ship selectedShip;
+    List<Ship> notplacedShips;
+    Dictionary<Ship, PlacedShipInfo> placedShips;
+
+    void ReevaluateTiles()
+    {
+
+    }
+
+
+
+    protected override void Update()
+    {
+        base.Update();
+    }
+
+
 
     struct ShipRectangleGroup
     {
@@ -59,6 +94,8 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             get { return vertical ? verticalCorners : horizontalCorners; }
         }
     }
+
+
 
     ShipRectangleGroup[] groups;
     GameObject shipDrawer;
@@ -75,6 +112,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         for (int i = 0; i < defaultShipLoadout.Length; i++)
         {
             Ship ship = Instantiate(defaultShipLoadout[i]).GetComponent<Ship>();
+            notplacedShips.Add(ship);
 
             ship.owner = Battle.main.attacker;
             ship.transform.SetParent(shipDrawer.transform);
@@ -123,7 +161,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
         MoldDrawerMeshes();
 
-        shipDrawer.transform.Translate(Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) * 1.05f);
+        shipDrawer.transform.Translate(Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) * 1.05f + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight);
     }
 
     void MoldDrawerMeshes()
@@ -424,10 +462,10 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         for (int i = 0; i < polygon.Length; i++)
         {
             // //TEST
-            Vector3 tcP = polygon[i];
-            Vector3 tnP = polygon[(i + 1) % polygon.Length];
+            // Vector3 tcP = polygon[i];
+            // Vector3 tnP = polygon[(i + 1) % polygon.Length];
 
-            Debug.DrawLine(tcP + Vector3.up * 0.1f * i, tnP + Vector3.up * 0.1f * i, Color.red, Mathf.Infinity, false);
+            // Debug.DrawLine(tcP + Vector3.up * 0.1f * i, tnP + Vector3.up * 0.1f * i, Color.red, Mathf.Infinity, false);
             // //TEST
             for (int edgeID = 0; edgeID < edgeIDs.Count; edgeID++)
             {
