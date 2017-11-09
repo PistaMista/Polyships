@@ -43,6 +43,7 @@ public class InputEnabledUserInterface : BasicUserInterface
     protected static bool pressed;
     [Range(0.0f, 1.0f)]
     public float dragRegisterDistanceInScreenHeightPercentage;
+    public float screenToWorldInputConversionHeight;
     public bool interactable;
     protected override void Update()
     {
@@ -66,6 +67,16 @@ public class InputEnabledUserInterface : BasicUserInterface
         {
             dragging = false;
         }
+
+        // initialInputPosition.world = ConvertToWorldInputPosition(initialInputPosition.screen);
+        // currentInputPosition.world = ConvertToWorldInputPosition(currentInputPosition.screen);
+        // lastFrameInputPosition.world = ConvertToWorldInputPosition(lastFrameInputPosition.screen);
+        // dragVelocity.world = ConvertToWorldInputPosition(dragVelocity.screen);
+    }
+
+    protected Vector3 ConvertToWorldInputPosition(Vector2 screenPosition)
+    {
+        return Camera.main.ScreenToWorldPoint((Vector3)screenPosition + Vector3.forward * (Camera.main.transform.position.y - screenToWorldInputConversionHeight));
     }
 
     public void SetInteractable(bool enabled)

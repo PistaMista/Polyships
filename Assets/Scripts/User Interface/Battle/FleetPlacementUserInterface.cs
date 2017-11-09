@@ -5,13 +5,11 @@ using UnityEngine;
 public class FleetPlacementUserInterface : BoardViewUserInterface
 {
 
-    // protected override void Start()
-    // {
-    //     base.Start();
-    //     float area1 = CalculateTriangleArea(Vector3.zero, Vector3.forward * 1, Vector3.right * 1);
-    //     float area2 = CalculateTriangleArea(Vector3.zero, Vector3.forward * 2, Vector3.right * 2);
-    //     float area3 = CalculateTriangleArea(Vector3.zero, Vector3.forward * 3, Vector3.right * 3);
-    // }
+    protected override void Start()
+    {
+        base.Start();
+        screenToWorldInputConversionHeight = MiscellaneousVariables.it.boardUIRenderHeight;
+    }
     public Material shipDrawerMaterial;
     public GameObject shipDrawerDecorator;
     public Waypoint cameraWaypoint;
@@ -43,9 +41,15 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
         CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
 
-        occupiedTiles = new List<Tile>();
         notplacedShips = new List<Ship>();
         placedShips = new Dictionary<Ship, PlacedShipInfo>();
+        allShips = new List<Ship>();
+        managedBoard = Battle.main.attacker.board;
+
+        selectedTiles = new List<Tile>();
+        validTiles = new List<Tile>();
+        invalidTiles = new List<Tile>();
+        occupiedTiles = new List<Tile>();
 
         ResetWorldSpaceParent();
         MakeShipDrawer();
@@ -53,31 +57,187 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
     struct PlacedShipInfo
     {
-        Vector3 boardPosition;
-        Quaternion boardRotation;
-        Tile[] occupiedTiles;
+        public Vector3 boardPosition;
+        public Quaternion boardRotation;
+        public Tile[] occupiedTiles;
     }
 
-    List<Tile> selectedTiles;
-    List<Tile> occupiedTiles;
-    List<Tile> validTiles;
-    List<Tile> invalidTiles;
-    List<Tile> evaluatedTiles;
+
+
+    List<Tile> selectedTiles; //List of tiles selected to house the currently selected ship
+    List<Tile> occupiedTiles; //List of tiles where the placed ships are placed
+    List<Tile> obstructedTiles; //List of tiles where nothing can be placed
+    List<Tile> validTiles; //List of tiles where the current ship can be placed
+    List<Tile> invalidTiles; //List of tiles where the current ship cannot be placed
 
     Ship selectedShip;
     List<Ship> notplacedShips;
     Dictionary<Ship, PlacedShipInfo> placedShips;
+    List<Ship> allShips;
 
     void ReevaluateTiles()
     {
+        Vector2 boardSize = new Vector2(managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1));
 
+        obstructedTiles = new List<Tile>();
+
+        //Determine the tiles in which a 1-tile sized ship cannot be placed
+        foreach (Tile tile in occupiedTiles)
+        {
+            for (int x = (tile.coordinates.x == 0 ? 0 : -1); x <= ((tile.coordinates.x == boardSize.x - 1) ? 0 : 1); x++)
+            {
+                for (int y = (tile.coordinates.y == 0 ? 0 : -1); y <= ((tile.coordinates.y == boardSize.y - 1) ? 0 : 1); y++)
+                {
+                    Tile obstructedTile = managedBoard.tiles[x + (int)tile.coordinates.x, y + (int)tile.coordinates.y];
+                    if (!obstructedTiles.Contains(obstructedTile))
+                    {
+                        obstructedTiles.Add(obstructedTile);
+                    }
+                }
+            }
+        }
+
+        invalidTiles = new List<Tile>();
+        validTiles = new List<Tile>();
+
+        for (int x = 0; x < boardSize.x; x++)
+        {
+            for (int y = 0; y < boardSize.y; y++)
+            {
+                invalidTiles.Add(managedBoard.tiles[x, y]);
+            }
+        }
+
+        //Determine where the current ship can or cannot be placed
+        for (int axis = 0; axis < 2; axis++) //The axis we are sweeping across
+        {
+            for (int line = 0; line < (axis == 0 ? boardSize.y : boardSize.x); line++)
+            {
+                List<Tile> inlineValidTiles = new List<Tile>();
+                List<Tile> inlineNeighbouringValidTiles = new List<Tile>();
+                for (int depth = 0; depth < (axis == 0 ? boardSize.x : boardSize.y); depth++)
+                {
+                    Tile examined = managedBoard.tiles[axis == 0 ? depth : line, axis == 0 ? line : depth];
+                    if (!obstructedTiles.Contains(examined))
+                    {
+                        inlineNeighbouringValidTiles.Add(examined);
+                    }
+                    else
+                    {
+                        if (inlineNeighbouringValidTiles.Count >= selectedShip.health)
+                        {
+                            inlineValidTiles.AddRange(inlineNeighbouringValidTiles);
+                        }
+                        inlineNeighbouringValidTiles = new List<Tile>();
+                    }
+                }
+
+                inlineValidTiles.AddRange(inlineNeighbouringValidTiles);
+
+                foreach (Tile tile in inlineValidTiles)
+                {
+                    if (!validTiles.Contains(tile))
+                    {
+                        validTiles.Add(tile);
+                        invalidTiles.Remove(tile);
+                    }
+                }
+            }
+        }
     }
 
+    void SelectShip(Ship ship)
+    {
+        selectedShip = ship;
+        if (placedShips.ContainsKey(ship))
+        {
+            RemovePlacedShip(ship);
+        }
+
+        ReevaluateTiles();
+
+        Debug.Log("Selected ship " + ship.name);
+    }
+
+    void RemovePlacedShip(Ship ship)
+    {
+        foreach (Tile tile in placedShips[ship].occupiedTiles)
+        {
+            occupiedTiles.Remove(tile);
+        }
+
+        placedShips.Remove(ship);
+        notplacedShips.Add(ship);
+    }
+
+    void PlaceCurrentlySelectedShip()
+    {
+        occupiedTiles.AddRange(selectedTiles);
+
+        PlacedShipInfo info;
+        info.occupiedTiles = selectedTiles.ToArray();
+        info.boardPosition = Vector3.zero;
+        info.boardRotation = new Quaternion(0, 0, 0, 0);
+
+        notplacedShips.Remove(selectedShip);
+        placedShips.Add(selectedShip, info);
+
+        Debug.Log("Placed ship " + selectedShip.name);
+    }
 
 
     protected override void Update()
     {
         base.Update();
+        if (tap)
+        {
+            foreach (Ship ship in allShips)
+            {
+                Vector3 localInputPosition = ship.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
+                if (Mathf.Abs(localInputPosition.x) < 0.5f && Mathf.Abs(localInputPosition.z) < ship.health / 2.0f)
+                {
+                    SelectShip(ship);
+                    break;
+                }
+            }
+        }
+
+        if (pressed)
+        {
+            Tile candidateTile = GetTileAtInputPosition();
+            if (candidateTile != null)
+            {
+                if (!selectedTiles.Contains(candidateTile) && validTiles.Contains(candidateTile))
+                {
+                    if (selectedTiles.Count == 0)
+                    {
+                        selectedTiles.Add(candidateTile);
+                    }
+                    else
+                    {
+                        Vector2 relativePosition = selectedTiles[0].coordinates - candidateTile.coordinates;
+                        if (relativePosition.x == 0 || relativePosition.y == 0)
+                        {
+                            selectedTiles.Add(candidateTile);
+                        }
+                    }
+
+                    if (selectedTiles.Count == selectedShip.health)
+                    {
+                        PlaceCurrentlySelectedShip();
+                        selectedShip = null;
+                        invalidTiles = new List<Tile>();
+                        validTiles = new List<Tile>();
+                        selectedTiles = new List<Tile>();
+                    }
+                }
+            }
+        }
+
+        if (endPress)
+        {
+            selectedTiles = new List<Tile>();
+        }
     }
 
 
@@ -113,6 +273,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         {
             Ship ship = Instantiate(defaultShipLoadout[i]).GetComponent<Ship>();
             notplacedShips.Add(ship);
+            allShips.Add(ship);
 
             ship.owner = Battle.main.attacker;
             ship.transform.SetParent(shipDrawer.transform);
