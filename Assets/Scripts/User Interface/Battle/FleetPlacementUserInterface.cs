@@ -57,17 +57,19 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
     public float shipAnimationTravelTime;
     public float shipAnimationMaxSpeed;
+    public float shipAnimationElevation;
 
     struct ShipInfo
     {
         public Vector3 boardPosition;
         public Quaternion boardRotation;
-        public Vector3 drawerPosition;
-        public Quaternion drawerRotation;
+        public Vector3 localDrawerPosition;
+        public Quaternion localDrawerRotation;
         public Tile[] occupiedTiles;
 
         public List<Vector3> waypoints;
         public Vector3 animationVelocity;
+        public float rotationVelocity;
     }
 
 
@@ -183,14 +185,33 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         occupiedTiles.AddRange(allShips[selectedShip].occupiedTiles);
 
         ShipInfo info = allShips[selectedShip];
-        info.boardPosition = Vector3.zero;
-        info.boardRotation = new Quaternion(0, 0, 0, 0);
+        Vector3 directional = info.occupiedTiles[0].transform.position - info.occupiedTiles[info.occupiedTiles.Length - 1].transform.position;
+        info.boardPosition = (info.occupiedTiles[0].transform.position + info.occupiedTiles[info.occupiedTiles.Length - 1].transform.position) / 2.0f;
+        info.boardRotation = Quaternion.Euler(0, directional.z != 0 ? 0 : 90, 0);
         allShips[selectedShip] = info;
 
         notplacedShips.Remove(selectedShip);
         placedShips.Add(selectedShip);
 
         Debug.Log("Placed ship " + selectedShip.name);
+    }
+
+    void UpdateShipWaypoints(Ship ship, bool selectedMode)
+    {
+        bool placed = allShips[ship].occupiedTiles != null;
+
+        ShipInfo info = allShips[ship];
+        info.waypoints = new List<Vector3>();
+
+        Vector3 targetPosition = placed ? info.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : shipDrawer.transform.TransformPoint(info.localDrawerPosition);
+
+        info.waypoints.Add(new Vector3(ship.transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + shipAnimationElevation, ship.transform.position.z));
+        info.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + shipAnimationElevation, targetPosition.z));
+        if (!selectedMode)
+        {
+            info.waypoints.Add(targetPosition);
+        }
+        allShips[ship] = info;
     }
 
 
@@ -211,9 +232,11 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                         {
                             PlaceCurrentlySelectedShip();
                         }
+                        UpdateShipWaypoints(selectedShip, false);
                     }
 
                     SelectShip(ship);
+                    UpdateShipWaypoints(selectedShip, true);
                     newShipSelected = true;
                     break;
                 }
@@ -234,13 +257,16 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                             //Remove the ship from the board and put it back into the drawer
                             ShipInfo info = allShips[selectedShip];
                             info.occupiedTiles = null;
-                            selectedShip = null;
+                            allShips[selectedShip] = info;
                         }
                         else
                         {
                             //Place the ship back where it was
                             PlaceCurrentlySelectedShip();
                         }
+
+                        UpdateShipWaypoints(selectedShip, false);
+                        selectedShip = null;
                     }
                 }
             }
@@ -259,8 +285,25 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                     }
                     else
                     {
-                        Vector2 relativePosition = selectedTiles[0].coordinates - candidateTile.coordinates;
-                        if (relativePosition.x == 0 || relativePosition.y == 0)
+                        bool connects = false;
+                        bool outOfLine = false;
+
+                        foreach (Tile tile in selectedTiles)
+                        {
+                            float distance = Vector2.Distance(tile.coordinates, candidateTile.coordinates);
+                            if ((int)distance != distance)
+                            {
+                                outOfLine = true;
+                                break;
+                            }
+
+                            if (distance == 1)
+                            {
+                                connects = true;
+                            }
+                        }
+
+                        if (connects && !outOfLine)
                         {
                             selectedTiles.Add(candidateTile);
                         }
@@ -273,6 +316,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                         allShips[selectedShip] = info;
 
                         PlaceCurrentlySelectedShip();
+                        UpdateShipWaypoints(selectedShip, false);
                         selectedShip = null;
                         invalidTiles = new List<Tile>();
                         validTiles = new List<Tile>();
@@ -287,10 +331,12 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             selectedTiles = new List<Tile>();
         }
 
-        foreach (KeyValuePair<Ship, ShipInfo> shipInfoPair in allShips)
+        Ship[] ships = new Ship[allShips.Keys.Count];
+        allShips.Keys.CopyTo(ships, 0);
+
+        foreach (Ship ship in ships)
         {
-            Ship ship = shipInfoPair.Key;
-            ShipInfo info = shipInfoPair.Value;
+            ShipInfo info = allShips[ship];
 
             if (info.waypoints != null)
             {
@@ -306,6 +352,9 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                     info.waypoints = null;
                 }
             }
+
+            Quaternion targetRotation = info.occupiedTiles == null ? info.localDrawerRotation : info.boardRotation;
+            ship.transform.rotation = Quaternion.RotateTowards(ship.transform.rotation, targetRotation, Mathf.Pow(Quaternion.Angle(ship.transform.rotation, targetRotation) * Time.deltaTime * 10.0f, 0.5f));
 
             allShips[ship] = info;
         }
@@ -915,10 +964,6 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                         foreach (int potentialIntersectorIndex in addedGroupIDs)
                         {
-                            if (potentialIntersectorIndex == 0 && groupID == 0 && cornerIndex == 3 && quadrantID == 3)
-                            {
-                                Debug.Log("BREAK");
-                            }
 
                             ShipRectangleGroup potentialIntersector = groups[potentialIntersectorIndex];
                             for (int intersectorCornerIndex = 0; intersectorCornerIndex < 4; intersectorCornerIndex++)
@@ -1007,8 +1052,8 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 ship.transform.rotation = new Quaternion(0, 1, 0, group.vertical ? 1 : 0);
 
                 ShipInfo info = allShips[ship];
-                info.drawerPosition = ship.transform.position;
-                info.drawerRotation = ship.transform.rotation;
+                info.localDrawerPosition = ship.transform.position;
+                info.localDrawerRotation = ship.transform.rotation;
                 allShips[ship] = info;
             }
 
