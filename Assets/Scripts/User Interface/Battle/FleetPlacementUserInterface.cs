@@ -72,6 +72,10 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         public float rotationVelocity;
     }
 
+    public Material invalidTileMaterial;
+    public Material occupiedTileMaterial;
+    public Material selectedTileMaterial;
+
 
 
     List<Tile> selectedTiles; //List of tiles selected to house the currently selected ship
@@ -154,7 +158,47 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 }
             }
         }
+
+        UpdateValidPositionMarkers();
     }
+
+    void UpdateValidPositionMarkers()
+    {
+        foreach (Tile tile in validTiles)
+        {
+            ResetTileParent(tile.coordinates);
+        }
+
+        foreach (Tile tile in invalidTiles)
+        {
+            if (!occupiedTiles.Contains(tile))
+            {
+                GameObject parent = GetTileParent(tile.coordinates, true);
+
+                GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                marker.transform.SetParent(parent.transform);
+                marker.transform.localPosition = Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+
+                marker.transform.localScale = Vector3.one * MiscellaneousVariables.it.boardTileSideLength;
+                marker.transform.Rotate(90, 0, 0);
+                Renderer renderer = marker.GetComponent<Renderer>();
+                renderer.material = invalidTileMaterial;
+            }
+        }
+    }
+
+    void HideValidPositionMarkers()
+    {
+        foreach (Tile tile in invalidTiles)
+        {
+            if (!occupiedTiles.Contains(tile))
+            {
+                ResetTileParent(tile.coordinates);
+            }
+        }
+    }
+
+
 
     void SelectShip(Ship ship)
     {
@@ -182,6 +226,20 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
     void PlaceCurrentlySelectedShip()
     {
+        foreach (Tile tile in allShips[selectedShip].occupiedTiles)
+        {
+            GameObject parent = GetTileParent(tile.coordinates, true);
+
+            GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            marker.transform.SetParent(parent.transform);
+            marker.transform.localPosition = Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+
+            marker.transform.localScale = Vector3.one * MiscellaneousVariables.it.boardTileSideLength;
+            marker.transform.Rotate(90, 0, 0);
+            Renderer renderer = marker.GetComponent<Renderer>();
+            renderer.material = occupiedTileMaterial;
+        }
+
         occupiedTiles.AddRange(allShips[selectedShip].occupiedTiles);
 
         ShipInfo info = allShips[selectedShip];
@@ -194,6 +252,8 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         placedShips.Add(selectedShip);
 
         Debug.Log("Placed ship " + selectedShip.name);
+
+
     }
 
     void UpdateShipWaypoints(Ship ship, bool selectedMode)
@@ -212,6 +272,21 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             info.waypoints.Add(targetPosition);
         }
         allShips[ship] = info;
+    }
+
+    void SelectTile(Tile tile)
+    {
+        selectedTiles.Add(tile);
+        GameObject parent = GetTileParent(tile.coordinates, true);
+
+        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        marker.transform.SetParent(parent.transform);
+        marker.transform.localPosition = Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+
+        marker.transform.localScale = Vector3.one * MiscellaneousVariables.it.boardTileSideLength;
+        marker.transform.Rotate(90, 0, 0);
+        Renderer renderer = marker.GetComponent<Renderer>();
+        renderer.material = selectedTileMaterial;
     }
 
 
@@ -267,6 +342,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                         UpdateShipWaypoints(selectedShip, false);
                         selectedShip = null;
+                        HideValidPositionMarkers();
                     }
                 }
             }
@@ -281,7 +357,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 {
                     if (selectedTiles.Count == 0)
                     {
-                        selectedTiles.Add(candidateTile);
+                        SelectTile(candidateTile);
                     }
                     else
                     {
@@ -305,18 +381,20 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                         if (connects && !outOfLine)
                         {
-                            selectedTiles.Add(candidateTile);
+                            SelectTile(candidateTile);
                         }
                     }
 
                     if (selectedTiles.Count == selectedShip.health)
                     {
+
                         ShipInfo info = allShips[selectedShip];
                         info.occupiedTiles = selectedTiles.ToArray();
                         allShips[selectedShip] = info;
 
                         PlaceCurrentlySelectedShip();
                         UpdateShipWaypoints(selectedShip, false);
+                        HideValidPositionMarkers();
                         selectedShip = null;
                         invalidTiles = new List<Tile>();
                         validTiles = new List<Tile>();
@@ -328,6 +406,10 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
         if (endPress)
         {
+            foreach (Tile tile in selectedTiles)
+            {
+                ResetTileParent(tile.coordinates);
+            }
             selectedTiles = new List<Tile>();
         }
 
