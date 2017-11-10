@@ -42,8 +42,8 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
 
         notplacedShips = new List<Ship>();
-        placedShips = new Dictionary<Ship, PlacedShipInfo>();
-        allShips = new List<Ship>();
+        placedShips = new List<Ship>();
+        allShips = new Dictionary<Ship, ShipInfo>();
         managedBoard = Battle.main.attacker.board;
 
         selectedTiles = new List<Tile>();
@@ -55,11 +55,19 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         MakeShipDrawer();
     }
 
-    struct PlacedShipInfo
+    public float shipAnimationTravelTime;
+    public float shipAnimationMaxSpeed;
+
+    struct ShipInfo
     {
         public Vector3 boardPosition;
         public Quaternion boardRotation;
+        public Vector3 drawerPosition;
+        public Quaternion drawerRotation;
         public Tile[] occupiedTiles;
+
+        public List<Vector3> waypoints;
+        public Vector3 animationVelocity;
     }
 
 
@@ -72,8 +80,8 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
     Ship selectedShip;
     List<Ship> notplacedShips;
-    Dictionary<Ship, PlacedShipInfo> placedShips;
-    List<Ship> allShips;
+    List<Ship> placedShips;
+    Dictionary<Ship, ShipInfo> allShips;
 
     void ReevaluateTiles()
     {
@@ -149,7 +157,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     void SelectShip(Ship ship)
     {
         selectedShip = ship;
-        if (placedShips.ContainsKey(ship))
+        if (placedShips.Contains(ship))
         {
             RemovePlacedShip(ship);
         }
@@ -161,7 +169,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
     void RemovePlacedShip(Ship ship)
     {
-        foreach (Tile tile in placedShips[ship].occupiedTiles)
+        foreach (Tile tile in allShips[ship].occupiedTiles)
         {
             occupiedTiles.Remove(tile);
         }
@@ -172,15 +180,15 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
     void PlaceCurrentlySelectedShip()
     {
-        occupiedTiles.AddRange(selectedTiles);
+        occupiedTiles.AddRange(allShips[selectedShip].occupiedTiles);
 
-        PlacedShipInfo info;
-        info.occupiedTiles = selectedTiles.ToArray();
+        ShipInfo info = allShips[selectedShip];
         info.boardPosition = Vector3.zero;
         info.boardRotation = new Quaternion(0, 0, 0, 0);
+        allShips[selectedShip] = info;
 
         notplacedShips.Remove(selectedShip);
-        placedShips.Add(selectedShip, info);
+        placedShips.Add(selectedShip);
 
         Debug.Log("Placed ship " + selectedShip.name);
     }
@@ -191,13 +199,49 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         base.Update();
         if (tap)
         {
-            foreach (Ship ship in allShips)
+            bool newShipSelected = false;
+            foreach (Ship ship in allShips.Keys)
             {
                 Vector3 localInputPosition = ship.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
                 if (Mathf.Abs(localInputPosition.x) < 0.5f && Mathf.Abs(localInputPosition.z) < ship.health / 2.0f)
                 {
+                    if (selectedShip != null)
+                    {
+                        if (allShips[selectedShip].occupiedTiles != null)
+                        {
+                            PlaceCurrentlySelectedShip();
+                        }
+                    }
+
                     SelectShip(ship);
+                    newShipSelected = true;
                     break;
+                }
+            }
+
+            if (!newShipSelected && selectedShip != null) //If no other ship was selected and a ship is already selected
+            {
+                Vector3 inputPositionInDrawer = shipDrawer.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
+                bool clickedOnBoard = GetTileAtInputPosition() != null;
+                bool clickedOnDrawer = Mathf.Abs(inputPositionInDrawer.x) < shipDrawerFlatSize / 2.0f && Mathf.Abs(inputPositionInDrawer.z) < shipDrawerFlatSize / 2.0f;
+
+                if (!clickedOnBoard) //If the user clicked outside of the board
+                {
+                    if (allShips[selectedShip].occupiedTiles != null) //If the ship was already on the board
+                    {
+                        if (clickedOnDrawer) //And the player clicks on the drawer
+                        {
+                            //Remove the ship from the board and put it back into the drawer
+                            ShipInfo info = allShips[selectedShip];
+                            info.occupiedTiles = null;
+                            selectedShip = null;
+                        }
+                        else
+                        {
+                            //Place the ship back where it was
+                            PlaceCurrentlySelectedShip();
+                        }
+                    }
                 }
             }
         }
@@ -224,6 +268,10 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                     if (selectedTiles.Count == selectedShip.health)
                     {
+                        ShipInfo info = allShips[selectedShip];
+                        info.occupiedTiles = selectedTiles.ToArray();
+                        allShips[selectedShip] = info;
+
                         PlaceCurrentlySelectedShip();
                         selectedShip = null;
                         invalidTiles = new List<Tile>();
@@ -237,6 +285,29 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         if (endPress)
         {
             selectedTiles = new List<Tile>();
+        }
+
+        foreach (KeyValuePair<Ship, ShipInfo> shipInfoPair in allShips)
+        {
+            Ship ship = shipInfoPair.Key;
+            ShipInfo info = shipInfoPair.Value;
+
+            if (info.waypoints != null)
+            {
+                ship.transform.position = Vector3.SmoothDamp(ship.transform.position, info.waypoints[0], ref info.animationVelocity, shipAnimationTravelTime, shipAnimationMaxSpeed);
+
+                if (Vector3.Distance(ship.transform.position, info.waypoints[0]) < 0.1f)
+                {
+                    info.waypoints.RemoveAt(0);
+                }
+
+                if (info.waypoints.Count == 0)
+                {
+                    info.waypoints = null;
+                }
+            }
+
+            allShips[ship] = info;
         }
     }
 
@@ -273,7 +344,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         {
             Ship ship = Instantiate(defaultShipLoadout[i]).GetComponent<Ship>();
             notplacedShips.Add(ship);
-            allShips.Add(ship);
+            allShips.Add(ship, new ShipInfo());
 
             ship.owner = Battle.main.attacker;
             ship.transform.SetParent(shipDrawer.transform);
@@ -934,6 +1005,11 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 Ship ship = group.ships[shipIndex];
                 ship.transform.position = startingPosition + positionStep * shipIndex;
                 ship.transform.rotation = new Quaternion(0, 1, 0, group.vertical ? 1 : 0);
+
+                ShipInfo info = allShips[ship];
+                info.drawerPosition = ship.transform.position;
+                info.drawerRotation = ship.transform.rotation;
+                allShips[ship] = info;
             }
 
             // GameObject tmp = GameObject.CreatePrimitive(PrimitiveType.Cube);
