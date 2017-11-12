@@ -11,13 +11,13 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
 
     protected override void ProcessInput()
     {
-        if (Application.isMobilePlatform)
+        if (Application.isEditor)
         {
-            MobileInput();
+            PCInput();
         }
         else
         {
-            PCInput();
+            MobileInput();
         }
 
 
@@ -53,6 +53,7 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
         {
             endPress = Input.GetMouseButtonUp(0);
         }
+
         pressed = Input.GetMouseButton(0);
 
         inputPoints = Input.GetKey(KeyCode.Space) ? 2 : 1;
@@ -63,7 +64,8 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
     void MobileInput()
     {
         inputPoints = Input.touchCount;
-        if (Input.touchCount > 0)
+        Debug.Log(inputPoints);
+        if (inputPoints > 0)
         {
             pressed = true;
             Touch touch = Input.GetTouch(0);
@@ -74,24 +76,9 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
             pressed = false;
         }
 
-        if (beginPress)
-        {
-            beginPress = false;
-        }
-        else
-        {
-            beginPress = !lastState && pressed;
-        }
 
-        if (endPress)
-        {
-            endPress = false;
-        }
-        else
-        {
-            endPress = lastState && !pressed;
-
-        }
+        beginPress = !lastState && pressed;
+        endPress = lastState && !pressed;
 
         lastState = pressed;
     }
