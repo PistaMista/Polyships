@@ -15,7 +15,6 @@ public sealed class PlayerIDtoStatusBridgeSecondaryBUI : SecondaryBattleUserInte
     protected override void ChangeState(UIState state)
     {
         boundPlayerIDBUI.State = state;
-        GetComponent<Renderer>();
     }
 
     public T GetCurrentlyConnectedBUIOfType<T>()
