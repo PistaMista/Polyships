@@ -31,6 +31,6 @@ public class Tile : MonoBehaviour
 
     public void AssignReferences(TileData data)
     {
-        owner = data.ownedByAttacker ? Battle.main.attacker : Battle.main.attacked;
+        owner = data.ownedByAttacker ? Battle.main.attacker : Battle.main.defender;
     }
 }

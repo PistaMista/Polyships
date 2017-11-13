@@ -50,7 +50,7 @@ public class BattleSetUpScreenUserInterface : SlidingUserInterface
             }
         }
 
-        GameLoaderUserInterface.newBattleData.attacked.board = boardData;
+        GameLoaderUserInterface.newBattleData.defender.board = boardData;
     }
 
 

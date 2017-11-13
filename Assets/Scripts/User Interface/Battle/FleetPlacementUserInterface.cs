@@ -22,9 +22,6 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     {
         switch (state)
         {
-            case UIState.DISABLING:
-                SetInteractable(false);
-                break;
             case UIState.ENABLING:
                 managedBoard = Battle.main.attacker.board;
                 break;
@@ -306,6 +303,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
         fadingDistance = (managedBoard.tiles.GetLength(0)) * (1 + cameraWaypointOffset * 2.0f) + 3;
 
+        ChangeState(UIState.DISABLING);
         Battle.main.NextTurn();
         SwitchToInterface(BattleUIType.TURN_NOTIFIER);
     }

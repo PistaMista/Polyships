@@ -55,7 +55,6 @@ public class Player : MonoBehaviour
 
     public Waypoint boardCameraPoint;
     public Waypoint flagCameraPoint;
-    public PlayerSecondaryBUI secondaryBUI;
     public void Initialize(PlayerData data)
     {
         index = data.index;

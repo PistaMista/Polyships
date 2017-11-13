@@ -5,7 +5,7 @@ using UnityEngine;
 public class BoardViewUserInterface : BattleUserInterface
 {
     protected Board managedBoard;
-    public FlagRendererSecondaryBUI flagRenderer;
+    public PlayerIDtoStatusBridgeSecondaryBUI flagRendererBridge;
     GameObject[,] tileParents;
 
     protected override void ChangeState(UIState state)
@@ -15,6 +15,8 @@ public class BoardViewUserInterface : BattleUserInterface
         {
             case UIState.ENABLING:
                 ResetWorldSpaceParent();
+                FlagRendererSecondaryBUI flagRenderer = flagRendererBridge.GetCurrentlyConnectedBUIOfType<FlagRendererSecondaryBUI>();
+
                 if (flagRenderer.gameObject.activeInHierarchy)
                 {
                     flagRenderer.onCameraOcclusion += DeployWorldElements;
@@ -40,12 +42,12 @@ public class BoardViewUserInterface : BattleUserInterface
 
     protected virtual void DeployWorldElements()
     {
-        SetInteractable(true);
+        // SetInteractable(true);
     }
 
     protected virtual void HideWorldElements()
     {
-        SetInteractable(false);
+        //SetInteractable(false);
     }
 
     protected void ResetAllTileParents()

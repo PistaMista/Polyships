@@ -18,7 +18,7 @@ public class Battle : MonoBehaviour
     public struct TurnInfo
     {
         public Player attacker;
-        public Player attacked;
+        public Player defender;
         public List<Tile> artilleryImpacts;
         public List<Tile> torpedoImpacts;
         public List<Tile> damagedTiles;
@@ -29,7 +29,7 @@ public class Battle : MonoBehaviour
         public TurnInfo(int r)
         {
             this.attacker = Battle.main.attacker;
-            this.attacked = Battle.main.attacked;
+            this.defender = Battle.main.defender;
             artilleryImpacts = new List<Tile>();
             torpedoImpacts = new List<Tile>();
             damagedTiles = new List<Tile>();
@@ -41,13 +41,13 @@ public class Battle : MonoBehaviour
         public static implicit operator TurnInfo(TurnInfoData data)
         {
             TurnInfo result = new TurnInfo(1);
-            result.attacker = Battle.main.attacker.index == data.attacker ? Battle.main.attacker : Battle.main.attacked;
-            result.attacked = Battle.main.attacked.index == data.attacked ? Battle.main.attacked : Battle.main.attacker;
-            result.artilleryImpacts = ConvertTileArray(data.artilleryImpacts, result.attacked);
-            result.torpedoImpacts = ConvertTileArray(data.torpedoImpacts, result.attacked);
-            result.damagedTiles = ConvertTileArray(data.damagedTiles, result.attacked);
-            result.damagedShips = ConvertShipArray(data.damagedShips, result.attacked);
-            result.destroyedShips = ConvertShipArray(data.destroyedShips, result.attacked);
+            result.attacker = Battle.main.attacker.index == data.attacker ? Battle.main.attacker : Battle.main.defender;
+            result.defender = Battle.main.defender.index == data.defender ? Battle.main.defender : Battle.main.attacker;
+            result.artilleryImpacts = ConvertTileArray(data.artilleryImpacts, result.defender);
+            result.torpedoImpacts = ConvertTileArray(data.torpedoImpacts, result.defender);
+            result.damagedTiles = ConvertTileArray(data.damagedTiles, result.defender);
+            result.damagedShips = ConvertShipArray(data.damagedShips, result.defender);
+            result.destroyedShips = ConvertShipArray(data.destroyedShips, result.defender);
             result.aircraftTargetChanged = data.aircraftTargetChanged;
             return result;
         }
@@ -79,7 +79,7 @@ public class Battle : MonoBehaviour
     public struct TurnInfoData
     {
         public int attacker;
-        public int attacked;
+        public int defender;
         public int[,] artilleryImpacts;
         public int[,] torpedoImpacts;
         public int[,] damagedTiles;
@@ -91,7 +91,7 @@ public class Battle : MonoBehaviour
         {
             TurnInfoData result = new TurnInfoData();
             result.attacker = info.attacker.index;
-            result.attacked = info.attacked.index;
+            result.defender = info.defender.index;
             result.artilleryImpacts = ConvertTileArray(info.artilleryImpacts.ToArray());
             result.torpedoImpacts = ConvertTileArray(info.torpedoImpacts.ToArray());
             result.damagedTiles = ConvertTileArray(info.damagedTiles.ToArray());
@@ -129,7 +129,7 @@ public class Battle : MonoBehaviour
     public struct BattleData
     {
         public Player.PlayerData attacker;
-        public Player.PlayerData attacked;
+        public Player.PlayerData defender;
         public int saveSlot;
         public BattleStage stage;
         public TurnInfoData[] log;
@@ -140,7 +140,7 @@ public class Battle : MonoBehaviour
         {
             BattleData result = new BattleData();
             result.attacker = battle.attacker;
-            result.attacked = battle.attacked;
+            result.defender = battle.defender;
             result.saveSlot = battle.saveSlot;
             result.stage = battle.stage;
             result.log = new TurnInfoData[battle.log.Count];
@@ -156,7 +156,7 @@ public class Battle : MonoBehaviour
 
     public static Battle main;
     public Player attacker;
-    public Player attacked;
+    public Player defender;
     public List<TurnInfo> log;
     public int saveSlot;
     public BattleStage stage;
@@ -181,9 +181,9 @@ public class Battle : MonoBehaviour
         attacker.gameObject.transform.SetParent(transform);
         attacker.Initialize(data.attacker);
 
-        attacked = new GameObject("Attacked").AddComponent<Player>();
-        attacked.gameObject.transform.SetParent(transform);
-        attacked.Initialize(data.attacked);
+        defender = new GameObject("Defender").AddComponent<Player>();
+        defender.gameObject.transform.SetParent(transform);
+        defender.Initialize(data.defender);
 
         //LOG - REF
 
@@ -196,7 +196,7 @@ public class Battle : MonoBehaviour
     public void AssignReferences(BattleData data)
     {
         attacker.AssignReferences(data.attacker);
-        attacked.AssignReferences(data.attacked);
+        defender.AssignReferences(data.defender);
 
         log = new List<TurnInfo>();
         if (data.log != null)
@@ -210,7 +210,7 @@ public class Battle : MonoBehaviour
         }
 
         attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
-        attacked.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
+        defender.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
 
         BattleUserInterface_Master.EnableUI(lastOpenUserInterface);
     }
@@ -236,8 +236,8 @@ public class Battle : MonoBehaviour
 
 
         Player lastAttacker = attacker;
-        attacker = attacked;
-        attacked = lastAttacker;
+        attacker = defender;
+        defender = lastAttacker;
 
         if (attacker.ships != null)
         {

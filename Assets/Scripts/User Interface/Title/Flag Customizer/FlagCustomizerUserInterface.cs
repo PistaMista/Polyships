@@ -18,7 +18,7 @@ public class FlagCustomizerUserInterface : SlidingUserInterface
                 if (GameLoaderUserInterface.newBattleData.attacker.flag == null)
                 {
                     GameLoaderUserInterface.newBattleData.attacker.flag = new float[(int)flagResolution.x, (int)flagResolution.y, 3];
-                    GameLoaderUserInterface.newBattleData.attacked.flag = new float[(int)flagResolution.x, (int)flagResolution.y, 3];
+                    GameLoaderUserInterface.newBattleData.defender.flag = new float[(int)flagResolution.x, (int)flagResolution.y, 3];
                 }
 
                 flagCustomizationModules[0].State = UIState.ENABLED;

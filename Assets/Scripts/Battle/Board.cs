@@ -48,7 +48,7 @@ public class Board : MonoBehaviour
 
     public void AssignReferences(BoardData data)
     {
-        owner = data.ownedByAttacker ? Battle.main.attacker : Battle.main.attacked;
+        owner = data.ownedByAttacker ? Battle.main.attacker : Battle.main.defender;
         for (int x = 0; x < tiles.GetLength(0); x++)
         {
             for (int y = 0; y < tiles.GetLength(1); y++)

@@ -2,17 +2,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerSecondaryBUI : SecondaryBattleUserInterface
+public class PlayerIDBoundSecondaryBUI : SecondaryBattleUserInterface
 {
+    public int managedPlayerID;
     protected Player managedPlayer;
-    public bool managingAttacker;
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
         switch (state)
         {
             case UIState.ENABLING:
-                managedPlayer = managingAttacker ? Battle.main.attacker : Battle.main.attacked;
+                if (managedPlayer == null)
+                {
+                    managedPlayer = Battle.main.attacker.index == managedPlayerID ? Battle.main.attacker : Battle.main.defender;
+                }
                 worldSpaceParent.position = managedPlayer.transform.position;
                 break;
         }

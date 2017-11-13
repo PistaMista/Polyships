@@ -64,7 +64,11 @@ public class BattleUserInterface : InputEnabledUserInterface
             case UIState.ENABLING:
                 Tutorial();
                 break;
+            case UIState.ENABLED:
+                SetInteractable(true);
+                break;
             case UIState.DISABLING:
+                SetInteractable(false);
                 break;
         }
 

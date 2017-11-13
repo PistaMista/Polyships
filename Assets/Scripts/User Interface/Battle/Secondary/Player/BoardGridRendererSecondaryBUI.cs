@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoardGridRendererSecondaryBUI : PlayerSecondaryBUI
+public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
 {
     public Material gridMaterial;
     public FlagRendererSecondaryBUI flagRenderer;
@@ -57,5 +57,7 @@ public class BoardGridRendererSecondaryBUI : PlayerSecondaryBUI
 
             line.GetComponent<Renderer>().material = gridMaterial;
         }
+
+        worldSpaceParent.transform.position = managedPlayer.transform.position;
     }
 }

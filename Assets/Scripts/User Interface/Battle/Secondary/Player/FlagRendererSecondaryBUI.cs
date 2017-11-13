@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FlagRendererSecondaryBUI : PlayerSecondaryBUI
+public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
 {
     public struct FlagVoxel
     {

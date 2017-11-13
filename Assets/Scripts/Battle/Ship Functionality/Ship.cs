@@ -60,7 +60,7 @@ public class Ship : MonoBehaviour
 
     public virtual void AssignReferences(ShipData data)
     {
-        owner = data.ownedByAttacker ? Battle.main.attacker : Battle.main.attacked;
+        owner = data.ownedByAttacker ? Battle.main.attacker : Battle.main.defender;
         tiles = new Tile[data.tiles.GetLength(0)];
         for (int i = 0; i < data.tiles.GetLength(0); i++)
         {

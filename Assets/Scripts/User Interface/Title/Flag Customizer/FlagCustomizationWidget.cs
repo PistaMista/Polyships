@@ -18,7 +18,7 @@ public class FlagCustomizationWidget : MonoBehaviour
     //     parent = new GameObject("Parent");
     //     parent.transform.SetParent(transform);
 
-    //     float[,,] flagData = secondPlayer ? GameLoaderUserInterface.newBattleData.attacked.flag : GameLoaderUserInterface.newBattleData.attacker.flag;
+    //     float[,,] flagData = secondPlayer ? GameLoaderUserInterface.newBattleData.defender.flag : GameLoaderUserInterface.newBattleData.attacker.flag;
     //     rect.anchoredPosition = Vector2.right * position * BasicUserInterface.referenceResolution.x;
     //     pixels = new Image[flagData.GetLength(0), flagData.GetLength(1)];
 
