@@ -14,6 +14,7 @@ public class BoardViewUserInterface : BattleUserInterface
         switch (state)
         {
             case UIState.ENABLING:
+                ResetWorldSpaceParent();
                 if (flagRenderer.gameObject.activeInHierarchy)
                 {
                     flagRenderer.onCameraOcclusion += DeployWorldElements;
@@ -22,11 +23,19 @@ public class BoardViewUserInterface : BattleUserInterface
                 {
                     DeployWorldElements();
                 }
+
                 break;
             case UIState.DISABLING:
-                flagRenderer.onCameraOcclusion += HideWorldElements;
+                //flagRenderer.onCameraOcclusion += HideWorldElements;
                 break;
         }
+    }
+
+    protected override void ResetWorldSpaceParent()
+    {
+        base.ResetWorldSpaceParent();
+        worldSpaceParent.transform.position = managedBoard.owner.transform.position;
+        tileParents = null;
     }
 
     protected virtual void DeployWorldElements()
@@ -36,7 +45,7 @@ public class BoardViewUserInterface : BattleUserInterface
 
     protected virtual void HideWorldElements()
     {
-
+        SetInteractable(false);
     }
 
     protected void ResetAllTileParents()
@@ -80,7 +89,7 @@ public class BoardViewUserInterface : BattleUserInterface
         if (parent == null)
         {
             parent = new GameObject("Tile parent: " + position);
-            parent.transform.SetParent(transform);
+            parent.transform.SetParent(worldSpaceParent);
             parent.transform.position = managedBoard.tiles[(int)position.x, (int)position.y].transform.position;
             tileParents[(int)position.x, (int)position.y] = parent;
         }

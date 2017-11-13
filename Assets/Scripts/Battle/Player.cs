@@ -74,13 +74,16 @@ public class Player : MonoBehaviour
                 flag[x, y] = new Color(data.flag[x, y, 0], data.flag[x, y, 1], data.flag[x, y, 2]);
             }
         }
+
         if (data.ships != null)
         {
+            ships = new Ship[data.ships.Length];
             for (int i = 0; i < data.ships.Length; i++)
             {
                 Ship ship = Instantiate(MiscellaneousVariables.it.shipPrefabs[(int)data.ships[i].type]).GetComponent<Ship>();
                 ship.transform.SetParent(transform);
                 ship.Initialize(data.ships[i]);
+                ships[i] = ship;
             }
         }
 

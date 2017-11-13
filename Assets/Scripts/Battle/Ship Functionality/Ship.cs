@@ -66,6 +66,8 @@ public class Ship : MonoBehaviour
         {
             tiles[i] = owner.board.tiles[data.tiles[i, 0], data.tiles[i, 1]];
         }
+
+        transform.SetParent(owner.transform);
     }
 
     public virtual int[] GetMetadata()

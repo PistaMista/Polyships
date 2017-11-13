@@ -191,7 +191,6 @@ public class Battle : MonoBehaviour
         stage = data.stage;
         tutorialStage = data.tutorialStage;
         lastOpenUserInterface = data.lastOpenUserInterface;
-        BattleUserInterface_Master.EnableUI(lastOpenUserInterface);
     }
 
     public void AssignReferences(BattleData data)
@@ -209,12 +208,17 @@ public class Battle : MonoBehaviour
                 log.Add(turn);
             }
         }
+
+        attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
+        attacked.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
+
+        BattleUserInterface_Master.EnableUI(lastOpenUserInterface);
     }
 
-    void OnApplicationPause(bool pauseStatus)
-    {
-        QuitBattle();
-    }
+    // void OnApplicationPause(bool pauseStatus)
+    // {
+    //     QuitBattle();
+    // }
 
     void OnApplicationQuit()
     {
@@ -225,5 +229,19 @@ public class Battle : MonoBehaviour
     {
         SaveToDisk();
         BattleUserInterface_Master.Disable();
+    }
+
+    public void NextTurn()
+    {
+
+
+        Player lastAttacker = attacker;
+        attacker = attacked;
+        attacked = lastAttacker;
+
+        if (attacker.ships != null)
+        {
+            log.Insert(0, new TurnInfo(1));
+        }
     }
 }

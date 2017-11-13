@@ -25,7 +25,7 @@ public class BattleUserInterface : InputEnabledUserInterface
         }
     }
 
-    protected void ResetWorldSpaceParent()
+    protected virtual void ResetWorldSpaceParent()
     {
         if (worldSpaceParent != null)
         {
