@@ -212,7 +212,7 @@ public class Battle : MonoBehaviour
         attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
         defender.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
 
-        BattleUserInterface_Master.EnableUI(lastOpenUserInterface);
+        BattleUserInterface_Master.EnablePrimaryBUI(lastOpenUserInterface);
     }
 
     // void OnApplicationPause(bool pauseStatus)
@@ -228,7 +228,7 @@ public class Battle : MonoBehaviour
     public void QuitBattle()
     {
         SaveToDisk();
-        BattleUserInterface_Master.Disable();
+        BattleUserInterface_Master.ForceResetAllBUIs();
     }
 
     public void NextTurn()

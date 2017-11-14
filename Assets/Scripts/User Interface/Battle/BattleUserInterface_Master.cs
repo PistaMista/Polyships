@@ -2,48 +2,64 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public enum BattleUIType
 {
-    ATTACKER_INFO,
-    ATTACK_VIEW,
-    BATTLE_OVERVIEW,
-    DAMAGE_REPORT,
     TURN_NOTIFIER,
-    FLEET_PLACEMENT
+    FLEET_PLACEMENT,
+    BATTLE_OVERVIEW,
+    ATTACK_VIEW,
+    ATTACKER_INFO,
+    DAMAGE_REPORT
 }
 public class BattleUserInterface_Master : InputEnabledUserInterface
 {
     static BattleUserInterface_Master it;
-    public BattleUserInterface[] interfaces;
+    public PrimaryBattleUserInterface[] primaryBUIs;
+    public SecondaryBattleUserInterface[] secondaryBUIs;
 
     void Awake()
     {
         it = this;
     }
 
-    public static void Disable()
+    public static void ForceResetAllBUIs()
     {
-        for (int i = 0; i < it.interfaces.Length; i++)
+        for (int i = 0; i < it.primaryBUIs.Length; i++)
         {
-            BattleUserInterface x = it.interfaces[i];
-            if (x.State != UIState.DISABLED && x.State != UIState.DISABLING)
+            PrimaryBattleUserInterface x = it.primaryBUIs[i];
+            if (x.State != UIState.DISABLED)
             {
-                x.State = UIState.DISABLING;
+                x.State = UIState.DISABLED;
+            }
+        }
+
+        for (int i = 0; i < it.secondaryBUIs.Length; i++)
+        {
+            SecondaryBattleUserInterface x = it.secondaryBUIs[i];
+            if (x.State != UIState.DISABLED)
+            {
+                x.State = UIState.DISABLED;
             }
         }
     }
 
-    public static void EnableUI(BattleUIType type)
+    public static void EnablePrimaryBUI(BattleUIType type)
     {
         Battle.main.lastOpenUserInterface = type;
-        it.interfaces[(int)type].State = UIState.ENABLING;
+        it.primaryBUIs[(int)type].State = UIState.ENABLING;
     }
 
-    public static void SetWorldSpaceRendering(bool enabled)
+    public static void SetWorldRendering(bool enabled)
     {
-        for (int i = 0; i < it.interfaces.Length; i++)
+        for (int i = 0; i < it.primaryBUIs.Length; i++)
         {
-            it.interfaces[i].SetWorldSpaceParent(enabled);
+            it.primaryBUIs[i].SetWorldRendering(enabled);
+        }
+
+        for (int i = 0; i < it.secondaryBUIs.Length; i++)
+        {
+            it.secondaryBUIs[i].SetWorldRendering(enabled);
         }
     }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TurnNotifierUserInterface : BattleUserInterface
+public class TurnNotifierUserInterface : PrimaryBattleUserInterface
 {
     protected override void ChangeState(UIState state)
     {

@@ -12,6 +12,7 @@ public class MiscellaneousVariables : MonoBehaviour
     public float boardUIRenderHeight;
     public float boardCameraHeightModifier;
     public float boardDistanceFromCenter;
+    public float flagVoxelScale;
     public static MiscellaneousVariables it;
 
     void Start()

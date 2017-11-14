@@ -11,7 +11,7 @@ public class SecondaryBattleUserInterface : BasicUserInterface
         ResetWorldSpaceParent();
     }
 
-    public void SetWorldSpaceParent(bool enabled)
+    public void SetWorldRendering(bool enabled)
     {
         worldSpaceParent.gameObject.SetActive(enabled);
     }
@@ -39,5 +39,11 @@ public class SecondaryBattleUserInterface : BasicUserInterface
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
+        switch (state)
+        {
+            case UIState.DISABLED:
+                ResetWorldSpaceParent();
+                break;
+        }
     }
 }

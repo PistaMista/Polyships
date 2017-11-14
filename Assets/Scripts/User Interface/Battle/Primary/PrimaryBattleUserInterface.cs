@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-public class BattleUserInterface : InputEnabledUserInterface
+public class PrimaryBattleUserInterface : InputEnabledUserInterface
 {
     public TutorialUserInterface[] tutorials;
     public SecondaryBattleUserInterface[] secondaries;
@@ -16,12 +16,12 @@ public class BattleUserInterface : InputEnabledUserInterface
         ResetWorldSpaceParent();
     }
 
-    public void SetWorldSpaceParent(bool enabled)
+    public void SetWorldRendering(bool enabled)
     {
         worldSpaceParent.gameObject.SetActive(enabled);
         for (int i = 0; i < secondaries.Length; i++)
         {
-            secondaries[i].SetWorldSpaceParent(enabled);
+            secondaries[i].SetWorldRendering(enabled);
         }
     }
 
@@ -70,6 +70,10 @@ public class BattleUserInterface : InputEnabledUserInterface
             case UIState.DISABLING:
                 SetInteractable(false);
                 break;
+            case UIState.DISABLED:
+                SetInteractable(false);
+                ResetWorldSpaceParent();
+                break;
         }
 
         for (int i = 0; i < graphicFaders.Length; i++)
@@ -89,6 +93,6 @@ public class BattleUserInterface : InputEnabledUserInterface
     public void SwitchToInterface(BattleUIType switchTo)
     {
         State = UIState.DISABLING;
-        BattleUserInterface_Master.EnableUI(switchTo);
+        BattleUserInterface_Master.EnablePrimaryBUI(switchTo);
     }
 }

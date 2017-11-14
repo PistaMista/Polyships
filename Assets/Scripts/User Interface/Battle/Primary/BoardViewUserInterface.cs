@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoardViewUserInterface : BattleUserInterface
+public class BoardViewUserInterface : PrimaryBattleUserInterface
 {
     protected Board managedBoard;
     public PlayerIDtoStatusBridgeSecondaryBUI flagRendererBridge;
@@ -10,7 +10,6 @@ public class BoardViewUserInterface : BattleUserInterface
 
     protected override void ChangeState(UIState state)
     {
-        base.ChangeState(state);
         switch (state)
         {
             case UIState.ENABLING:
@@ -19,7 +18,7 @@ public class BoardViewUserInterface : BattleUserInterface
 
                 if (flagRenderer.gameObject.activeInHierarchy)
                 {
-                    flagRenderer.onCameraOcclusion += DeployWorldElements;
+                    flagRenderer.OnCameraOcclusion1 += DeployWorldElements;
                 }
                 else
                 {
@@ -31,6 +30,7 @@ public class BoardViewUserInterface : BattleUserInterface
                 //flagRenderer.onCameraOcclusion += HideWorldElements;
                 break;
         }
+        base.ChangeState(state);
     }
 
     protected override void ResetWorldSpaceParent()

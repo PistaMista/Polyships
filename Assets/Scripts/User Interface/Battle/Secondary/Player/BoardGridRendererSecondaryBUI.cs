@@ -16,7 +16,7 @@ public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
                 ResetWorldSpaceParent();
                 if (flagRenderer.gameObject.activeInHierarchy)
                 {
-                    flagRenderer.onCameraOcclusion += AddGrid;
+                    flagRenderer.OnCameraOcclusion1 += AddGrid;
                 }
                 else
                 {
