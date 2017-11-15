@@ -45,6 +45,10 @@ public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
             case UIState.DISABLING:
                 targetHeightModifier = -4.0f * MiscellaneousVariables.it.flagVoxelScale;
                 break;
+            case UIState.DISABLED:
+                ResetWorldSpaceParent();
+                voxels = null;
+                break;
         }
     }
 
@@ -69,7 +73,7 @@ public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
         if (OnCameraOcclusion1 != null)
         {
             FlagVoxel voxel = voxels[voxels.GetLength(0) / 2, voxels.GetLength(1) / 2];
-            if ((state == UIState.DISABLING && voxel.voxel.transform.position.y >= (Camera.main.transform.position.y - voxel.voxel.transform.lossyScale.y)) || (state == UIState.ENABLING && voxel.voxel.transform.position.y <= (Camera.main.transform.position.y - voxel.voxel.transform.lossyScale.y)))
+            if ((State == UIState.DISABLING && voxel.voxel.transform.position.y >= (Camera.main.transform.position.y - voxel.voxel.transform.lossyScale.y)) || (State == UIState.ENABLING && voxel.voxel.transform.position.y <= (Camera.main.transform.position.y - voxel.voxel.transform.lossyScale.y)))
             {
                 OnCameraOcclusion1();
                 OnCameraOcclusion1 = null;

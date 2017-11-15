@@ -27,7 +27,10 @@ public class SlidingUserInterface : InputEnabledUserInterface
 
     public virtual void OnMasterDisable()
     {
-
+        if (State != UIState.DISABLED)
+        {
+            State = UIState.DISABLED;
+        }
     }
 
     protected override void ChangeState(UIState state)

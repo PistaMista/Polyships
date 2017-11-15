@@ -25,6 +25,15 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             case UIState.ENABLING:
                 managedBoard = Battle.main.attacker.board;
                 break;
+            case UIState.DISABLED:
+                if (managedBoard.owner.ships != null)
+                {
+                    for (int i = 0; i < managedBoard.owner.ships.Length; i++)
+                    {
+                        managedBoard.owner.ships[i].gameObject.SetActive(false);
+                    }
+                }
+                break;
         }
 
         base.ChangeState(state);
@@ -313,7 +322,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     protected override void Update()
     {
         base.Update();
-        switch (state)
+        switch (State)
         {
             case UIState.ENABLED:
                 if (tap)

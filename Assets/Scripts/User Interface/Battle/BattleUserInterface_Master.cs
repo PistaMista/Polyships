@@ -46,7 +46,6 @@ public class BattleUserInterface_Master : InputEnabledUserInterface
 
     public static void EnablePrimaryBUI(BattleUIType type)
     {
-        Battle.main.lastOpenUserInterface = type;
         it.primaryBUIs[(int)type].State = UIState.ENABLING;
     }
 

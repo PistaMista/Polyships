@@ -9,13 +9,14 @@ public class PlayerIDBoundSecondaryBUI : SecondaryBattleUserInterface
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
+        if (managedPlayer == null)
+        {
+            managedPlayer = Battle.main.attacker.index == managedPlayerID ? Battle.main.attacker : Battle.main.defender;
+        }
+
         switch (state)
         {
             case UIState.ENABLING:
-                if (managedPlayer == null)
-                {
-                    managedPlayer = Battle.main.attacker.index == managedPlayerID ? Battle.main.attacker : Battle.main.defender;
-                }
                 worldSpaceParent.position = managedPlayer.transform.position;
                 break;
         }

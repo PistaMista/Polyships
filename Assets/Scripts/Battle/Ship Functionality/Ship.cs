@@ -68,6 +68,7 @@ public class Ship : MonoBehaviour
         }
 
         transform.SetParent(owner.transform);
+        gameObject.SetActive(false);
     }
 
     public virtual int[] GetMetadata()

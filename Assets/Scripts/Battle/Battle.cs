@@ -134,7 +134,6 @@ public class Battle : MonoBehaviour
         public BattleStage stage;
         public TurnInfoData[] log;
         public int tutorialStage;
-        public BattleUIType lastOpenUserInterface;
 
         public static implicit operator BattleData(Battle battle)
         {
@@ -149,7 +148,6 @@ public class Battle : MonoBehaviour
                 result.log[i] = battle.log[i];
             }
             result.tutorialStage = battle.tutorialStage;
-            result.lastOpenUserInterface = battle.lastOpenUserInterface;
             return result;
         }
     }
@@ -161,8 +159,6 @@ public class Battle : MonoBehaviour
     public int saveSlot;
     public BattleStage stage;
     public int tutorialStage;
-    public BattleUIType lastOpenUserInterface;
-
     public void SaveToDisk()
     {
         BinaryFormatter formatter = new BinaryFormatter();
@@ -190,7 +186,6 @@ public class Battle : MonoBehaviour
         saveSlot = data.saveSlot;
         stage = data.stage;
         tutorialStage = data.tutorialStage;
-        lastOpenUserInterface = data.lastOpenUserInterface;
     }
 
     public void AssignReferences(BattleData data)
@@ -212,23 +207,26 @@ public class Battle : MonoBehaviour
         attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
         defender.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
 
-        BattleUserInterface_Master.EnablePrimaryBUI(lastOpenUserInterface);
+        BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
     }
 
-    // void OnApplicationPause(bool pauseStatus)
-    // {
-    //     QuitBattle();
-    // }
+    void OnApplicationPause(bool pauseStatus)
+    {
+        //SaveToDisk();
+        QuitBattle();
+    }
 
     void OnApplicationQuit()
     {
-        QuitBattle();
+        SaveToDisk();
     }
 
     public void QuitBattle()
     {
         SaveToDisk();
         BattleUserInterface_Master.ForceResetAllBUIs();
+        MiscellaneousVariables.it.titleInterfaceMaster.State = UIState.ENABLED;
+        Destroy(this.gameObject);
     }
 
     public void NextTurn()
@@ -243,5 +241,7 @@ public class Battle : MonoBehaviour
         {
             log.Insert(0, new TurnInfo(1));
         }
+
+        SaveToDisk();
     }
 }

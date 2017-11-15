@@ -12,7 +12,7 @@ public enum UIState
 
 public class BasicUserInterface : MonoBehaviour
 {
-    public UIState state;
+    private UIState state;
     public RectTransform rect;
     public bool enableOnStart;
     public static Vector2 referenceResolution;

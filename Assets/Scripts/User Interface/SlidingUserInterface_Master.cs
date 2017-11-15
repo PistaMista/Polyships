@@ -40,46 +40,7 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
         }
 
         transitionDistance = Mathf.Abs(rect.anchoredPosition.x - (defaultPosition - selectedPosition) * referenceResolution.x);
-        //ManageSwipeHint();
     }
-
-    // public float maximumCluelessTime;
-    // public float cluelessTime;
-    // public float successRating;
-    // public float backwardSwipeSuccessFalloff = 1;
-    // public bool hintEnabled;
-    // public Image[] leftChevrons;
-    // public Image[] rightChevrons;
-    // public RectTransform chevronParent;
-    // void ManageSwipeHint()
-    // {
-    //     if (transitionDistance < referenceWidth * 0.1f)
-    //     {
-    //         cluelessTime += Time.deltaTime;
-    //         hintEnabled = cluelessTime > maximumCluelessTime * successRating;
-    //     }
-    //     else
-    //     {
-    //         hintEnabled = false;
-    //     }
-
-
-    //     ManageChevrons(rightChevrons, selectedPosition == lastPosition || !hintEnabled);
-    //     ManageChevrons(leftChevrons, selectedPosition == 0 || !hintEnabled);
-    // }
-
-    // void ManageChevrons(Image[] chevrons, bool fade)
-    // {
-    //     float excessTime = cluelessTime - maximumCluelessTime * successRating;
-
-    //     for (int i = 0; i < chevrons.Length; i++)
-    //     {
-    //         Image c = chevrons[i];
-    //         Color color = Color.black;
-    //         color.a = fade ? 0 : (Mathf.Sin(Mathf.Clamp(excessTime * 2.0f, 0.0f, Mathf.Infinity) + i / Mathf.PI) + 1) / 2.0f * Mathf.Clamp01(excessTime * 0.5f);
-    //         c.color = color;
-    //     }
-    // }
 
     protected override void ProcessInput()
     {
@@ -151,6 +112,9 @@ public class SlidingUserInterface_Master : InputEnabledUserInterface
         }
         else
         {
+            selectedPosition = defaultPosition;
+            lockedDirections = new bool[] { false, false };
+            RecalculateChildrenPositions();
             foreach (SlidingUserInterface i in interfaces)
             {
                 i.OnMasterEnable();
