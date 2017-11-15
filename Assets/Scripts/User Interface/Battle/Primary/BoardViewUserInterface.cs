@@ -10,33 +10,28 @@ public class BoardViewUserInterface : PrimaryBattleUserInterface
 
     protected override void ChangeState(UIState state)
     {
+        base.ChangeState(state);
         switch (state)
         {
             case UIState.ENABLING:
                 ResetWorldSpaceParent();
-                FlagRendererSecondaryBUI flagRenderer = flagRendererBridge.GetCurrentlyConnectedBUIOfType<FlagRendererSecondaryBUI>();
+                DeployWorldElements();
 
-                if (flagRenderer.gameObject.activeInHierarchy)
-                {
-                    flagRenderer.OnCameraOcclusion1 += DeployWorldElements;
-                }
-                else
-                {
-                    DeployWorldElements();
-                }
 
                 break;
             case UIState.DISABLING:
                 //flagRenderer.onCameraOcclusion += HideWorldElements;
                 break;
         }
-        base.ChangeState(state);
     }
 
     protected override void ResetWorldSpaceParent()
     {
         base.ResetWorldSpaceParent();
-        worldSpaceParent.transform.position = managedBoard.owner.transform.position;
+        if (managedBoard != null)
+        {
+            worldSpaceParent.transform.position = managedBoard.owner.transform.position;
+        }
         tileParents = null;
     }
 

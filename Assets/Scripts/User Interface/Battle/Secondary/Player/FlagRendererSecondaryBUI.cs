@@ -14,22 +14,6 @@ public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
     public Material flagMaterial;
     public FlagVoxel[,] voxels;
 
-    public delegate void OnCameraOcclusion();
-    OnCameraOcclusion onCameraOcclusion;
-    public OnCameraOcclusion OnCameraOcclusion1
-    {
-        get
-        {
-            return onCameraOcclusion;
-        }
-
-        set
-        {
-            onCameraOcclusion = value;
-            targetHeightModifier = managedPlayer.flagCameraPoint.transform.position.y + 4 * MiscellaneousVariables.it.flagVoxelScale;
-        }
-    }
-
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
@@ -67,16 +51,6 @@ public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
                 v.smoothedPosition = Vector3.SmoothDamp(v.smoothedPosition, targetSmoothedPosition, ref v.velocity, 0.5f + (x + z) / 10.0f);
                 v.voxel.transform.position = v.smoothedPosition + Vector3.forward * (Mathf.Sin((x + Time.time) / 2.0f) - 0.5f) / 10.0f * MiscellaneousVariables.it.flagVoxelScale;
                 voxels[x, z] = v;
-            }
-        }
-
-        if (OnCameraOcclusion1 != null)
-        {
-            FlagVoxel voxel = voxels[voxels.GetLength(0) / 2, voxels.GetLength(1) / 2];
-            if ((State == UIState.DISABLING && voxel.voxel.transform.position.y >= (Camera.main.transform.position.y - voxel.voxel.transform.lossyScale.y)) || (State == UIState.ENABLING && voxel.voxel.transform.position.y <= (Camera.main.transform.position.y - voxel.voxel.transform.lossyScale.y)))
-            {
-                OnCameraOcclusion1();
-                OnCameraOcclusion1 = null;
             }
         }
     }

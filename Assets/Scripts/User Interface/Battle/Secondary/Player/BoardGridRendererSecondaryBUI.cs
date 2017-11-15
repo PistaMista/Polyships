@@ -5,7 +5,7 @@ using UnityEngine;
 public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
 {
     public Material gridMaterial;
-    public FlagRendererSecondaryBUI flagRenderer;
+    public float defaultDisableTime;
 
     protected override void ChangeState(UIState state)
     {
@@ -14,15 +14,13 @@ public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
         {
             case UIState.ENABLING:
                 ResetWorldSpaceParent();
-                if (flagRenderer.gameObject.activeInHierarchy)
-                {
-                    flagRenderer.OnCameraOcclusion1 += AddGrid;
-                }
-                else
-                {
-                    AddGrid();
-                }
-
+                AddGrid();
+                break;
+            case UIState.DISABLING:
+                disableTime = defaultDisableTime;
+                break;
+            case UIState.DISABLED:
+                ResetWorldSpaceParent();
                 break;
         }
     }
@@ -59,5 +57,19 @@ public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
         }
 
         worldSpaceParent.transform.position = managedPlayer.transform.position;
+    }
+
+    float disableTime;
+    protected override void Update()
+    {
+        base.Update();
+        if (State == UIState.DISABLING)
+        {
+            if (disableTime < 0)
+            {
+                State = UIState.DISABLED;
+            }
+            disableTime -= Time.deltaTime;
+        }
     }
 }

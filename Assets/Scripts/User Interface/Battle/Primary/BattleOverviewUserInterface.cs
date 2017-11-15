@@ -17,4 +17,24 @@ public class BattleOverviewUserInterface : PrimaryBattleUserInterface
                 break;
         }
     }
+
+    protected override void Update()
+    {
+        base.Update();
+        if (tap)
+        {
+            Vector3 tapPosition = ConvertToWorldInputPosition(currentInputPosition.screen);
+            bool selectedAttacker = Mathf.Sign(tapPosition.x) == Mathf.Sign(Battle.main.attacker.transform.position.x);
+            if (selectedAttacker)
+            {
+                SwitchToInterface(BattleUIType.ATTACKER_INFO);
+                State = UIState.DISABLED;
+            }
+            else
+            {
+                SwitchToInterface(BattleUIType.ATTACK_VIEW);
+                State = UIState.DISABLED;
+            }
+        }
+    }
 }

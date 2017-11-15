@@ -88,7 +88,7 @@ public class Player : MonoBehaviour
 
         boardCameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
         boardCameraPoint.transform.SetParent(transform);
-        boardCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(new Vector2(board.tiles.GetLength(0), board.tiles.GetLength(1))) * MiscellaneousVariables.it.boardCameraHeightModifier + MiscellaneousVariables.it.boardUIRenderHeight);
+        boardCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(new Vector2(board.tiles.GetLength(0) + 2, board.tiles.GetLength(1) + 2)) * MiscellaneousVariables.it.boardCameraHeightModifier + MiscellaneousVariables.it.boardUIRenderHeight);
         boardCameraPoint.transform.LookAt(transform);
 
         flagCameraPoint = new GameObject("Flag Camera Point").AddComponent<Waypoint>();

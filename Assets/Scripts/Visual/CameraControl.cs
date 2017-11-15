@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CameraControl : MonoBehaviour
 {
-    static Waypoint currentWaypoint;
+    public static Waypoint currentWaypoint;
     static float transitionTime;
     public static float TransitionProgress
     {

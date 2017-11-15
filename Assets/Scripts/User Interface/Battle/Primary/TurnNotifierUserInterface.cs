@@ -22,7 +22,7 @@ public class TurnNotifierUserInterface : PrimaryBattleUserInterface
     protected override void ProcessInput()
     {
         base.ProcessInput();
-        if (beginPress)
+        if (tap)
         {
             if (Battle.main.attacker.ships == null)
             {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AttackerInformationUserInterface : BoardViewUserInterface
+public class AttackerInformationUserInterface : PrimaryBattleUserInterface
 {
     protected override void ChangeState(UIState state)
     {
@@ -14,7 +14,7 @@ public class AttackerInformationUserInterface : BoardViewUserInterface
                 break;
             case UIState.ENABLING:
                 SetInteractable(true);
-                CameraControl.GoToWaypoint(Battle.main.attacker.boardCameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
+                CameraControl.GoToWaypoint(Battle.main.attacker.flagCameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
                 break;
         }
     }

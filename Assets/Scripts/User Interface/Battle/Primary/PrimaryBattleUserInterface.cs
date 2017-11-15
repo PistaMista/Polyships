@@ -13,7 +13,7 @@ public class PrimaryBattleUserInterface : InputEnabledUserInterface
 
     void Awake()
     {
-        ResetWorldSpaceParent();
+        //ResetWorldSpaceParent();
     }
 
     public void SetWorldRendering(bool enabled)

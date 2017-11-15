@@ -213,7 +213,7 @@ public class Battle : MonoBehaviour
     void OnApplicationPause(bool pauseStatus)
     {
         //SaveToDisk();
-        QuitBattle();
+        //QuitBattle();
     }
 
     void OnApplicationQuit()
