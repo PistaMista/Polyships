@@ -21,6 +21,7 @@ public class Ship : MonoBehaviour
         public bool ownedByAttacker;
         public int[,] tiles;
         public int health;
+        public bool concealed;
         public ShipType type;
         public int[] metadata;
 
@@ -37,6 +38,7 @@ public class Ship : MonoBehaviour
             }
 
             result.health = ship.health;
+            result.concealed = ship.concealed;
             result.type = ship.type;
             result.metadata = ship.GetMetadata();
             return result;
@@ -47,6 +49,7 @@ public class Ship : MonoBehaviour
     public Player owner;
     public Tile[] tiles;
     public int health;
+    public bool concealed;
     public ShipType type;
 
     public virtual void Initialize(ShipData data)
@@ -55,6 +58,7 @@ public class Ship : MonoBehaviour
         //owner - REF
         //tiles - REF
         health = data.health;
+        concealed = data.concealed;
         type = data.type;
     }
 
@@ -74,5 +78,34 @@ public class Ship : MonoBehaviour
     public virtual int[] GetMetadata()
     {
         return new int[3];
+    }
+
+    public virtual void OnTurnStart()
+    {
+
+    }
+
+    public virtual void OnTurnEnd()
+    {
+
+    }
+
+    public virtual void OnDestruction()
+    {
+        owner.intactShipCount--;
+    }
+
+    public virtual void OnDamaged(int[] hitTilesIndexes)
+    {
+        health -= hitTilesIndexes.Length;
+        if (health <= 0)
+        {
+            OnDestruction();
+        }
+    }
+
+    public virtual void OnPlacement()
+    {
+
     }
 }

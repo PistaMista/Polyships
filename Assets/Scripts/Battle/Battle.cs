@@ -207,6 +207,7 @@ public class Battle : MonoBehaviour
         attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
         defender.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
 
+        CollectAttackerCapabilities();
         BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
     }
 
@@ -231,17 +232,137 @@ public class Battle : MonoBehaviour
 
     public void NextTurn()
     {
-
-
         Player lastAttacker = attacker;
         attacker = defender;
         defender = lastAttacker;
+
+        lastAttacker.OnTurnEnd();
+        attacker.OnTurnStart();
 
         if (attacker.ships != null)
         {
             log.Insert(0, new TurnInfo(1));
         }
 
+        CollectAttackerCapabilities();
         SaveToDisk();
+    }
+
+    public struct AttackerCapabilities
+    {
+        public int maximumArtilleryCount;
+        public int maximumTorpedoCount;
+    }
+    public AttackerCapabilities attackerCapabilities;
+    void CollectAttackerCapabilities()
+    {
+        AttackerCapabilities gathered = new AttackerCapabilities();
+        for (int i = 0; i < attacker.ships.Length; i++)
+        {
+            Ship ship = attacker.ships[i];
+            if (ship.health > 0)
+            {
+                switch (ship.type)
+                {
+                    case ShipType.BATTLESHIP:
+                        gathered.maximumArtilleryCount += ((Battleship)ship).artilleryBonus;
+                        break;
+                    case ShipType.DESTROYER:
+                        gathered.maximumTorpedoCount += ((Destroyer)ship).torpedoCount;
+                        break;
+                }
+            }
+        }
+
+        attackerCapabilities = gathered;
+    }
+
+    void ExecuteArtilleryAttack(Tile[] targets)
+    {
+        //Check if the number of targets is correct
+        if (targets.Length > attackerCapabilities.maximumArtilleryCount || targets.Length == 0)
+        {
+            Debug.LogWarning("ARTILLERY ATTACK has a possibly invalid number of targets: " + targets.Length + "/" + attackerCapabilities.maximumArtilleryCount);
+        }
+
+        //Determine the final hits to ships and other tiles
+        List<Tile> actualHits = new List<Tile>();
+        Dictionary<Ship, List<int>> shipHits = new Dictionary<Ship, List<int>>();
+        for (int targetIndex = 0; targetIndex < targets.Length; targetIndex++)
+        {
+            Tile target = targets[targetIndex];
+
+            //If there is a concealed ship in this tile displace the shot
+            if (target.containedShip != null)
+            {
+                if (target.containedShip.concealed)
+                {
+                    Tile newTarget = null;
+
+                    for (int x = (target.coordinates.x == 0 ? 0 : -1); x <= ((target.coordinates.x == defender.board.tiles.GetLength(0) - 1) ? 0 : 1); x++)
+                    {
+                        for (int y = (target.coordinates.y == 0 ? 0 : -1); y <= ((target.coordinates.y == defender.board.tiles.GetLength(1) - 1) ? 0 : 1); y++)
+                        {
+                            if (!(y == 0 && x == 0))
+                            {
+                                Tile candidate = defender.board.tiles[x + (int)target.coordinates.x, y + (int)target.coordinates.y];
+                                if (!attacker.hitTiles.Contains(candidate))
+                                {
+                                    newTarget = candidate;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (newTarget == null)
+                    {
+                        continue;
+                    }
+                    target = newTarget;
+                }
+            }
+
+            if (!attacker.hitTiles.Contains(target))
+            {
+                actualHits.Add(target);
+                if (target.containedShip)
+                {
+                    if (!shipHits.ContainsKey(target.containedShip))
+                    {
+                        shipHits.Add(target.containedShip, new List<int>());
+                    }
+
+                    for (int i = 0; i < target.containedShip.tiles.Length; i++)
+                    {
+                        if (target.containedShip.tiles[i] == target)
+                        {
+                            shipHits[target.containedShip].Add(i);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        //Apply the hits
+        log[0].artilleryImpacts.AddRange(actualHits);
+        log[0].damagedTiles.AddRange(actualHits);
+
+        actualHits.ForEach(x => x.hit = true);
+
+        foreach (KeyValuePair<Ship, List<int>> shipHitInfo in shipHits)
+        {
+            log[0].damagedShips.Add(shipHitInfo.Key);
+            shipHitInfo.Key.OnDamaged(shipHitInfo.Value.ToArray());
+            if (shipHitInfo.Key.health <= 0)
+            {
+                log[0].destroyedShips.Add(shipHitInfo.Key);
+            }
+        }
+
+        attacker.hitTiles.AddRange(actualHits);
+
+        NextTurn();
     }
 }

@@ -4,16 +4,16 @@ using UnityEngine;
 
 public class Destroyer : Ship
 {
+    public int torpedoCount;
 
-    // Use this for initialization
-    void Start()
+    public override int[] GetMetadata()
     {
-
+        return new int[] { torpedoCount };
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void Initialize(ShipData data)
     {
-
+        base.Initialize(data);
+        torpedoCount = data.metadata[0];
     }
 }

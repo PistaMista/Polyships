@@ -10,6 +10,8 @@ public class Tile : MonoBehaviour
     {
         public bool ownedByAttacker;
         public int[] coordinates;
+        public bool hit;
+        public int containedShip;
         public static implicit operator TileData(Tile tile)
         {
             TileData result = new TileData();
@@ -22,15 +24,22 @@ public class Tile : MonoBehaviour
     }
     public Player owner;
     public Vector2 coordinates;
+    public bool hit;
+    public Ship containedShip;
 
     public void Initialize(TileData data)
     {
         //owner - REF
         coordinates = new Vector2(data.coordinates[0], data.coordinates[1]);
+        hit = data.hit;
     }
 
     public void AssignReferences(TileData data)
     {
         owner = data.ownedByAttacker ? Battle.main.attacker : Battle.main.defender;
+        if (data.containedShip >= 0)
+        {
+
+        }
     }
 }

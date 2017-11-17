@@ -13,6 +13,8 @@ public class Player : MonoBehaviour
         public bool computerControlled;
         public float[,,] flag;
         public Ship.ShipData[] ships;
+        public int intactShipCount;
+        public int[,] hitTiles;
         public static implicit operator PlayerData(Player player)
         {
             PlayerData result = new PlayerData();
@@ -41,6 +43,16 @@ public class Player : MonoBehaviour
             }
 
 
+            result.intactShipCount = player.intactShipCount;
+            result.hitTiles = new int[player.hitTiles.Count, 2];
+            for (int i = 0; i < player.hitTiles.Count; i++)
+            {
+                Tile tile = player.hitTiles[i];
+                result.hitTiles[i, 0] = (int)tile.coordinates.x;
+                result.hitTiles[i, 1] = (int)tile.coordinates.y;
+            }
+
+
             return result;
         }
     }
@@ -49,6 +61,8 @@ public class Player : MonoBehaviour
     public bool computerControlled;
     public Color[,] flag;
     public Ship[] ships;
+    public int intactShipCount;
+    public List<Tile> hitTiles;
 
 
 
@@ -86,6 +100,10 @@ public class Player : MonoBehaviour
             }
         }
 
+        intactShipCount = data.intactShipCount;
+
+        //hitTiles - REF
+
         boardCameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
         boardCameraPoint.transform.SetParent(transform);
         boardCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(new Vector2(board.tiles.GetLength(0) + 2, board.tiles.GetLength(1) + 2)) * MiscellaneousVariables.it.boardCameraHeightModifier + MiscellaneousVariables.it.boardUIRenderHeight);
@@ -107,6 +125,34 @@ public class Player : MonoBehaviour
             for (int i = 0; i < ships.Length; i++)
             {
                 ships[i].AssignReferences(data.ships[i]);
+            }
+        }
+
+        hitTiles = new List<Tile>();
+        for (int i = 0; i < data.hitTiles.GetLength(0); i++)
+        {
+            hitTiles.Add(board.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
+        }
+    }
+
+    public void OnTurnStart()
+    {
+        if (ships != null)
+        {
+            for (int i = 0; i < ships.Length; i++)
+            {
+                ships[i].OnTurnStart();
+            }
+        }
+    }
+
+    public void OnTurnEnd()
+    {
+        if (ships != null)
+        {
+            for (int i = 0; i < ships.Length; i++)
+            {
+                ships[i].OnTurnEnd();
             }
         }
     }

@@ -4,16 +4,15 @@ using UnityEngine;
 
 public class Battleship : Ship
 {
-
-    // Use this for initialization
-    void Start()
+    public int artilleryBonus;
+    public override int[] GetMetadata()
     {
-
+        return new int[] { artilleryBonus };
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void Initialize(ShipData data)
     {
-
+        base.Initialize(data);
+        artilleryBonus = data.metadata[0];
     }
 }
