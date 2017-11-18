@@ -129,9 +129,12 @@ public class Player : MonoBehaviour
         }
 
         hitTiles = new List<Tile>();
-        for (int i = 0; i < data.hitTiles.GetLength(0); i++)
+        if (data.hitTiles != null)
         {
-            hitTiles.Add(board.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
+            for (int i = 0; i < data.hitTiles.GetLength(0); i++)
+            {
+                hitTiles.Add(board.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
+            }
         }
     }
 

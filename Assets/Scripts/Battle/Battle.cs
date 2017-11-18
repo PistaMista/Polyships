@@ -207,7 +207,11 @@ public class Battle : MonoBehaviour
         attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
         defender.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
 
-        CollectAttackerCapabilities();
+        if (attacker.ships != null)
+        {
+            CollectAttackerCapabilities();
+        }
+
         BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
     }
 
@@ -244,7 +248,10 @@ public class Battle : MonoBehaviour
             log.Insert(0, new TurnInfo(1));
         }
 
-        CollectAttackerCapabilities();
+        if (attacker.ships != null)
+        {
+            CollectAttackerCapabilities();
+        }
         SaveToDisk();
     }
 
