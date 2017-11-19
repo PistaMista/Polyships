@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class AttackViewUserInterface : BoardViewUserInterface
 {
-
-    bool attackConfirmed;
+    public TacticalTargetingBattleUserInterface selectedTargeter;
+    public PrimaryTacticalTargetingBUI activePrimaryTargeter;
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
@@ -19,10 +19,5 @@ public class AttackViewUserInterface : BoardViewUserInterface
                 CameraControl.GoToWaypoint(Battle.main.defender.boardCameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
                 break;
         }
-    }
-
-    public void ConfirmAttack()
-    {
-
     }
 }

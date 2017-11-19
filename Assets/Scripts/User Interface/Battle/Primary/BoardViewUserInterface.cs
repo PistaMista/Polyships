@@ -5,7 +5,6 @@ using UnityEngine;
 public class BoardViewUserInterface : PrimaryBattleUserInterface
 {
     protected Board managedBoard;
-    public PlayerIDtoStatusBridgeSecondaryBUI flagRendererBridge;
     GameObject[,] tileParents;
 
     protected override void ChangeState(UIState state)
