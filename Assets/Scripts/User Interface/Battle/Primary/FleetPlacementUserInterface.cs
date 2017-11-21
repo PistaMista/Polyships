@@ -389,7 +389,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                     }
                 }
 
-                if (pressed)
+                if (pressed && selectedShip != null)
                 {
                     Tile candidateTile = GetTileAtInputPosition();
                     if (candidateTile != null)
