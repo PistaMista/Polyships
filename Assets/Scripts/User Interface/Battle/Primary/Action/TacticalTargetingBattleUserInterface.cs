@@ -5,17 +5,35 @@ using UnityEngine;
 public class TacticalTargetingBattleUserInterface : PrimaryBattleUserInterface
 {
     public bool isPrimary;
+    Player managedAttacker;
     public AttackViewUserInterface attackViewUserInterface;
-    protected ActionToken[] tokens;
-    protected ActionToken selectedToken;
-    public void ResetTokens()
+
+
+    public GameObject tokenPrefab;
+    public GameObject stackPedestal;
+    public Vector3 defaultPedestalPosition;
+    public Vector3 targetPedestalPosition;
+    protected List<ActionToken> placedTokens;
+    protected List<ActionToken> stackTokens;
+    protected ActionToken[] allTokens;
+    protected ActionToken heldToken;
+
+    public void ResetTargeting() //Resets the targeting completely
     {
-        ResetWorldSpaceParent();
-        tokens = null;
+        stackPedestal.SetActive(true);
+        stackPedestal.transform.position = defaultPedestalPosition;
+        for (int i = 0; i < allTokens.Length; i++)
+        {
+            Destroy(allTokens[i].gameObject);
+        }
+        allTokens = null;
+        heldToken = null;
         AddTokens();
+        stackTokens = new List<ActionToken>(allTokens);
+        placedTokens = new List<ActionToken>();
     }
 
-    protected virtual void AddTokens()
+    protected virtual void AddTokens() //Spawns in the tokens
     {
 
     }
@@ -23,22 +41,32 @@ public class TacticalTargetingBattleUserInterface : PrimaryBattleUserInterface
     protected override void Update()
     {
         base.Update();
-        if (attackViewUserInterface.State == UIState.DISABLING)
-        {
-            HideAllTokens();
-        }
-        else
-        {
 
-        }
     }
 
-    protected virtual void HideAllTokens()
+    protected override void ResetWorldSpaceParent() //World space parent is completely negated
     {
-        for (int i = 0; i < tokens.Length; i++)
+
+    }
+
+    protected override void ChangeState(UIState state)
+    {
+        base.ChangeState(state);
+        switch (state)
         {
-            ActionToken token = tokens[i];
-            token.targetPosition.y = -10f;
+            case UIState.ENABLING:
+                if (managedAttacker != Battle.main.attacker) //If the last attacker played his turn reset the targeter
+                {
+                    ResetTargeting();
+                    managedAttacker = Battle.main.attacker;
+                }
+                break;
+        }
+
+        stackPedestal.SetActive(state != UIState.DISABLED);
+        for (int i = 0; i < allTokens.Length; i++)
+        {
+            allTokens[i].gameObject.SetActive(state != UIState.DISABLED);
         }
     }
 }
