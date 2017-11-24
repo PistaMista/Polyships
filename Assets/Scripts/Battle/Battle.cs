@@ -264,6 +264,7 @@ public class Battle : MonoBehaviour
     void CollectAttackerCapabilities()
     {
         AttackerCapabilities gathered = new AttackerCapabilities();
+        gathered.maximumArtilleryCount = 1;
         for (int i = 0; i < attacker.ships.Length; i++)
         {
             Ship ship = attacker.ships[i];

@@ -17,6 +17,7 @@ public class AttackViewUserInterface : BoardViewUserInterface
                 break;
             case UIState.ENABLING:
                 SetInteractable(true);
+                managedBoard = Battle.main.defender.board;
                 CameraControl.GoToWaypoint(Battle.main.defender.boardCameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
 
                 float targeterSpacing = managedBoard.tiles.GetLength(1) / (float)(targeters.Length - 1);

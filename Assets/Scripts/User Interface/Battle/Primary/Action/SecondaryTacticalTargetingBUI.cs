@@ -4,5 +4,9 @@ using UnityEngine;
 
 public class SecondaryTacticalTargetingBUI : TacticalTargetingBattleUserInterface
 {
-
+    protected override void DropHeldToken()
+    {
+        base.DropHeldToken();
+        heldToken = null;
+    }
 }
