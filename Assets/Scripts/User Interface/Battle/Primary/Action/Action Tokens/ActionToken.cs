@@ -25,7 +25,7 @@ public class ActionToken : MonoBehaviour
     }
 
     public float transitionTime;
-    Vector3 velocity;
+    public Vector3 velocity;
     void Update()
     {
         if (onPedestal)

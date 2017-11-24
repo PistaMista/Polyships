@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TacticalTargetingBattleUserInterface : PrimaryBattleUserInterface
+public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
 {
     public bool isPrimary;
     Player managedAttacker;
@@ -127,7 +127,7 @@ public class TacticalTargetingBattleUserInterface : PrimaryBattleUserInterface
         }
         else
         {
-            if (beginPress && attackViewUserInterface.selectedTargeter == null)
+            if (beginPress && (attackViewUserInterface.selectedTargeter == null || attackViewUserInterface.selectedTargeter == this))
             {
                 CheckTokensForPickup();
             }
@@ -173,6 +173,7 @@ public class TacticalTargetingBattleUserInterface : PrimaryBattleUserInterface
         switch (state)
         {
             case UIState.ENABLING:
+                managedBoard = Battle.main.defender.board;
                 if (managedAttacker != Battle.main.attacker) //If the last attacker played his turn reset the targeter
                 {
                     ResetTargeting();

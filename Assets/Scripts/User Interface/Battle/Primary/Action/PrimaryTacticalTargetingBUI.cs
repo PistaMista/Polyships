@@ -22,7 +22,7 @@ public class PrimaryTacticalTargetingBUI : TacticalTargetingBattleUserInterface
 
     protected override void CheckTokensForPickup()
     {
-        if (attackViewUserInterface.activePrimaryTargeter == null)
+        if (attackViewUserInterface.activePrimaryTargeter == null || attackViewUserInterface.activePrimaryTargeter == this)
         {
             base.CheckTokensForPickup();
         }
