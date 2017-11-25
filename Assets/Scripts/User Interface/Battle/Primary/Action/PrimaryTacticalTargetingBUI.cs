@@ -20,11 +20,13 @@ public class PrimaryTacticalTargetingBUI : TacticalTargetingBattleUserInterface
         heldToken = null;
     }
 
-    protected override void CheckTokensForPickup()
+    protected override bool IsSelectable()
     {
-        if (attackViewUserInterface.activePrimaryTargeter == null || attackViewUserInterface.activePrimaryTargeter == this)
-        {
-            base.CheckTokensForPickup();
-        }
+        return base.IsSelectable() && (attackViewUserInterface.activePrimaryTargeter == null || attackViewUserInterface.activePrimaryTargeter == this);
+    }
+
+    public virtual void ConfirmTargeting()
+    {
+
     }
 }

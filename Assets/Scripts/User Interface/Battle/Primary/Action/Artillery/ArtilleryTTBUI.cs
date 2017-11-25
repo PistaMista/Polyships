@@ -21,10 +21,10 @@ public class ArtilleryTTBUI : PrimaryTacticalTargetingBUI
         else
         {
             Tile candidateTargetTile = GetTileAtInputPosition();
-            token.value = candidateTargetTile;
 
-            if (candidateTargetTile != null)
+            if (candidateTargetTile != null && !placedTokens.Find(x => x.value && x.value == candidateTargetTile))
             {
+                token.value = candidateTargetTile;
                 token.targetPosition = candidateTargetTile.transform.position + MiscellaneousVariables.it.boardUIRenderHeight * Vector3.up;
             }
         }
@@ -32,7 +32,21 @@ public class ArtilleryTTBUI : PrimaryTacticalTargetingBUI
 
     protected override Vector3 CalculateHeldTokenTargetPosition(Vector3 inputPosition)
     {
-        inputPosition.y = heldToken.transform.position.y;
+        Vector3 localBoardPosition = inputPosition - managedBoard.transform.position;
+        bool hoveringOverBoard = Mathf.Abs(localBoardPosition.x) < managedBoard.tiles.GetLength(0) / 2.0f && Mathf.Abs(localBoardPosition.z) < managedBoard.tiles.GetLength(1) / 2.0f;
+
+        inputPosition.y = hoveringOverBoard ? MiscellaneousVariables.it.boardUIRenderHeight : stackPedestal.transform.TransformPoint(heldToken.defaultPositionRelativeToPedestal).y;
         return inputPosition;
+    }
+
+    public override void ConfirmTargeting()
+    {
+        Tile[] targets = new Tile[placedTokens.Count];
+        for (int i = 0; i < targets.Length; i++)
+        {
+            targets[i] = (Tile)placedTokens[i].value;
+        }
+
+        Battle.main.ExecuteArtilleryAttack(targets);
     }
 }

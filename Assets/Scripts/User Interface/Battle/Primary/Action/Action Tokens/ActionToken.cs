@@ -34,7 +34,8 @@ public class ActionToken : MonoBehaviour
         }
         else
         {
-            transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, transitionTime);
+            Vector3 hideModifier = owner.State == UIState.DISABLING ? -Vector3.up * (targetPosition.y + 10f) : Vector3.zero;
+            transform.position = Vector3.SmoothDamp(transform.position, targetPosition + hideModifier, ref velocity, transitionTime);
         }
     }
 }

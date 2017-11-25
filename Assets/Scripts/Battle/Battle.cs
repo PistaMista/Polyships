@@ -285,7 +285,7 @@ public class Battle : MonoBehaviour
         attackerCapabilities = gathered;
     }
 
-    void ExecuteArtilleryAttack(Tile[] targets)
+    public void ExecuteArtilleryAttack(Tile[] targets)
     {
         //Check if the number of targets is correct
         if (targets.Length > attackerCapabilities.maximumArtilleryCount || targets.Length == 0)

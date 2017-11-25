@@ -34,23 +34,29 @@ public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
                 voxels = null;
                 break;
         }
+
+        referenceSmoothedPosition = managedPlayer.transform.position - new Vector3(voxels.GetLength(0) / 2.0f, 0, voxels.GetLength(1) / 2.0f) * MiscellaneousVariables.it.flagVoxelScale + Vector3.up * targetHeightModifier;
     }
 
     float targetHeightModifier;
+    Vector3 referenceSmoothedPosition;
     protected override void Update()
     {
         base.Update();
-        Vector3 referenceSmoothedPosition = managedPlayer.transform.position - new Vector3(voxels.GetLength(0) / 2.0f, 0, voxels.GetLength(1) / 2.0f) * MiscellaneousVariables.it.flagVoxelScale + Vector3.up * targetHeightModifier;
         for (int x = 0; x < voxels.GetLength(0); x++)
         {
             for (int z = 0; z < voxels.GetLength(1); z++)
             {
-                Vector3 targetSmoothedPosition = referenceSmoothedPosition + new Vector3(x + 0.5f, 0, z + 0.5f) * MiscellaneousVariables.it.flagVoxelScale;
-
                 FlagVoxel v = voxels[x, z];
-                v.smoothedPosition = Vector3.SmoothDamp(v.smoothedPosition, targetSmoothedPosition, ref v.velocity, 0.5f + (x + z) / 10.0f);
-                v.voxel.transform.position = v.smoothedPosition + Vector3.forward * (Mathf.Sin((x + Time.time) / 2.0f) - 0.5f) / 10.0f * MiscellaneousVariables.it.flagVoxelScale;
-                voxels[x, z] = v;
+                if (v.voxel.transform.position.y > referenceSmoothedPosition.y * 0.8f || targetHeightModifier >= -1)
+                {
+                    Vector3 targetSmoothedPosition = referenceSmoothedPosition + new Vector3(x + 0.5f, 0, z + 0.5f) * MiscellaneousVariables.it.flagVoxelScale;
+
+
+                    v.smoothedPosition = Vector3.SmoothDamp(v.smoothedPosition, targetSmoothedPosition, ref v.velocity, 0.5f + (x + z) / 10.0f);
+                    v.voxel.transform.position = v.smoothedPosition + Vector3.forward * (Mathf.Sin((x + Time.time) / 2.0f) - 0.5f) / 10.0f * MiscellaneousVariables.it.flagVoxelScale;
+                    voxels[x, z] = v;
+                }
             }
         }
     }

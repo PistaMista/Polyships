@@ -7,6 +7,7 @@ public class AttackViewUserInterface : BoardViewUserInterface
     public TacticalTargetingBattleUserInterface selectedTargeter;
     public PrimaryTacticalTargetingBUI activePrimaryTargeter;
     public TacticalTargetingBattleUserInterface[] targeters;
+    public int referenceBoardWidthForPedestalScaling;
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);

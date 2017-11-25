@@ -12,10 +12,13 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
     public GameObject tokenPrefab;
     public GameObject stackPedestal;
     public float stackPedestalHeight;
+    public float stackPedestalWidth;
+    public float stackPedestalTransitionTime;
     public float stackMaximumDeviation;
     public Vector3 defaultPedestalPosition;
+    public Vector3 scaledPedestalPosition;
     public Vector3 stowedPedestalPosition;
-    public Vector3 targetPedestalPosition;
+    public Vector3 pedestalVelocity;
     protected List<ActionToken> placedTokens;
     protected List<ActionToken> stackTokens;
     protected ActionToken[] allTokens;
@@ -24,7 +27,11 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
     public void ResetTargeting() //Resets the targeting completely
     {
         stackPedestal.SetActive(true);
-        stackPedestal.transform.position = defaultPedestalPosition;
+
+        Vector3 pedestalDirectional = defaultPedestalPosition - managedBoard.owner.boardCameraPoint.transform.position;
+        scaledPedestalPosition = managedBoard.owner.boardCameraPoint.transform.position + pedestalDirectional.normalized * pedestalDirectional.magnitude / (managedBoard.tiles.GetLength(0) / (float)attackViewUserInterface.referenceBoardWidthForPedestalScaling);
+        stowedPedestalPosition = scaledPedestalPosition + Vector3.right * managedBoard.tiles.GetLength(0) / 2.0f;
+        stackPedestal.transform.position = scaledPedestalPosition;
         if (allTokens != null)
         {
             for (int i = 0; i < allTokens.Length; i++)
@@ -44,7 +51,7 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
         int tokenCount = GetInitialTokenCount();
         allTokens = new ActionToken[tokenCount];
 
-        Vector3 startingPosition = defaultPedestalPosition + Vector3.up * (stackPedestalHeight / 2.0f + tokenPrefab.GetComponent<ActionToken>().stackHeight / 2.0f);
+        Vector3 startingPosition = scaledPedestalPosition + Vector3.up * (stackPedestalHeight / 2.0f + tokenPrefab.GetComponent<ActionToken>().stackHeight / 2.0f);
         for (int i = 0; i < tokenCount; i++)
         {
             ActionToken token = Instantiate(tokenPrefab).GetComponent<ActionToken>();
@@ -90,6 +97,7 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
         {
             stackTokens.Add(heldToken);
             Debug.Log("Dropped token onto pedestal");
+            heldToken.defaultPositionRelativeToPedestal.y = (heldToken.stackHeight * stackTokens.Count + stackPedestalHeight / 2.0f - heldToken.stackHeight / 2.0f) * stackPedestal.transform.lossyScale.y;
             heldToken.OnPedestal = true;
         }
         else
@@ -115,29 +123,52 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
     protected override void Update()
     {
         base.Update();
-        if (heldToken)
+        if (State == UIState.ENABLING)
         {
-            Vector3 pressedPosition = ConvertToWorldInputPosition(currentInputPosition.screen);
-            heldToken.targetPosition = CalculateHeldTokenTargetPosition(pressedPosition);
-
-            if (endPress)
+            bool selectable = IsSelectable();
+            if (heldToken)
             {
-                DropHeldToken();
+                Vector3 pressedPosition = ConvertToWorldInputPosition(currentInputPosition.screen);
+                heldToken.targetPosition = CalculateHeldTokenTargetPosition(pressedPosition);
+
+                if (endPress)
+                {
+                    DropHeldToken();
+                }
+            }
+            else
+            {
+                if (beginPress && selectable)
+                {
+                    CheckTokensForPickup();
+                }
+            }
+
+            if (selectable)
+            {
+                stackPedestal.transform.position = Vector3.SmoothDamp(stackPedestal.transform.position, scaledPedestalPosition, ref pedestalVelocity, stackPedestalTransitionTime);
+            }
+            else
+            {
+                stackPedestal.transform.position = Vector3.SmoothDamp(stackPedestal.transform.position, stowedPedestalPosition, ref pedestalVelocity, stackPedestalTransitionTime);
             }
         }
         else
         {
-            if (beginPress && (attackViewUserInterface.selectedTargeter == null || attackViewUserInterface.selectedTargeter == this))
-            {
-                CheckTokensForPickup();
-            }
+            Vector3 hideModifier = -Vector3.up * (scaledPedestalPosition.y + 10f);
+            stackPedestal.transform.position = Vector3.SmoothDamp(stackPedestal.transform.position, scaledPedestalPosition + hideModifier, ref pedestalVelocity, stackPedestalTransitionTime);
         }
     }
 
-    protected virtual void CheckTokensForPickup()
+    protected virtual bool IsSelectable()
+    {
+        return (attackViewUserInterface.selectedTargeter == null || attackViewUserInterface.selectedTargeter == this) && State == UIState.ENABLING;
+    }
+
+    protected void CheckTokensForPickup()
     {
         Vector3 pressedPosition = ConvertToWorldInputPosition(currentInputPosition.screen);
-        if (Vector3.Distance(pressedPosition, defaultPedestalPosition) < 3.0f)
+        if (Vector3.Distance(pressedPosition, defaultPedestalPosition) < 3.0f && stackTokens.Count > 0)
         {
             PickupToken(stackTokens[stackTokens.Count - 1]);
         }
@@ -176,8 +207,8 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
                 managedBoard = Battle.main.defender.board;
                 if (managedAttacker != Battle.main.attacker) //If the last attacker played his turn reset the targeter
                 {
-                    ResetTargeting();
                     managedAttacker = Battle.main.attacker;
+                    ResetTargeting();
                 }
                 break;
         }
