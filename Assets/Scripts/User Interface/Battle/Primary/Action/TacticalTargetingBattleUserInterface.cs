@@ -31,7 +31,7 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
         Vector3 pedestalDirectional = defaultPedestalPosition - managedBoard.owner.boardCameraPoint.transform.position;
         scaledPedestalPosition = managedBoard.owner.boardCameraPoint.transform.position + pedestalDirectional.normalized * pedestalDirectional.magnitude / (managedBoard.tiles.GetLength(0) / (float)attackViewUserInterface.referenceBoardWidthForPedestalScaling);
         stowedPedestalPosition = scaledPedestalPosition + Vector3.right * managedBoard.tiles.GetLength(0) / 2.0f;
-        stackPedestal.transform.position = scaledPedestalPosition;
+        stackPedestal.transform.position = defaultPedestalPosition;
 
         if (allTokens != null)
         {
@@ -210,6 +210,8 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
                     managedAttacker = Battle.main.attacker;
                     ResetTargeting();
                 }
+
+                stackPedestal.transform.position = IsSelectable() ? defaultPedestalPosition : stowedPedestalPosition;
                 break;
         }
 

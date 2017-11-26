@@ -44,7 +44,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         base.DeployWorldElements();
 
         Vector3 finalPosition = Battle.main.attacker.boardCameraPoint.transform.position + Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) * cameraWaypointOffset;
-        finalPosition.y = CameraControl.CalculateCameraWaypointHeight(new Vector2((Battle.main.attacker.board.tiles.GetLength(0)) * (1 + cameraWaypointOffset * 2.0f) + 3, Battle.main.attacker.board.tiles.GetLength(1)));
+        finalPosition.y = CameraControl.CalculateCameraWaypointHeight(new Vector2((Battle.main.attacker.board.tiles.GetLength(0)) * (1 + cameraWaypointOffset * 2.0f) + 3, Battle.main.attacker.board.tiles.GetLength(1) + 3));
         cameraWaypoint.transform.position = finalPosition;
         cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
         CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);

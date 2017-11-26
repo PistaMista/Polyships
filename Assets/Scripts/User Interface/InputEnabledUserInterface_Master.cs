@@ -12,7 +12,6 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
     protected override void ProcessInput()
     {
         Shared();
-        base.ProcessInput();
 
         if (dragging)
         {
@@ -78,7 +77,7 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
     {
         pressed = Input.GetMouseButton(0);
         currentInputPosition.screen = Input.mousePosition;
-        
+
 
         beginPress = !lastState && pressed;
         endPress = lastState && !pressed;
@@ -88,9 +87,9 @@ public class InputEnabledUserInterface_Master : InputEnabledUserInterface
         {
             initialInputPosition.screen = currentInputPosition.screen;
         }
-        
-        
-        
+
+
+
 
         lastState = pressed;
     }
