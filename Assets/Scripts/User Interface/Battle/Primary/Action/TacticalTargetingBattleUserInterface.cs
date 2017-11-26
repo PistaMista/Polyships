@@ -19,8 +19,8 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
     public Vector3 scaledPedestalPosition;
     public Vector3 stowedPedestalPosition;
     public Vector3 pedestalVelocity;
-    protected List<ActionToken> placedTokens;
-    protected List<ActionToken> stackTokens;
+    public List<ActionToken> placedTokens;
+    public List<ActionToken> stackTokens;
     protected ActionToken[] allTokens;
     protected ActionToken heldToken;
 
@@ -32,6 +32,7 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
         scaledPedestalPosition = managedBoard.owner.boardCameraPoint.transform.position + pedestalDirectional.normalized * pedestalDirectional.magnitude / (managedBoard.tiles.GetLength(0) / (float)attackViewUserInterface.referenceBoardWidthForPedestalScaling);
         stowedPedestalPosition = scaledPedestalPosition + Vector3.right * managedBoard.tiles.GetLength(0) / 2.0f;
         stackPedestal.transform.position = scaledPedestalPosition;
+
         if (allTokens != null)
         {
             for (int i = 0; i < allTokens.Length; i++)
@@ -42,27 +43,25 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
         allTokens = null;
         heldToken = null;
         AddTokens();
-        stackTokens = new List<ActionToken>(allTokens);
-        placedTokens = new List<ActionToken>();
     }
 
     protected void AddTokens() //Spawns in the tokens
     {
         int tokenCount = GetInitialTokenCount();
-        allTokens = new ActionToken[tokenCount];
 
-        Vector3 startingPosition = scaledPedestalPosition + Vector3.up * (stackPedestalHeight / 2.0f + tokenPrefab.GetComponent<ActionToken>().stackHeight / 2.0f);
+        allTokens = new ActionToken[tokenCount];
+        stackTokens = new List<ActionToken>();
+        placedTokens = new List<ActionToken>();
+
         for (int i = 0; i < tokenCount; i++)
         {
             ActionToken token = Instantiate(tokenPrefab).GetComponent<ActionToken>();
             token.owner = this;
-            token.OnPedestal = true;
 
-
-            Vector3 globalPosition = startingPosition + Vector3.up * token.stackHeight * i + new Vector3(Random.Range(-stackMaximumDeviation, stackMaximumDeviation), 0, Random.Range(-stackMaximumDeviation, stackMaximumDeviation));
-            token.defaultPositionRelativeToPedestal = stackPedestal.transform.InverseTransformPoint(globalPosition);
-            token.transform.localPosition = token.defaultPositionRelativeToPedestal;
             allTokens[i] = token;
+            stackTokens.Add(token);
+            token.OnPedestal = true;
+            token.transform.localPosition = token.defaultPositionRelativeToPedestal;
         }
     }
 
@@ -112,7 +111,8 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
 
     protected virtual Vector3 CalculateHeldTokenTargetPosition(Vector3 inputPosition)
     {
-        return inputPosition;
+        Vector3 directional = inputPosition - managedBoard.owner.boardCameraPoint.transform.position;
+        return directional / directional.y * (stackPedestal.transform.TransformPoint(heldToken.defaultPositionRelativeToPedestal).y - managedBoard.owner.boardCameraPoint.transform.position.y) + managedBoard.owner.boardCameraPoint.transform.position;
     }
 
     protected virtual void CalculateTokenValue(ActionToken token)

@@ -16,11 +16,22 @@ public class ActionToken : MonoBehaviour
         {
             return onPedestal;
         }
-
         set
         {
-            onPedestal = value;
-            transform.SetParent(onPedestal ? owner.stackPedestal.transform : owner.transform);
+            if (value != onPedestal)
+            {
+                transform.SetParent(value ? owner.stackPedestal.transform : owner.transform);
+                velocity = value ? owner.stackPedestal.transform.InverseTransformDirection(velocity) : owner.stackPedestal.transform.TransformDirection(velocity);
+
+                if (value)
+                {
+                    Vector3 stackStart = Vector3.up * (owner.stackPedestalHeight / 2.0f - stackHeight / 2.0f) * owner.stackPedestal.transform.lossyScale.y;
+                    Vector3 stackDeviation = Vector3.Scale(new Vector3(Random.Range(-1.0f, 1.0f), 0, Random.Range(-1.0f, 1.0f)).normalized * Random.Range(owner.stackMaximumDeviation * 0.2f, owner.stackMaximumDeviation), owner.stackPedestal.transform.lossyScale);
+                    defaultPositionRelativeToPedestal = stackStart + stackDeviation + Vector3.up * stackHeight * owner.stackTokens.Count * owner.stackPedestal.transform.lossyScale.y;
+                }
+
+                onPedestal = value;
+            }
         }
     }
 

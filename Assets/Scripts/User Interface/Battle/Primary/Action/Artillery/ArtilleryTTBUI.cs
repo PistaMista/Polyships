@@ -35,8 +35,16 @@ public class ArtilleryTTBUI : PrimaryTacticalTargetingBUI
         Vector3 localBoardPosition = inputPosition - managedBoard.transform.position;
         bool hoveringOverBoard = Mathf.Abs(localBoardPosition.x) < managedBoard.tiles.GetLength(0) / 2.0f && Mathf.Abs(localBoardPosition.z) < managedBoard.tiles.GetLength(1) / 2.0f;
 
-        inputPosition.y = hoveringOverBoard ? MiscellaneousVariables.it.boardUIRenderHeight : stackPedestal.transform.TransformPoint(heldToken.defaultPositionRelativeToPedestal).y;
-        return inputPosition;
+        if (hoveringOverBoard)
+        {
+            inputPosition.y = hoveringOverBoard ? MiscellaneousVariables.it.boardUIRenderHeight : stackPedestal.transform.TransformPoint(heldToken.defaultPositionRelativeToPedestal).y;
+            return inputPosition;
+        }
+        else
+        {
+            return base.CalculateHeldTokenTargetPosition(inputPosition);
+        }
+
     }
 
     public override void ConfirmTargeting()
