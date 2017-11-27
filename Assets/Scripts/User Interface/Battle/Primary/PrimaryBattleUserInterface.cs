@@ -18,7 +18,11 @@ public class PrimaryBattleUserInterface : InputEnabledUserInterface
 
     public void SetWorldRendering(bool enabled)
     {
-        worldSpaceParent.gameObject.SetActive(enabled);
+        if (worldSpaceParent != null)
+        {
+            worldSpaceParent.gameObject.SetActive(enabled);
+        }
+
         for (int i = 0; i < secondaries.Length; i++)
         {
             secondaries[i].SetWorldRendering(enabled);
@@ -31,8 +35,8 @@ public class PrimaryBattleUserInterface : InputEnabledUserInterface
         {
             Destroy(worldSpaceParent.gameObject);
         }
+
         worldSpaceParent = new GameObject("World Space Parent").transform;
-        worldSpaceParent.SetParent(transform);
     }
 
     public void Tutorial()
@@ -87,6 +91,10 @@ public class PrimaryBattleUserInterface : InputEnabledUserInterface
             {
                 secondaries[i].State = state;
             }
+        }
+        if (worldSpaceParent != null)
+        {
+            worldSpaceParent.gameObject.SetActive(State != UIState.DISABLED);
         }
     }
 

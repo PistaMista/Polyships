@@ -211,7 +211,7 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
                     ResetTargeting();
                 }
 
-                stackPedestal.transform.position = IsSelectable() ? defaultPedestalPosition : stowedPedestalPosition;
+                stackPedestal.transform.position = scaledPedestalPosition - Vector3.up * (scaledPedestalPosition.y + 10f);
                 break;
         }
 

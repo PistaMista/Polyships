@@ -25,9 +25,9 @@ public class ActionToken : MonoBehaviour
 
                 if (value)
                 {
-                    Vector3 stackStart = Vector3.up * (owner.stackPedestalHeight / 2.0f - stackHeight / 2.0f) * owner.stackPedestal.transform.lossyScale.y;
-                    Vector3 stackDeviation = Vector3.Scale(new Vector3(Random.Range(-1.0f, 1.0f), 0, Random.Range(-1.0f, 1.0f)).normalized * Random.Range(owner.stackMaximumDeviation * 0.2f, owner.stackMaximumDeviation), owner.stackPedestal.transform.lossyScale);
-                    defaultPositionRelativeToPedestal = stackStart + stackDeviation + Vector3.up * stackHeight * owner.stackTokens.Count * owner.stackPedestal.transform.lossyScale.y;
+                    Vector3 stackStart = Vector3.up * (owner.stackPedestalHeight / 2.0f - stackHeight / 2.0f);
+                    Vector3 stackDeviation = new Vector3(Random.Range(-1.0f, 1.0f), 0, Random.Range(-1.0f, 1.0f)).normalized * Random.Range(owner.stackMaximumDeviation * 0.2f, owner.stackMaximumDeviation);
+                    defaultPositionRelativeToPedestal = owner.stackPedestal.transform.InverseTransformDirection(stackStart + stackDeviation + Vector3.up * stackHeight * owner.stackTokens.Count);
                 }
 
                 onPedestal = value;

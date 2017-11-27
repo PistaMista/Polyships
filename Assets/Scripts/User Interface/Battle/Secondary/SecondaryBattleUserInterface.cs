@@ -23,7 +23,6 @@ public class SecondaryBattleUserInterface : BasicUserInterface
             Destroy(worldSpaceParent.gameObject);
         }
         worldSpaceParent = new GameObject("World Space Parent").transform;
-        worldSpaceParent.SetParent(transform);
     }
 
     protected override void Start()
