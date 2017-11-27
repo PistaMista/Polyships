@@ -4,18 +4,16 @@ using UnityEngine;
 
 public class PrimaryTacticalTargetingBUI : TacticalTargetingBattleUserInterface
 {
-    protected override void PickupToken(ActionToken token)
-    {
-        base.PickupToken(token);
-        attackViewUserInterface.activePrimaryTargeter = this;
-    }
-
     protected override void DropHeldToken()
     {
         base.DropHeldToken();
         if (heldToken.value == null && placedTokens.Count == 0)
         {
             attackViewUserInterface.activePrimaryTargeter = null;
+        }
+        else
+        {
+            attackViewUserInterface.activePrimaryTargeter = this;
         }
         heldToken = null;
     }
@@ -27,6 +25,8 @@ public class PrimaryTacticalTargetingBUI : TacticalTargetingBattleUserInterface
 
     public virtual void ConfirmTargeting()
     {
-
+        attackViewUserInterface.activePrimaryTargeter = null;
+        attackViewUserInterface.State = UIState.DISABLING;
+        SwitchToInterface(BattleUIType.CINEMATIC_VIEW);
     }
 }

@@ -56,5 +56,6 @@ public class ArtilleryTTBUI : PrimaryTacticalTargetingBUI
         }
 
         Battle.main.ExecuteArtilleryAttack(targets);
+        base.ConfirmTargeting();
     }
 }

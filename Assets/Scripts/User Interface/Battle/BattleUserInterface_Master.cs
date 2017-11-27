@@ -10,7 +10,8 @@ public enum BattleUIType
     BATTLE_OVERVIEW,
     ATTACK_VIEW,
     ATTACKER_INFO,
-    DAMAGE_REPORT
+    DAMAGE_REPORT,
+    CINEMATIC_VIEW
 }
 public class BattleUserInterface_Master : InputEnabledUserInterface
 {

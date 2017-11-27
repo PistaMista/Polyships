@@ -53,7 +53,7 @@ public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
                     Vector3 targetSmoothedPosition = referenceSmoothedPosition + new Vector3(x + 0.5f, 0, z + 0.5f) * MiscellaneousVariables.it.flagVoxelScale;
 
 
-                    v.smoothedPosition = Vector3.SmoothDamp(v.smoothedPosition, targetSmoothedPosition, ref v.velocity, 0.5f + (x + z) / 10.0f);
+                    v.smoothedPosition = Vector3.SmoothDamp(v.smoothedPosition, targetSmoothedPosition, ref v.velocity, 0.1f + (x + z) / 20.0f);
                     v.voxel.transform.position = v.smoothedPosition + Vector3.forward * (Mathf.Sin((x + Time.time) / 2.0f) - 0.5f) / 10.0f * MiscellaneousVariables.it.flagVoxelScale;
                     voxels[x, z] = v;
                 }
