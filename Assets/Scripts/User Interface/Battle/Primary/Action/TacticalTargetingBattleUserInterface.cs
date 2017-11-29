@@ -193,11 +193,6 @@ public class TacticalTargetingBattleUserInterface : BoardViewUserInterface
         }
     }
 
-    protected override void ResetWorldSpaceParent() //World space parent is completely negated
-    {
-
-    }
-
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);

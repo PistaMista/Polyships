@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TurnNotifierUserInterface : PrimaryBattleUserInterface
+public class TurnNotifierUserInterface : BattleUserInterface
 {
     protected override void ChangeState(UIState state)
     {
@@ -26,11 +26,11 @@ public class TurnNotifierUserInterface : PrimaryBattleUserInterface
         {
             if (Battle.main.attacker.ships == null)
             {
-                SwitchToInterface(BattleUIType.FLEET_PLACEMENT);
+                BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.FLEET_PLACEMENT);
             }
             else
             {
-                SwitchToInterface(BattleUIType.BATTLE_OVERVIEW);
+                BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.BATTLE_OVERVIEW);
             }
         }
     }

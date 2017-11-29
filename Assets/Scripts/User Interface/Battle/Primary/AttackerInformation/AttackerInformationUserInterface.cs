@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AttackerInformationUserInterface : PrimaryBattleUserInterface
+public class AttackerInformationUserInterface : BattleUserInterface
 {
     protected override void ChangeState(UIState state)
     {

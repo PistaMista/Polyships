@@ -16,8 +16,8 @@ public enum BattleUIType
 public class BattleUserInterface_Master : InputEnabledUserInterface
 {
     static BattleUserInterface_Master it;
-    public PrimaryBattleUserInterface[] primaryBUIs;
-    public SecondaryBattleUserInterface[] secondaryBUIs;
+    public BattleUserInterface[] primaryBUIs;
+    public BattleUserInterface[] secondaryBUIs;
 
     void Awake()
     {
@@ -28,7 +28,7 @@ public class BattleUserInterface_Master : InputEnabledUserInterface
     {
         for (int i = 0; i < it.primaryBUIs.Length; i++)
         {
-            PrimaryBattleUserInterface x = it.primaryBUIs[i];
+            BattleUserInterface x = it.primaryBUIs[i];
             if (x.State != UIState.DISABLED)
             {
                 x.State = UIState.DISABLED;
@@ -37,7 +37,7 @@ public class BattleUserInterface_Master : InputEnabledUserInterface
 
         for (int i = 0; i < it.secondaryBUIs.Length; i++)
         {
-            SecondaryBattleUserInterface x = it.secondaryBUIs[i];
+            BattleUserInterface x = it.secondaryBUIs[i];
             if (x.State != UIState.DISABLED)
             {
                 x.State = UIState.DISABLED;

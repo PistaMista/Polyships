@@ -30,7 +30,6 @@ public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
                 targetHeightModifier = -4.0f * MiscellaneousVariables.it.flagVoxelScale;
                 break;
             case UIState.DISABLED:
-                ResetWorldSpaceParent();
                 voxels = null;
                 break;
         }
@@ -68,8 +67,7 @@ public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
         {
             for (int z = 0; z < voxels.GetLength(1); z++)
             {
-                GameObject voxel = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                voxel.transform.SetParent(worldSpaceParent);
+                GameObject voxel = CreateDynamicAgent(0).gameObject;
                 voxel.transform.localScale = Vector3.one * MiscellaneousVariables.it.flagVoxelScale;
 
                 Renderer rend = voxel.GetComponent<Renderer>();

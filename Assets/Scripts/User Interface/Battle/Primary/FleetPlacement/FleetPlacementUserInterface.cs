@@ -37,34 +37,34 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         }
 
         base.ChangeState(state);
-    }
 
-    protected override void DeployWorldElements()
-    {
-        base.DeployWorldElements();
+        switch (state)
+        {
+            case UIState.ENABLING:
+                Vector3 finalPosition = Battle.main.attacker.boardCameraPoint.transform.position + Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) * cameraWaypointOffset;
+                finalPosition.y = CameraControl.CalculateCameraWaypointHeight(new Vector2((Battle.main.attacker.board.tiles.GetLength(0)) * (1 + cameraWaypointOffset * 2.0f) + 3, Battle.main.attacker.board.tiles.GetLength(1) + 3));
+                cameraWaypoint.transform.position = finalPosition;
+                cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
+                CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
 
-        Vector3 finalPosition = Battle.main.attacker.boardCameraPoint.transform.position + Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) * cameraWaypointOffset;
-        finalPosition.y = CameraControl.CalculateCameraWaypointHeight(new Vector2((Battle.main.attacker.board.tiles.GetLength(0)) * (1 + cameraWaypointOffset * 2.0f) + 3, Battle.main.attacker.board.tiles.GetLength(1) + 3));
-        cameraWaypoint.transform.position = finalPosition;
-        cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
-        CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
+                notplacedShips = new List<Ship>();
+                placedShips = new List<Ship>();
+                allShips = new Dictionary<Ship, ShipInfo>();
 
-        notplacedShips = new List<Ship>();
-        placedShips = new List<Ship>();
-        allShips = new Dictionary<Ship, ShipInfo>();
+                selectedTiles = new List<Tile>();
+                validTiles = new List<Tile>();
+                invalidTiles = new List<Tile>();
+                occupiedTiles = new List<Tile>();
 
-        selectedTiles = new List<Tile>();
-        validTiles = new List<Tile>();
-        invalidTiles = new List<Tile>();
-        occupiedTiles = new List<Tile>();
-
-        ResetWorldSpaceParent();
-        MakeShipDrawer();
+                DestroyDynamicAgents();
+                MakeShipDrawer();
 
 
 
 
-        ChangeState(UIState.ENABLED);
+                ChangeState(UIState.ENABLED);
+                break;
+        }
     }
 
     public float shipAnimationTravelTime;
@@ -314,7 +314,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
         ChangeState(UIState.DISABLING);
         Battle.main.NextTurn();
-        SwitchToInterface(BattleUIType.TURN_NOTIFIER);
+        BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
     }
 
 
@@ -512,9 +512,10 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     GameObject shipDrawer;
     void MakeShipDrawer()
     {
-        Destroy(shipDrawer);
-        shipDrawer = new GameObject("Ship Drawer");
-        shipDrawer.transform.SetParent(worldSpaceParent, false);
+        // Destroy(shipDrawer);
+        // shipDrawer = new GameObject("Ship Drawer");
+        // shipDrawer.transform.SetParent(UIAgentParent, false);
+        shipDrawer = CreateDynamicAgent(1).gameObject;
 
         List<ShipRectangleGroup> unfinishedGroups = new List<ShipRectangleGroup>();
         List<Ship> toAdd = new List<Ship>();

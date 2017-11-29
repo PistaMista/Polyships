@@ -27,6 +27,6 @@ public class PrimaryTacticalTargetingBUI : TacticalTargetingBattleUserInterface
     {
         attackViewUserInterface.activePrimaryTargeter = null;
         attackViewUserInterface.State = UIState.DISABLING;
-        SwitchToInterface(BattleUIType.CINEMATIC_VIEW);
+        BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.CINEMATIC_VIEW);
     }
 }

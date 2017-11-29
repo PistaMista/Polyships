@@ -13,14 +13,12 @@ public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
         switch (state)
         {
             case UIState.ENABLING:
-                ResetWorldSpaceParent();
                 AddGrid();
                 break;
             case UIState.DISABLING:
                 disableTime = defaultDisableTime;
                 break;
             case UIState.DISABLED:
-                ResetWorldSpaceParent();
                 break;
         }
     }
@@ -32,8 +30,7 @@ public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
         float startingPosition = (-managedPlayer.board.tiles.GetLength(0) / 2.0f);
         for (int x = 1; x < managedPlayer.board.tiles.GetLength(0); x++)
         {
-            GameObject line = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            line.transform.SetParent(worldSpaceParent);
+            GameObject line = CreateDynamicAgent(0).gameObject;
 
             line.transform.localScale = new Vector3(lineWidth, lineLength, 1.0f);
             line.transform.localRotation = new Quaternion(1, 0, 0, 1);
@@ -47,7 +44,6 @@ public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
         for (int y = 1; y < managedPlayer.board.tiles.GetLength(1); y++)
         {
             GameObject line = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            line.transform.SetParent(worldSpaceParent);
 
             line.transform.localScale = new Vector3(lineLength, lineWidth, 1.0f);
             line.transform.localRotation = new Quaternion(1, 0, 0, 1);
@@ -56,7 +52,7 @@ public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
             line.GetComponent<Renderer>().material = gridMaterial;
         }
 
-        worldSpaceParent.transform.position = managedPlayer.transform.position;
+        UIAgentParent.transform.position = managedPlayer.transform.position;
     }
 
     float disableTime;

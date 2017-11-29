@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CinematicViewUserInterface : PrimaryBattleUserInterface
+public class CinematicViewUserInterface : BattleUserInterface
 {
     public Battle.TurnInfo processedTurn;
     public float cinematicTime = 0;
@@ -35,6 +35,6 @@ public class CinematicViewUserInterface : PrimaryBattleUserInterface
     void Finish()
     {
         State = UIState.DISABLING;
-        SwitchToInterface(BattleUIType.TURN_NOTIFIER);
+        BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
     }
 }

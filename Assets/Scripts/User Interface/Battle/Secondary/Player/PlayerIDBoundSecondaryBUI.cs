@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerIDBoundSecondaryBUI : SecondaryBattleUserInterface
+public class PlayerIDBoundSecondaryBUI : BattleUserInterface
 {
     public int managedPlayerID;
     protected Player managedPlayer;
@@ -17,7 +17,7 @@ public class PlayerIDBoundSecondaryBUI : SecondaryBattleUserInterface
         switch (state)
         {
             case UIState.ENABLING:
-                worldSpaceParent.position = managedPlayer.transform.position;
+                UIAgentParent.position = managedPlayer.transform.position;
                 break;
         }
     }

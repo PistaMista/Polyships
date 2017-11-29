@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoardViewUserInterface : PrimaryBattleUserInterface
+public class BoardViewUserInterface : BattleUserInterface
 {
     protected Board managedBoard;
     GameObject[,] tileParents;
@@ -13,35 +13,8 @@ public class BoardViewUserInterface : PrimaryBattleUserInterface
         switch (state)
         {
             case UIState.ENABLING:
-                ResetWorldSpaceParent();
-                DeployWorldElements();
-
-
-                break;
-            case UIState.DISABLING:
-                //flagRenderer.onCameraOcclusion += HideWorldElements;
                 break;
         }
-    }
-
-    protected override void ResetWorldSpaceParent()
-    {
-        base.ResetWorldSpaceParent();
-        if (managedBoard != null)
-        {
-            worldSpaceParent.transform.position = managedBoard.owner.transform.position;
-        }
-        tileParents = null;
-    }
-
-    protected virtual void DeployWorldElements()
-    {
-        // SetInteractable(true);
-    }
-
-    protected virtual void HideWorldElements()
-    {
-        //SetInteractable(false);
     }
 
     protected void ResetAllTileParents()
@@ -69,7 +42,7 @@ public class BoardViewUserInterface : PrimaryBattleUserInterface
         }
     }
 
-    protected GameObject GetTileParent(Vector2 position, bool reset)
+    protected GameObject GetTileParent(Vector2Int position, bool reset)
     {
         if (tileParents == null)
         {
@@ -81,13 +54,15 @@ public class BoardViewUserInterface : PrimaryBattleUserInterface
             ResetTileParent(position);
         }
 
-        GameObject parent = tileParents[(int)position.x, (int)position.y];
+        GameObject parent = tileParents[position.x, position.y];
         if (parent == null)
         {
-            parent = new GameObject("Tile parent: " + position);
-            parent.transform.SetParent(worldSpaceParent);
-            parent.transform.position = managedBoard.tiles[(int)position.x, (int)position.y].transform.position;
-            tileParents[(int)position.x, (int)position.y] = parent;
+            // parent = new GameObject("Tile parent: " + position);
+            // parent.transform.position = managedBoard.tiles[(int)position.x, (int)position.y].transform.position;
+            // tileParents[(int)position.x, (int)position.y] = parent;
+            parent = CreateDynamicAgent(0).gameObject;
+            parent.transform.position = managedBoard.tiles[position.x, position.y].transform.position;
+            tileParents[position.x, position.y] = parent;
         }
 
         return parent;

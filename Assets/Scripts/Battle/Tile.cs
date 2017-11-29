@@ -23,14 +23,14 @@ public class Tile : MonoBehaviour
         }
     }
     public Player owner;
-    public Vector2 coordinates;
+    public Vector2Int coordinates;
     public bool hit;
     public Ship containedShip;
 
     public void Initialize(TileData data)
     {
         //owner - REF
-        coordinates = new Vector2(data.coordinates[0], data.coordinates[1]);
+        coordinates = new Vector2Int(data.coordinates[0], data.coordinates[1]);
         hit = data.hit;
     }
 

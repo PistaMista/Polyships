@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public sealed class PlayerIDtoStatusBridgeSecondaryBUI : SecondaryBattleUserInterface
+public sealed class PlayerIDtoStatusBridgeSecondaryBUI : BattleUserInterface
 {
     public bool managingAttacker;
     public PlayerIDBoundSecondaryBUI[] playerIDBUIPair;

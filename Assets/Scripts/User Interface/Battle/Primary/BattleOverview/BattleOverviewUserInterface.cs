@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BattleOverviewUserInterface : PrimaryBattleUserInterface
+public class BattleOverviewUserInterface : BattleUserInterface
 {
     public Waypoint cameraWaypoint;
     protected override void ChangeState(UIState state)
@@ -27,12 +27,12 @@ public class BattleOverviewUserInterface : PrimaryBattleUserInterface
             bool selectedAttacker = Mathf.Sign(tapPosition.x) == Mathf.Sign(Battle.main.attacker.transform.position.x);
             if (selectedAttacker)
             {
-                SwitchToInterface(BattleUIType.ATTACKER_INFO);
+                BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.ATTACKER_INFO);
                 State = UIState.DISABLED;
             }
             else
             {
-                SwitchToInterface(BattleUIType.ATTACK_VIEW);
+                BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.ATTACK_VIEW);
                 State = UIState.DISABLED;
             }
         }
