@@ -49,17 +49,4 @@ public class BattleUserInterface_Master : InputEnabledUserInterface
     {
         it.primaryBUIs[(int)type].State = UIState.ENABLING;
     }
-
-    public static void SetWorldRendering(bool enabled)
-    {
-        for (int i = 0; i < it.primaryBUIs.Length; i++)
-        {
-            it.primaryBUIs[i].SetWorldRendering(enabled);
-        }
-
-        for (int i = 0; i < it.secondaryBUIs.Length; i++)
-        {
-            it.secondaryBUIs[i].SetWorldRendering(enabled);
-        }
-    }
 }

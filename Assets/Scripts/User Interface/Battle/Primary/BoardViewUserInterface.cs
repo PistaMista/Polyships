@@ -60,7 +60,7 @@ public class BoardViewUserInterface : BattleUserInterface
             // parent = new GameObject("Tile parent: " + position);
             // parent.transform.position = managedBoard.tiles[(int)position.x, (int)position.y].transform.position;
             // tileParents[(int)position.x, (int)position.y] = parent;
-            parent = CreateDynamicAgent(0).gameObject;
+            parent = CreateDynamicAgent("tile_parent").gameObject;
             parent.transform.position = managedBoard.tiles[position.x, position.y].transform.position;
             tileParents[position.x, position.y] = parent;
         }

@@ -5,65 +5,65 @@ using UnityEngine;
 
 public class BattleUserInterface : InputEnabledUserInterface
 {
-    public BattleUserInterface[] secondaries;
     public UIAgent[] staticUIAgents = new UIAgent[0];
     public List<UIAgent> dynamicUIAgents = new List<UIAgent>();
-    public GameObject[] dynamicUIAgentPalette;
+    public GameObject[] dynamicUIAgentPaletteObjects;
+    public string[] dynamicUIAgentPaletteNames;
     public Transform UIAgentParent;
-
-    public void SetWorldRendering(bool enabled)
+    public List<UIAgent> allAgents
     {
-        for (int i = 0; i < secondaries.Length; i++)
+        get
         {
-            secondaries[i].SetWorldRendering(enabled);
+            List<UIAgent> result = new List<UIAgent>();
+            result.AddRange(staticUIAgents);
+            result.AddRange(dynamicUIAgents);
+            return result;
         }
     }
+
 
     protected void DestroyDynamicAgents()
     {
-        foreach (UIAgent agent in dynamicUIAgents)
-        {
-            Destroy(agent.gameObject);
-        }
-
+        dynamicUIAgents.ForEach(x => Destroy(x.gameObject));
         dynamicUIAgents = new List<UIAgent>();
     }
 
-    protected UIAgent CreateDynamicAgent(int paletteNumber)
+    protected UIAgent CreateDynamicAgent(string name)
     {
-        UIAgent agent = Instantiate(dynamicUIAgentPalette[paletteNumber]).GetComponent<UIAgent>();
-        agent.transform.SetParent(UIAgentParent);
+        UIAgent agent = null;
+        for (int i = 0; i < dynamicUIAgentPaletteNames.Length; i++)
+        {
+            if (name == dynamicUIAgentPaletteNames[i])
+            {
+                agent = Instantiate(dynamicUIAgentPaletteObjects[i]).GetComponent<UIAgent>();
+                if (UIAgentParent != null)
+                {
+                    agent.transform.SetParent(UIAgentParent);
+                    agent.State = State;
+                }
+
+                break;
+            }
+        }
         return agent;
     }
 
     protected override void Update()
     {
         base.Update();
-
+        if (State == UIState.ENABLING || State == UIState.DISABLING)
+        {
+            if (!allAgents.Find(x => x.State == State))
+            {
+                State = State == UIState.ENABLING ? UIState.ENABLED : UIState.DISABLED;
+            }
+        }
     }
 
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
-        switch (state)
-        {
-            case UIState.ENABLING:
-                SetInteractable(true);
-                break;
-            case UIState.ENABLED:
-                SetInteractable(true);
-                break;
-            case UIState.DISABLING:
-                SetInteractable(false);
-                break;
-            case UIState.DISABLED:
-                SetInteractable(false);
-                break;
-        }
-
-        for (int i = 0; i < secondaries.Length; i++)
-        {
-            secondaries[i].State = state;
-        }
+        SetInteractable((int)state >= 2);
+        allAgents.ForEach(x => { if (x.State != state) { x.State = state; } });
     }
 }

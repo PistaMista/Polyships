@@ -30,7 +30,7 @@ public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
         float startingPosition = (-managedPlayer.board.tiles.GetLength(0) / 2.0f);
         for (int x = 1; x < managedPlayer.board.tiles.GetLength(0); x++)
         {
-            GameObject line = CreateDynamicAgent(0).gameObject;
+            GameObject line = CreateDynamicAgent("grid_line").gameObject;
 
             line.transform.localScale = new Vector3(lineWidth, lineLength, 1.0f);
             line.transform.localRotation = new Quaternion(1, 0, 0, 1);
