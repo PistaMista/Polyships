@@ -24,6 +24,7 @@ public class TurnNotifierUserInterface : BattleUserInterface
         base.ProcessInput();
         if (tap)
         {
+            State = UIState.DISABLING;
             if (Battle.main.attacker.ships == null)
             {
                 BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.FLEET_PLACEMENT);

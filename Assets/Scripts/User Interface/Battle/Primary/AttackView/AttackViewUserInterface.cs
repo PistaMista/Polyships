@@ -8,10 +8,9 @@ public class AttackViewUserInterface : BoardViewUserInterface
     public PrimaryTacticalTargetingBUI activePrimaryTargeter;
     public TacticalTargetingBattleUserInterface[] targeters;
     public int referenceBoardWidthForPedestalScaling;
-    public FireButton fireButton;
+    public FireButton_AttackViewAgent fireButton;
     protected override void ChangeState(UIState state)
     {
-        base.ChangeState(state);
         switch (state)
         {
             case UIState.DISABLING:
@@ -31,16 +30,15 @@ public class AttackViewUserInterface : BoardViewUserInterface
 
                 fireButton.gameObject.SetActive(true);
                 fireButton.owner = this;
-                fireButton.activePosition = managedBoard.owner.transform.position + new Vector3(-managedBoard.tiles.GetLength(0) / 2.0f - 4, MiscellaneousVariables.it.boardUIRenderHeight, -managedBoard.tiles.GetLength(1) / 2.0f + 4);
-                fireButton.inactivePosition = fireButton.activePosition + Vector3.left * managedBoard.tiles.GetLength(0);
-                fireButton.transform.position = fireButton.inactivePosition - Vector3.up * (fireButton.inactivePosition.y + 10);
+                fireButton.enabledPositions = new Vector3[2];
+                fireButton.enabledPositions[0] = new Vector3(-managedBoard.tiles.GetLength(0) / 2.0f - 4, MiscellaneousVariables.it.boardUIRenderHeight, -managedBoard.tiles.GetLength(1) / 2.0f + 4);
+                fireButton.enabledPositions[1] = fireButton.enabledPositions[0] + Vector3.left * managedBoard.tiles.GetLength(0);
+                fireButton.disabledPosition = fireButton.enabledPositions[1];
+                fireButton.disabledPosition.y = -10;
+                fireButton.transform.position = fireButton.disabledPosition;
                 break;
         }
-
-        for (int i = 0; i < targeters.Length; i++)
-        {
-            targeters[i].State = state;
-        }
+        base.ChangeState(state);
     }
 
     protected override void Update()

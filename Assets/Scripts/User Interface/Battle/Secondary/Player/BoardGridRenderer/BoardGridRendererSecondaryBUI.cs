@@ -4,68 +4,57 @@ using UnityEngine;
 
 public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
 {
-    public Material gridMaterial;
-    public float defaultDisableTime;
-
     protected override void ChangeState(UIState state)
     {
         base.ChangeState(state);
         switch (state)
         {
             case UIState.ENABLING:
-                AddGrid();
-                break;
-            case UIState.DISABLING:
-                disableTime = defaultDisableTime;
-                break;
-            case UIState.DISABLED:
+                if (dynamicUIAgents.Count == 0)
+                {
+                    AddGrid();
+                }
                 break;
         }
     }
 
     public void AddGrid()
     {
-        float lineWidth = 1.00f - MiscellaneousVariables.it.boardTileSideLength;
+        UIAgentParent.transform.position = managedPlayer.transform.position;
+
+        float lineWidth = (1.00f - MiscellaneousVariables.it.boardTileSideLength);
         float lineLength = managedPlayer.board.tiles.GetLength(0);
         float startingPosition = (-managedPlayer.board.tiles.GetLength(0) / 2.0f);
         for (int x = 1; x < managedPlayer.board.tiles.GetLength(0); x++)
         {
-            GameObject line = CreateDynamicAgent("grid_line").gameObject;
+            GridLine_BoardGridRendererAgent line = (GridLine_BoardGridRendererAgent)CreateDynamicAgent("grid_line");
 
-            line.transform.localScale = new Vector3(lineWidth, lineLength, 1.0f);
-            line.transform.localRotation = new Quaternion(1, 0, 0, 1);
-            line.transform.localPosition = Vector3.right * (startingPosition + x) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+            line.transform.localScale = new Vector3(lineWidth, 1.0f, lineLength);
 
-            line.GetComponent<Renderer>().material = gridMaterial;
+            line.enabledPositions = new Vector3[1] { Vector3.right * (startingPosition + x) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight };
+            line.disabledPosition = line.enabledPositions[0];
+            line.disabledPosition.y = -10;
+
+            line.movementTime = line.movementTime * Random.Range(0.8f, 1.2f);
+
+            line.transform.localPosition = line.disabledPosition;
         }
 
         lineLength = managedPlayer.board.tiles.GetLength(1);
         startingPosition = (-managedPlayer.board.tiles.GetLength(1) / 2.0f);
         for (int y = 1; y < managedPlayer.board.tiles.GetLength(1); y++)
         {
-            GameObject line = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            GridLine_BoardGridRendererAgent line = (GridLine_BoardGridRendererAgent)CreateDynamicAgent("grid_line");
 
-            line.transform.localScale = new Vector3(lineLength, lineWidth, 1.0f);
-            line.transform.localRotation = new Quaternion(1, 0, 0, 1);
-            line.transform.localPosition = Vector3.forward * (startingPosition + y) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+            line.transform.localScale = new Vector3(lineLength, 1.0f, lineWidth);
 
-            line.GetComponent<Renderer>().material = gridMaterial;
-        }
+            line.enabledPositions = new Vector3[1] { Vector3.forward * (startingPosition + y) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight };
+            line.disabledPosition = line.enabledPositions[0];
+            line.disabledPosition.y = -10;
 
-        UIAgentParent.transform.position = managedPlayer.transform.position;
-    }
+            line.movementTime = line.movementTime * Random.Range(0.8f, 1.2f);
 
-    float disableTime;
-    protected override void Update()
-    {
-        base.Update();
-        if (State == UIState.DISABLING)
-        {
-            if (disableTime < 0)
-            {
-                State = UIState.DISABLED;
-            }
-            disableTime -= Time.deltaTime;
+            line.transform.localPosition = line.disabledPosition;
         }
     }
 }

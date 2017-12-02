@@ -148,7 +148,6 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
 
     public void SelectColor(int colorSelectorID)
     {
-        FlagCustomizationColorSelector selector = colorSelectors[colorSelectorID];
         selectedColorID = colorSelectorID;
         colorSelectorGroup.ResetColors(colorSelectorID);
     }

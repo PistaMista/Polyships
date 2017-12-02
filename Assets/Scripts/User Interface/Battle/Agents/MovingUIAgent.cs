@@ -18,7 +18,6 @@ public class MovingUIAgent : UIAgent
         Vector3 targetPosition = (int)State >= 2 ? enabledPositions[GetTargetPositionIndex()] : disabledPosition;
         if (targetPosition != lastTargetPosition)
         {
-            lastTargetPosition = targetPosition;
             State = (int)State >= 2 ? UIState.ENABLING : UIState.DISABLING;
         }
 
@@ -27,12 +26,13 @@ public class MovingUIAgent : UIAgent
             if (Vector3.Distance(transform.localPosition, targetPosition) < movementFinishingDistance)
             {
                 State = (int)State >= 2 ? UIState.ENABLED : UIState.DISABLED;
+                lastTargetPosition = targetPosition;
             }
             else
             {
-                Vector3 localVelocity = transform.parent.InverseTransformDirection(globalVelocity);
+                Vector3 localVelocity = transform.parent ? transform.parent.InverseTransformDirection(globalVelocity) : globalVelocity;
                 transform.localPosition = Vector3.SmoothDamp(transform.localPosition, targetPosition, ref localVelocity, movementTime, movementMaxSpeed);
-                globalVelocity = transform.parent.TransformDirection(localVelocity);
+                globalVelocity = transform.parent ? transform.parent.TransformDirection(localVelocity) : localVelocity;
             }
         }
     }

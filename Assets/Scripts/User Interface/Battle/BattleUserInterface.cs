@@ -42,6 +42,7 @@ public class BattleUserInterface : InputEnabledUserInterface
                     agent.State = State;
                 }
 
+                dynamicUIAgents.Add(agent);
                 break;
             }
         }

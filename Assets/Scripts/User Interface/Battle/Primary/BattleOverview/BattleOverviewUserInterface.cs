@@ -28,12 +28,12 @@ public class BattleOverviewUserInterface : BattleUserInterface
             if (selectedAttacker)
             {
                 BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.ATTACKER_INFO);
-                State = UIState.DISABLED;
+                State = UIState.DISABLING;
             }
             else
             {
                 BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.ATTACK_VIEW);
-                State = UIState.DISABLED;
+                State = UIState.DISABLING;
             }
         }
     }

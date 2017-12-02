@@ -181,7 +181,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         {
             if (!occupiedTiles.Contains(tile))
             {
-                GameObject parent = GetTileParent(tile.coordinates, true);
+                MovingUIAgent parent = GetTileParent(tile.coordinates, true);
 
                 GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 marker.transform.SetParent(parent.transform);
@@ -236,7 +236,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     {
         foreach (Tile tile in allShips[selectedShip].occupiedTiles)
         {
-            GameObject parent = GetTileParent(tile.coordinates, true);
+            MovingUIAgent parent = GetTileParent(tile.coordinates, true);
 
             GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
             marker.transform.SetParent(parent.transform);
@@ -269,7 +269,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         ShipInfo info = allShips[ship];
         info.waypoints = new List<Vector3>();
 
-        Vector3 targetPosition = placed ? info.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : shipDrawerParent.transform.TransformPoint(info.localDrawerPosition);
+        Vector3 targetPosition = placed ? info.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : shipDrawer.transform.TransformPoint(info.localDrawerPosition);
 
         info.waypoints.Add(new Vector3(ship.transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + shipAnimationElevation, ship.transform.position.z));
         info.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + shipAnimationElevation, targetPosition.z));
@@ -283,7 +283,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
     void SelectTile(Tile tile)
     {
         selectedTiles.Add(tile);
-        GameObject parent = GetTileParent(tile.coordinates, true);
+        MovingUIAgent parent = GetTileParent(tile.coordinates, true);
 
         GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
         marker.transform.SetParent(parent.transform);
@@ -345,7 +345,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
                     if (!newShipSelected) //If no other ship was selected
                     {
-                        Vector3 inputPositionInDrawer = shipDrawerParent.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
+                        Vector3 inputPositionInDrawer = shipDrawer.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
                         bool clickedOnBoard = GetTileAtInputPosition() != null;
                         bool clickedOnDrawer = Mathf.Abs(inputPositionInDrawer.x) < shipDrawerFlatSize / 2.0f && Mathf.Abs(inputPositionInDrawer.z) < shipDrawerFlatSize / 2.0f;
                         if (selectedShip != null) //If a ship is not selected
@@ -503,10 +503,10 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
 
     ShipRectangleGroup[] groups;
-    GameObject shipDrawerParent;
+    ShipDrawer_FleetPlacementAgent shipDrawer;
     void MakeShipDrawer()
     {
-        shipDrawerParent = CreateDynamicAgent("ship_drawer_parent").gameObject;
+        shipDrawer = (ShipDrawer_FleetPlacementAgent)CreateDynamicAgent("ship_drawer");
 
         List<ShipRectangleGroup> unfinishedGroups = new List<ShipRectangleGroup>();
         List<Ship> toAdd = new List<Ship>();
@@ -519,7 +519,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
             allShips.Add(ship, new ShipInfo());
 
             ship.owner = Battle.main.attacker;
-            ship.transform.SetParent(shipDrawerParent.transform);
+            ship.transform.SetParent(shipDrawer.transform);
 
             if (toAdd.Count == 0)
             {
@@ -558,7 +558,11 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         ArrangeShipGroupsOnSquarePlane();
         MoldDrawerMeshes();
 
-        shipDrawerParent.transform.Translate(Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) * 1.05f + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight);
+        shipDrawer.enabledPositions = new Vector3[1] { Vector3.left * Battle.main.attacker.board.tiles.GetLength(0) * 1.05f + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight };
+        shipDrawer.disabledPosition = shipDrawer.enabledPositions[0];
+        shipDrawer.disabledPosition.y = -10;
+
+        shipDrawer.transform.localPosition = shipDrawer.enabledPositions[0];
     }
 
     void MoldDrawerMeshes()
@@ -573,7 +577,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 //Get the mesh we are going to be molding
                 MeshFilter moldedShipMesh = groups[groupIndex].ships[shipIndex].GetComponentInChildren<MeshFilter>();
 
-                Vector3 positionRelativeToDrawer = groups[groupIndex].ships[shipIndex].transform.position - shipDrawerParent.transform.position;
+                Vector3 positionRelativeToDrawer = groups[groupIndex].ships[shipIndex].transform.position - shipDrawer.transform.position;
                 Vector3 positionMod = moldedShipMesh.gameObject.transform.position - groups[groupIndex].ships[shipIndex].transform.position;
                 Vector3 scale = moldedShipMesh.gameObject.transform.lossyScale;
 
@@ -714,7 +718,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
                 finalMesh.RecalculateNormals();
 
                 GameObject shipMold = new GameObject("Ship Mold");
-                shipMold.transform.SetParent(shipDrawerParent.transform, false);
+                shipMold.transform.SetParent(shipDrawer.transform, false);
                 //shipMold.transform.position = moldedShipMesh.gameObject.transform.position + Vector3.up * 10;
                 //shipMold.transform.rotation = moldedShipMesh.gameObject.transform.rotation;
 
@@ -929,14 +933,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
         drawerFlatpanelMesh.vertices = finalVertices.ToArray();
         drawerFlatpanelMesh.triangles = finalTriangles.ToArray();
         drawerFlatpanelMesh.RecalculateNormals();
-
-        GameObject shipDrawerFlatpanel = CreateDynamicAgent("ship_drawer_flatpanel").gameObject;
-        shipDrawerFlatpanel.transform.SetParent(shipDrawerParent.transform, false);
-        Renderer flatpanelRenderer = shipDrawerFlatpanel.GetComponent<MeshRenderer>();
-        shipDrawerFlatpanel.AddComponent<MeshFilter>().mesh = drawerFlatpanelMesh;
-
-        UIAgent shipDrawerCasing = CreateDynamicAgent("ship_drawer_casing");
-        shipDrawerCasing.transform.SetParent(shipDrawerParent.transform, false);
+        shipDrawer.flatpanelMesh.mesh = drawerFlatpanelMesh;
     }
 
     float TriangleSign(Vector3 p1, Vector3 p2, Vector3 p3)

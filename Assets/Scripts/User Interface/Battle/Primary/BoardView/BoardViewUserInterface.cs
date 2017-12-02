@@ -5,7 +5,7 @@ using UnityEngine;
 public class BoardViewUserInterface : BattleUserInterface
 {
     protected Board managedBoard;
-    GameObject[,] tileParents;
+    MovingUIAgent[,] tileParents;
 
     protected override void ChangeState(UIState state)
     {
@@ -13,6 +13,10 @@ public class BoardViewUserInterface : BattleUserInterface
         switch (state)
         {
             case UIState.ENABLING:
+                if (UIAgentParent)
+                {
+                    UIAgentParent.transform.position = managedBoard.owner.transform.position;
+                }
                 break;
         }
     }
@@ -33,20 +37,24 @@ public class BoardViewUserInterface : BattleUserInterface
 
     }
 
-    protected void ResetTileParent(Vector2 position)
+    protected void ResetTileParent(Vector2Int position)
     {
         if (tileParents != null)
         {
-            Destroy(tileParents[(int)position.x, (int)position.y]);
-            tileParents[(int)position.x, (int)position.y] = null;
+            if (tileParents[position.x, position.y] != null)
+            {
+                dynamicUIAgents.Remove(tileParents[position.x, position.y]);
+                Destroy(tileParents[position.x, position.y].gameObject);
+                tileParents[position.x, position.y] = null;
+            }
         }
     }
 
-    protected GameObject GetTileParent(Vector2Int position, bool reset)
+    protected MovingUIAgent GetTileParent(Vector2Int position, bool reset)
     {
         if (tileParents == null)
         {
-            tileParents = new GameObject[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
+            tileParents = new MovingUIAgent[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
         }
 
         if (reset)
@@ -54,14 +62,24 @@ public class BoardViewUserInterface : BattleUserInterface
             ResetTileParent(position);
         }
 
-        GameObject parent = tileParents[position.x, position.y];
+        MovingUIAgent parent = tileParents[position.x, position.y];
         if (parent == null)
         {
             // parent = new GameObject("Tile parent: " + position);
             // parent.transform.position = managedBoard.tiles[(int)position.x, (int)position.y].transform.position;
             // tileParents[(int)position.x, (int)position.y] = parent;
-            parent = CreateDynamicAgent("tile_parent").gameObject;
-            parent.transform.position = managedBoard.tiles[position.x, position.y].transform.position;
+            Vector3 finalPosition = managedBoard.tiles[position.x, position.y].transform.position;
+            if (UIAgentParent)
+            {
+                finalPosition = UIAgentParent.InverseTransformPoint(finalPosition);
+            }
+
+            parent = (MovingUIAgent)CreateDynamicAgent("tile_parent");
+            parent.enabledPositions = new Vector3[1] { finalPosition };
+            parent.disabledPosition = parent.enabledPositions[0];
+            parent.disabledPosition.y = -10;
+
+            parent.transform.localPosition = parent.enabledPositions[0];
             tileParents[position.x, position.y] = parent;
         }
 
