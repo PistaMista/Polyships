@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
+public class BoardGridRendererUI : CombatantUI
 {
     protected override void ChangeState(UIState state)
     {
@@ -20,12 +20,12 @@ public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
 
     public void AddGrid()
     {
-        UIAgentParent.transform.position = managedPlayer.transform.position;
+        childAgentDefaultParent.transform.position = managedBoard.owner.transform.position;
 
         float lineWidth = (1.00f - MiscellaneousVariables.it.boardTileSideLength);
-        float lineLength = managedPlayer.board.tiles.GetLength(0);
-        float startingPosition = (-managedPlayer.board.tiles.GetLength(0) / 2.0f);
-        for (int x = 1; x < managedPlayer.board.tiles.GetLength(0); x++)
+        float lineLength = managedBoard.tiles.GetLength(0);
+        float startingPosition = (-managedBoard.tiles.GetLength(0) / 2.0f);
+        for (int x = 1; x < managedBoard.tiles.GetLength(0); x++)
         {
             GridLine_BoardGridRendererAgent line = (GridLine_BoardGridRendererAgent)CreateDynamicAgent("grid_line");
 
@@ -40,9 +40,9 @@ public class BoardGridRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
             line.transform.localPosition = line.disabledPosition;
         }
 
-        lineLength = managedPlayer.board.tiles.GetLength(1);
-        startingPosition = (-managedPlayer.board.tiles.GetLength(1) / 2.0f);
-        for (int y = 1; y < managedPlayer.board.tiles.GetLength(1); y++)
+        lineLength = managedBoard.tiles.GetLength(1);
+        startingPosition = (-managedBoard.tiles.GetLength(1) / 2.0f);
+        for (int y = 1; y < managedBoard.tiles.GetLength(1); y++)
         {
             GridLine_BoardGridRendererAgent line = (GridLine_BoardGridRendererAgent)CreateDynamicAgent("grid_line");
 

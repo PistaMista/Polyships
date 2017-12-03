@@ -308,7 +308,7 @@ public class FleetPlacementUserInterface : BoardViewUserInterface
 
         ChangeState(UIState.DISABLING);
         Battle.main.NextTurn();
-        BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
+        BattleUIMaster.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
     }
 
 

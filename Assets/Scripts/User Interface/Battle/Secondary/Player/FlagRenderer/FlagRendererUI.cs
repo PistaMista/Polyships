@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
+public class FlagRendererUI : CombatantUI
 {
     protected override void ChangeState(UIState state)
     {
@@ -28,12 +28,12 @@ public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
 
     void Initialize()
     {
-        UIAgentParent.transform.position = managedPlayer.transform.position;
-        Vector3 startingPosition = -new Vector3(managedPlayer.flag.GetLength(0) / 2.0f, 0, managedPlayer.flag.GetLength(1) / 2.0f) * MiscellaneousVariables.it.flagVoxelScale /*+ ( ? (managedPlayer.boardCameraPoint.transform.position.y + 10) * Vector3.up : Vector3.zero)*/;
+        childAgentDefaultParent.transform.position = managedBoard.owner.transform.position;
+        Vector3 startingPosition = -new Vector3(managedBoard.owner.flag.GetLength(0) / 2.0f, 0, managedBoard.owner.flag.GetLength(1) / 2.0f) * MiscellaneousVariables.it.flagVoxelScale /*+ ( ? (managedPlayer.boardCameraPoint.transform.position.y + 10) * Vector3.up : Vector3.zero)*/;
 
-        for (int x = 0; x < managedPlayer.flag.GetLength(0); x++)
+        for (int x = 0; x < managedBoard.owner.flag.GetLength(0); x++)
         {
-            for (int z = 0; z < managedPlayer.flag.GetLength(1); z++)
+            for (int z = 0; z < managedBoard.owner.flag.GetLength(1); z++)
             {
                 FlagVoxel_FlagRendererAgent voxel = (FlagVoxel_FlagRendererAgent)CreateDynamicAgent("flag_voxel");
                 voxel.transform.localScale = Vector3.one * MiscellaneousVariables.it.flagVoxelScale;
@@ -46,7 +46,7 @@ public class FlagRendererSecondaryBUI : PlayerIDBoundSecondaryBUI
 
                 Renderer rend = voxel.GetComponentInChildren<Renderer>();
                 MaterialPropertyBlock block = new MaterialPropertyBlock();
-                block.SetColor("_Color", managedPlayer.flag[x, z]);
+                block.SetColor("_Color", managedBoard.owner.flag[x, z]);
                 rend.SetPropertyBlock(block);
             }
         }

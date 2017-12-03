@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
-public class BattleUserInterface : InputEnabledUserInterface
+public class UIAgent : MonoBehaviour
 {
+    public UIState state;
     public UIAgent[] staticUIAgents = new UIAgent[0];
     public List<UIAgent> dynamicUIAgents = new List<UIAgent>();
     public GameObject[] dynamicUIAgentPaletteObjects;
     public string[] dynamicUIAgentPaletteNames;
-    public Transform UIAgentParent;
+    public Transform childAgentDefaultParent;
     public List<UIAgent> allAgents
     {
         get
@@ -20,8 +20,17 @@ public class BattleUserInterface : InputEnabledUserInterface
             return result;
         }
     }
-
-
+    public UIState State
+    {
+        get
+        {
+            return state;
+        }
+        set
+        {
+            ChangeState(value);
+        }
+    }
     protected void DestroyDynamicAgents()
     {
         dynamicUIAgents.ForEach(x => Destroy(x.gameObject));
@@ -36,9 +45,9 @@ public class BattleUserInterface : InputEnabledUserInterface
             if (name == dynamicUIAgentPaletteNames[i])
             {
                 agent = Instantiate(dynamicUIAgentPaletteObjects[i]).GetComponent<UIAgent>();
-                if (UIAgentParent != null)
+                if (childAgentDefaultParent != null)
                 {
-                    agent.transform.SetParent(UIAgentParent);
+                    agent.transform.SetParent(childAgentDefaultParent);
                     agent.State = State;
                 }
 
@@ -49,22 +58,27 @@ public class BattleUserInterface : InputEnabledUserInterface
         return agent;
     }
 
-    protected override void Update()
+    bool changeStateCausedByUpdate;
+    protected virtual void Update()
     {
-        base.Update();
         if (State == UIState.ENABLING || State == UIState.DISABLING)
         {
-            if (!allAgents.Find(x => x.State == State))
+            if (!allAgents.Exists(x => x.State == State))
             {
+                changeStateCausedByUpdate = true;
                 State = State == UIState.ENABLING ? UIState.ENABLED : UIState.DISABLED;
+                changeStateCausedByUpdate = false;
             }
         }
     }
 
-    protected override void ChangeState(UIState state)
+    protected virtual void ChangeState(UIState state)
     {
-        base.ChangeState(state);
-        SetInteractable((int)state >= 2);
-        allAgents.ForEach(x => { if (x.State != state) { x.State = state; } });
+        this.state = state;
+        if (!changeStateCausedByUpdate)
+        {
+            allAgents.ForEach(x => { if (x.State != state) { x.State = state; } });
+        }
+        gameObject.SetActive(state != UIState.DISABLED);
     }
 }

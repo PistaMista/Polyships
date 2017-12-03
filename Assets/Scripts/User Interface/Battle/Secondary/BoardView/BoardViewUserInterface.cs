@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BoardViewUserInterface : BattleUserInterface
+public class BoardViewUserInterface : InputEnabledUserInterface
 {
     protected Board managedBoard;
     MovingUIAgent[,] tileParents;
@@ -13,9 +13,9 @@ public class BoardViewUserInterface : BattleUserInterface
         switch (state)
         {
             case UIState.ENABLING:
-                if (UIAgentParent)
+                if (childAgentDefaultParent)
                 {
-                    UIAgentParent.transform.position = managedBoard.owner.transform.position;
+                    childAgentDefaultParent.transform.position = managedBoard.owner.transform.position;
                 }
                 break;
         }
@@ -69,9 +69,9 @@ public class BoardViewUserInterface : BattleUserInterface
             // parent.transform.position = managedBoard.tiles[(int)position.x, (int)position.y].transform.position;
             // tileParents[(int)position.x, (int)position.y] = parent;
             Vector3 finalPosition = managedBoard.tiles[position.x, position.y].transform.position;
-            if (UIAgentParent)
+            if (childAgentDefaultParent)
             {
-                finalPosition = UIAgentParent.InverseTransformPoint(finalPosition);
+                finalPosition = childAgentDefaultParent.InverseTransformPoint(finalPosition);
             }
 
             parent = (MovingUIAgent)CreateDynamicAgent("tile_parent");

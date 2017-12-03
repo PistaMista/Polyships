@@ -212,7 +212,7 @@ public class Battle : MonoBehaviour
             CollectAttackerCapabilities();
         }
 
-        BattleUserInterface_Master.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
+        BattleUIMaster.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
     }
 
     void OnApplicationPause(bool pauseStatus)
@@ -229,7 +229,7 @@ public class Battle : MonoBehaviour
     public void QuitBattle()
     {
         SaveToDisk();
-        BattleUserInterface_Master.ForceResetAllBUIs();
+        BattleUIMaster.ForceResetAllBUIs();
         MiscellaneousVariables.it.titleInterfaceMaster.State = UIState.ENABLED;
         Destroy(this.gameObject);
     }

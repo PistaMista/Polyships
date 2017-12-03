@@ -13,11 +13,11 @@ public enum BattleUIType
     DAMAGE_REPORT,
     CINEMATIC_VIEW
 }
-public class BattleUserInterface_Master : InputEnabledUserInterface
+public class BattleUIMaster : InputEnabledUserInterface
 {
-    static BattleUserInterface_Master it;
-    public BattleUserInterface[] primaryBUIs;
-    public BattleUserInterface[] secondaryBUIs;
+    static BattleUIMaster it;
+    public UIAgent[] primaryBUIs;
+    public UIAgent[] secondaryBUIs;
 
     void Awake()
     {
@@ -28,7 +28,7 @@ public class BattleUserInterface_Master : InputEnabledUserInterface
     {
         for (int i = 0; i < it.primaryBUIs.Length; i++)
         {
-            BattleUserInterface x = it.primaryBUIs[i];
+            UIAgent x = it.primaryBUIs[i];
             if (x.State != UIState.DISABLED)
             {
                 x.State = UIState.DISABLED;
@@ -37,7 +37,7 @@ public class BattleUserInterface_Master : InputEnabledUserInterface
 
         for (int i = 0; i < it.secondaryBUIs.Length; i++)
         {
-            BattleUserInterface x = it.secondaryBUIs[i];
+            UIAgent x = it.secondaryBUIs[i];
             if (x.State != UIState.DISABLED)
             {
                 x.State = UIState.DISABLED;
