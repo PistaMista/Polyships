@@ -19,6 +19,11 @@ public sealed class CombatantUIRelay : UIAgent
         this.state = state;
     }
 
+    protected override void Update()
+    {
+
+    }
+
     public T GetCurrentlyConnectedUIOfType<T>()
     {
         T result = default(T);

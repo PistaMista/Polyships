@@ -10,7 +10,6 @@ public class FleetPlacementUI : BoardViewUI
         screenToWorldInputConversionHeight = MiscellaneousVariables.it.boardUIRenderHeight;
     }
     public Material shipDrawerMaterial;
-    public GameObject shipDrawerDecorator;
     public Waypoint cameraWaypoint;
     public GameObject[] defaultShipLoadout;
     public bool forceIdenticalShipTypesToGroupTogether;

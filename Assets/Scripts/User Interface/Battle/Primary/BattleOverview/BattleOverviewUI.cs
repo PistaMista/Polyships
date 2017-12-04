@@ -34,7 +34,6 @@ public class BattleOverviewUI : InputEnabledUI
             {
                 BattleUIMaster.EnablePrimaryBUI(BattleUIType.ATTACK_VIEW);
             }
-            Debug.Break();
         }
     }
 }

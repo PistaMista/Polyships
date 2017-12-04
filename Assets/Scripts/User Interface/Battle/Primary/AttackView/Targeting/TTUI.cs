@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class TTUI : BoardViewUI
 {
-    public bool isPrimary;
     Player managedAttacker;
     public AttackViewUI attackViewUserInterface;
     // public GameObject tokenPrefab;
@@ -146,7 +145,7 @@ public class TTUI : BoardViewUI
 
     public virtual bool IsSelectable()
     {
-        return (attackViewUserInterface.selectedTargeter == null || attackViewUserInterface.selectedTargeter == this) && State == UIState.ENABLING;
+        return (attackViewUserInterface.selectedTargeter == null || attackViewUserInterface.selectedTargeter == this) && (int)State >= 2;
     }
 
     protected void CheckTokensForPickup()
@@ -179,7 +178,6 @@ public class TTUI : BoardViewUI
 
     protected override void ChangeState(UIState state)
     {
-        base.ChangeState(state);
         switch (state)
         {
             case UIState.ENABLING:
@@ -190,8 +188,9 @@ public class TTUI : BoardViewUI
                     ResetTargeting();
                 }
 
-                stackPedestal.transform.position = stackPedestal.enabledPositions[1] - Vector3.up * (stackPedestal.enabledPositions[1].y + 10f);
+                stackPedestal.transform.position = stackPedestal.disabledPosition;
                 break;
         }
+        base.ChangeState(state);
     }
 }

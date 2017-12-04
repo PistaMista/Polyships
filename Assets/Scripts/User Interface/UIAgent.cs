@@ -63,11 +63,15 @@ public class UIAgent : MonoBehaviour
     {
         if (State == UIState.ENABLING || State == UIState.DISABLING)
         {
-            if (!allAgents.Exists(x => x.State == State))
+            List<UIAgent> agents = allAgents;
+            if (agents.Count > 0)
             {
-                changeStateCausedByUpdate = true;
-                State = State == UIState.ENABLING ? UIState.ENABLED : UIState.DISABLED;
-                changeStateCausedByUpdate = false;
+                if (!allAgents.Exists(x => x.State == State))
+                {
+                    changeStateCausedByUpdate = true;
+                    State = State == UIState.ENABLING ? UIState.ENABLED : UIState.DISABLED;
+                    changeStateCausedByUpdate = false;
+                }
             }
         }
     }
