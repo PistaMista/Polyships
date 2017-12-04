@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SlidingUserInterface_Master : InputEnabledUserInterface
+public class SlidingUserInterface_Master : InputEnabledUI
 {
     SlidingUserInterface[] interfaces;
     public int selectedPosition;

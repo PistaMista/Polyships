@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SlidingUserInterface : InputEnabledUserInterface
+public class SlidingUserInterface : InputEnabledUI
 {
     public int position;
     public int width;

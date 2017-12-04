@@ -13,7 +13,7 @@ public enum BattleUIType
     DAMAGE_REPORT,
     CINEMATIC_VIEW
 }
-public class BattleUIMaster : InputEnabledUserInterface
+public class BattleUIMaster : InputEnabledUI
 {
     static BattleUIMaster it;
     public UIAgent[] primaryBUIs;

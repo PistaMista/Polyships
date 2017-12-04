@@ -7,7 +7,7 @@ public class FireButton_AttackViewAgent : MovingUIAgent
 
     public bool pushed;
     public GameObject buttonPart;
-    public AttackViewUserInterface owner;
+    public AttackViewUI owner;
     public float pushRadius;
     protected override void Update()
     {

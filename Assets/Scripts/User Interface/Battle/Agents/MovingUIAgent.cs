@@ -10,7 +10,7 @@ public class MovingUIAgent : UIAgent
     public float movementTime;
     public float movementFinishingDistance;
 
-    Vector3 globalVelocity;
+    public Vector3 globalVelocity;
     Vector3 lastTargetPosition;
     protected override void Update()
     {

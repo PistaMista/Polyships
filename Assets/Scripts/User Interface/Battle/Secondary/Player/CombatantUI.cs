@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CombatantUI : BoardViewUserInterface
+public class CombatantUI : BoardViewUI
 {
     public CombatantUIRelay relay;
     protected override void ChangeState(UIState state)

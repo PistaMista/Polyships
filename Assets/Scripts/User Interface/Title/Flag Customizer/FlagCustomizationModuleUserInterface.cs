@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
+public class FlagCustomizationModuleUserInterface : InputEnabledUI
 {
     public Image colorPalette;
     public FlagCustomizationColorSelector[] colorSelectors;
@@ -49,7 +49,7 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUserInterface
         float[,,] flagData = secondPlayer ? GameLoaderUserInterface.newBattleData.defender.flag : GameLoaderUserInterface.newBattleData.attacker.flag;
         pixels = new Image[flagData.GetLength(0), flagData.GetLength(1)];
 
-        Vector2 reservedSpace = new Vector2(BasicUserInterface.referenceResolution.x / 2.0f, BasicUserInterface.referenceResolution.y / 2.5f);
+        Vector2 reservedSpace = new Vector2(BasicUI.referenceResolution.x / 2.0f, BasicUI.referenceResolution.y / 2.5f);
         bool horizontalAdjustment = reservedSpace.x < reservedSpace.y;
 
         pixelDimensions = Mathf.FloorToInt((horizontalAdjustment ? reservedSpace.x : reservedSpace.y) / (horizontalAdjustment ? flagData.GetLength(0) : flagData.GetLength(1)));

@@ -14,6 +14,7 @@ public sealed class CombatantUIRelay : UIAgent
 
     protected override void ChangeState(UIState state)
     {
+        correspondingCombatantUI.relay = this;
         correspondingCombatantUI.State = state;
         this.state = state;
     }
