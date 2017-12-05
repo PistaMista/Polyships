@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class FlagRendererUI : CombatantUI
 {
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
-        base.ChangeState(state);
+        base.SetState(state);
         switch (state)
         {
             case UIState.ENABLING:
@@ -16,7 +16,7 @@ public class FlagRendererUI : CombatantUI
                 }
                 break;
             case UIState.DISABLED:
-                DestroyDynamicAgents();
+                DestroyDynamicAgents<FlagVoxel_FlagRendererAgent>("");
                 break;
         }
     }
@@ -42,7 +42,7 @@ public class FlagRendererUI : CombatantUI
                 voxel.disabledPosition.y = -10;
 
                 voxel.xOffset = x;
-                voxel.movementTime = 0.1f + (x + z) / 20.0f;
+                voxel.movementTime = 0.05f + (x + z) / 40.0f;
 
                 Renderer rend = voxel.GetComponentInChildren<Renderer>();
                 MaterialPropertyBlock block = new MaterialPropertyBlock();

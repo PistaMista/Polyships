@@ -28,13 +28,29 @@ public class UIAgent : MonoBehaviour
         }
         set
         {
-            ChangeState(value);
+            SetState(value);
         }
     }
-    protected void DestroyDynamicAgents()
+    protected void DestroyDynamicAgents<T>(string nameFilter)
     {
         dynamicUIAgents.ForEach(x => Destroy(x.gameObject));
+        foreach (UIAgent agent in dynamicUIAgents)
+        {
+            if (ReferenceEquals(agent, typeof(T)))
+            {
+                if (agent.name.Contains(nameFilter))
+                {
+                    Destroy(agent.gameObject);
+                }
+            }
+        }
         dynamicUIAgents = new List<UIAgent>();
+    }
+
+    protected void DestroyDynamicAgent(UIAgent agent)
+    {
+        dynamicUIAgents.Remove(agent);
+        Destroy(agent.gameObject);
     }
 
     protected UIAgent CreateDynamicAgent(string name)
@@ -76,7 +92,7 @@ public class UIAgent : MonoBehaviour
         }
     }
 
-    protected virtual void ChangeState(UIState state)
+    protected virtual void SetState(UIState state)
     {
         this.state = state;
         if (!changeStateCausedByUpdate)

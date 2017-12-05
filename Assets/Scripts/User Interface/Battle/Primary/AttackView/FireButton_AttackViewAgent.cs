@@ -4,9 +4,13 @@ using UnityEngine;
 
 public class FireButton_AttackViewAgent : MovingUIAgent
 {
-
+    void Awake()
+    {
+        initialPartPosition = buttonPart.transform.localPosition;
+    }
     public bool pushed;
     public GameObject buttonPart;
+    public Vector3 initialPartPosition;
     public AttackViewUI owner;
     public float pushRadius;
 
@@ -16,6 +20,12 @@ public class FireButton_AttackViewAgent : MovingUIAgent
         Vector3 buttonPosition = transform.position;
         buttonPosition.y = 0;
         pushed = Vector3.Distance(buttonPosition, position) < pushRadius;
+    }
+
+    protected override void Update()
+    {
+        base.Update();
+        buttonPart.transform.localPosition = pushed ? Vector3.zero : initialPartPosition;
     }
 
     protected override int GetTargetPositionIndex()

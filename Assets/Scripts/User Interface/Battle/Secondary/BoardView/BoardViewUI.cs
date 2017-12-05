@@ -7,9 +7,9 @@ public class BoardViewUI : InputEnabledUI
     protected Board managedBoard;
     MovingUIAgent[,] tileParents;
 
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
-        base.ChangeState(state);
+        base.SetState(state);
         switch (state)
         {
             case UIState.ENABLING:
@@ -43,8 +43,7 @@ public class BoardViewUI : InputEnabledUI
         {
             if (tileParents[position.x, position.y] != null)
             {
-                dynamicUIAgents.Remove(tileParents[position.x, position.y]);
-                Destroy(tileParents[position.x, position.y].gameObject);
+                DestroyDynamicAgent(tileParents[position.x, position.y]);
                 tileParents[position.x, position.y] = null;
             }
         }

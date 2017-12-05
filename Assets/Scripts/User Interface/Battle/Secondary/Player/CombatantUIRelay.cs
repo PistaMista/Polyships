@@ -12,7 +12,7 @@ public sealed class CombatantUIRelay : UIAgent
         get { return combatantUIPair[(managingAttacker ? Battle.main.attacker : Battle.main.defender).index]; }
     }
 
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
         correspondingCombatantUI.relay = this;
         correspondingCombatantUI.State = state;

@@ -9,7 +9,7 @@ public class AttackViewUI : BoardViewUI
     public TTUI[] targeters;
     public int referenceBoardWidthForPedestalScaling;
     public FireButton_AttackViewAgent fireButton;
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
         switch (state)
         {
@@ -37,7 +37,7 @@ public class AttackViewUI : BoardViewUI
                 fireButton.transform.position = fireButton.disabledPosition;
                 break;
         }
-        base.ChangeState(state);
+        base.SetState(state);
     }
 
     protected override void ProcessInput()

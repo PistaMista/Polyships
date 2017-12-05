@@ -52,9 +52,9 @@ public class ScrollableUserInterface : SlidingUserInterface
         }
     }
 
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
-        base.ChangeState(state);
+        base.SetState(state);
         if (state == UIState.ENABLING)
         {
             scrollVelocity = 0.0f;

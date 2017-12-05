@@ -9,14 +9,13 @@ public class FleetPlacementUI : BoardViewUI
         base.Start();
         screenToWorldInputConversionHeight = MiscellaneousVariables.it.boardUIRenderHeight;
     }
-    public Material shipDrawerMaterial;
     public Waypoint cameraWaypoint;
     public GameObject[] defaultShipLoadout;
     public bool forceIdenticalShipTypesToGroupTogether;
     public float shipPaletteGroupPadding;
     public float shipDrawerFlatSize;
     public float cameraWaypointOffset;
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
         switch (state)
         {
@@ -34,7 +33,7 @@ public class FleetPlacementUI : BoardViewUI
                 break;
         }
 
-        base.ChangeState(state);
+        base.SetState(state);
 
         switch (state)
         {
@@ -54,10 +53,10 @@ public class FleetPlacementUI : BoardViewUI
                 invalidTiles = new List<Tile>();
                 occupiedTiles = new List<Tile>();
 
-                DestroyDynamicAgents();
+                DestroyDynamicAgents<UIAgent>("");
                 MakeShipDrawer();
 
-                ChangeState(UIState.ENABLED);
+                SetState(UIState.ENABLED);
                 break;
         }
     }
@@ -305,7 +304,7 @@ public class FleetPlacementUI : BoardViewUI
 
         fadingDistance = (managedBoard.tiles.GetLength(0)) * (1 + cameraWaypointOffset * 2.0f) + 3;
 
-        ChangeState(UIState.DISABLING);
+        SetState(UIState.DISABLING);
         Battle.main.NextTurn();
         BattleUIMaster.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
     }
@@ -478,7 +477,7 @@ public class FleetPlacementUI : BoardViewUI
             case UIState.DISABLING:
                 if (Vector3.Distance(cameraWaypoint.transform.position, Camera.main.transform.position) > fadingDistance)
                 {
-                    ChangeState(UIState.DISABLED);
+                    SetState(UIState.DISABLED);
                 }
                 break;
         }
@@ -725,7 +724,7 @@ public class FleetPlacementUI : BoardViewUI
                 shipMold.AddComponent<MeshRenderer>();
                 meshFilter.mesh = finalMesh;
 
-                shipMold.GetComponent<Renderer>().material = shipDrawerMaterial;
+                shipMold.GetComponent<Renderer>().material = shipDrawer.flatpanelMesh.GetComponent<Renderer>().material;
             }
         }
 

@@ -6,9 +6,9 @@ public class BattleSetUpScreenUserInterface : SlidingUserInterface
 {
     public ExclusiveTogglingButtonGroup tutorialButtonGroup;
     public ExclusiveTogglingButtonGroup boardSizeButtonGroup;
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
-        base.ChangeState(state);
+        base.SetState(state);
         if (GameLoaderUserInterface.newBattleData.attacker.board.tiles == null && state == UIState.ENABLING)
         {
             SetBoardSize(1);

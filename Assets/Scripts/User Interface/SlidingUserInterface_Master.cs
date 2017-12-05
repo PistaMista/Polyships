@@ -100,9 +100,9 @@ public class SlidingUserInterface_Master : InputEnabledUI
         lastPosition = widthOffset + interfaces.Length - 1;
     }
 
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
-        base.ChangeState(state);
+        base.SetState(state);
         if ((int)state <= 2)
         {
             foreach (SlidingUserInterface i in interfaces)

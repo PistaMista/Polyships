@@ -5,9 +5,9 @@ using UnityEngine;
 public class BattleLauncherUserInterface : SlidingUserInterface
 {
     public SlidingUserInterface_Master masterInterface;
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
-        base.ChangeState(state);
+        base.SetState(state);
         switch (state)
         {
             case UIState.ENABLING:

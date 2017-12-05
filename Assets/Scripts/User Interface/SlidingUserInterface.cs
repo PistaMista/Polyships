@@ -33,9 +33,9 @@ public class SlidingUserInterface : InputEnabledUI
         }
     }
 
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
-        base.ChangeState(state);
+        base.SetState(state);
         SetInteractable(state == UIState.ENABLED || (interactableWhileEnabling && state == UIState.ENABLING));
     }
 }

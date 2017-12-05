@@ -5,9 +5,9 @@ using UnityEngine;
 public class DamageReportUI : BoardViewUI
 {
 
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
-        base.ChangeState(state);
+        base.SetState(state);
         switch (state)
         {
             case UIState.DISABLING:

@@ -11,7 +11,7 @@ public class FlagVoxel_FlagRendererAgent : MovingUIAgent
         base.Update();
         if (State != UIState.DISABLED)
         {
-            voxel.transform.localPosition = Vector3.forward * (Mathf.Sin((xOffset + Time.time) / 2.0f) - 0.5f) / 10.0f * MiscellaneousVariables.it.flagVoxelScale;
+            voxel.transform.localPosition = Vector3.forward * (Mathf.Sin((xOffset + Time.time) / 2.0f) - 0.5f) / 20.0f * MiscellaneousVariables.it.flagVoxelScale;
         }
     }
 }

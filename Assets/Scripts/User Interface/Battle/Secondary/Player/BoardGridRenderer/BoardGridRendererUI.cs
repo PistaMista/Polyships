@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class BoardGridRendererUI : CombatantUI
 {
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
-        base.ChangeState(state);
+        base.SetState(state);
         switch (state)
         {
             case UIState.ENABLING:

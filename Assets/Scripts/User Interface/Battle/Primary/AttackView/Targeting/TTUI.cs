@@ -33,10 +33,7 @@ public class TTUI : BoardViewUI
 
         if (allTokens != null)
         {
-            for (int i = 0; i < allTokens.Length; i++)
-            {
-                Destroy(allTokens[i].gameObject);
-            }
+            DestroyDynamicAgents<Token_TTAgent>("");
         }
         allTokens = null;
         heldToken = null;
@@ -176,7 +173,7 @@ public class TTUI : BoardViewUI
         }
     }
 
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
         switch (state)
         {
@@ -191,6 +188,6 @@ public class TTUI : BoardViewUI
                 stackPedestal.transform.position = stackPedestal.disabledPosition;
                 break;
         }
-        base.ChangeState(state);
+        base.SetState(state);
     }
 }

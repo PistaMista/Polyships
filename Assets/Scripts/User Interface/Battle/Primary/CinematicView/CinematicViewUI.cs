@@ -6,9 +6,9 @@ public class CinematicViewUI : InputEnabledUI
 {
     public Battle.TurnInfo processedTurn;
     public float cinematicTime = 0;
-    protected override void ChangeState(UIState state)
+    protected override void SetState(UIState state)
     {
-        base.ChangeState(state);
+        base.SetState(state);
         switch (state)
         {
             case UIState.ENABLING:
