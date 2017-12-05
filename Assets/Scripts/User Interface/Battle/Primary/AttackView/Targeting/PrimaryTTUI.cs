@@ -23,10 +23,16 @@ public class PrimaryTTUI : TTUI
         return base.IsSelectable() && (attackViewUserInterface.activePrimaryTargeter == null || attackViewUserInterface.activePrimaryTargeter == this);
     }
 
-    public virtual void ConfirmTargeting()
+    public void ConfirmTargeting()
     {
         attackViewUserInterface.activePrimaryTargeter = null;
         attackViewUserInterface.State = UIState.DISABLING;
+        ConfirmAttack();
         BattleUIMaster.EnablePrimaryBUI(BattleUIType.CINEMATIC_VIEW);
+    }
+
+    protected virtual void ConfirmAttack()
+    {
+
     }
 }

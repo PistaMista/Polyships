@@ -28,7 +28,6 @@ public class AttackViewUI : BoardViewUI
                     targeters[i].stackPedestal.enabledPositions[0] = startingPosition + Vector3.back * i * targeterSpacing;
                 }
 
-                fireButton.gameObject.SetActive(true);
                 fireButton.owner = this;
                 fireButton.enabledPositions = new Vector3[2];
                 fireButton.enabledPositions[0] = new Vector3(-managedBoard.tiles.GetLength(0) / 2.0f - 4, MiscellaneousVariables.it.boardUIRenderHeight, -managedBoard.tiles.GetLength(1) / 2.0f + 4);
@@ -41,9 +40,9 @@ public class AttackViewUI : BoardViewUI
         base.ChangeState(state);
     }
 
-    protected override void Update()
+    protected override void ProcessInput()
     {
-        base.Update();
+        base.ProcessInput();
         if (activePrimaryTargeter)
         {
             if (endPress && fireButton.pushed)

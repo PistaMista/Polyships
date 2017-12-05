@@ -9,11 +9,6 @@ public class FireButton_AttackViewAgent : MovingUIAgent
     public GameObject buttonPart;
     public AttackViewUI owner;
     public float pushRadius;
-    protected override void Update()
-    {
-        base.Update();
-
-    }
 
     public void Push(Vector3 position)
     {
@@ -21,5 +16,10 @@ public class FireButton_AttackViewAgent : MovingUIAgent
         Vector3 buttonPosition = transform.position;
         buttonPosition.y = 0;
         pushed = Vector3.Distance(buttonPosition, position) < pushRadius;
+    }
+
+    protected override int GetTargetPositionIndex()
+    {
+        return owner.activePrimaryTargeter ? 0 : 1;
     }
 }

@@ -16,11 +16,12 @@ public class BattleOverviewUI : InputEnabledUI
                 CameraControl.GoToWaypoint(cameraWaypoint, 1.2f);
                 break;
         }
+        SetInteractable(state == UIState.ENABLED);
     }
 
-    protected override void Update()
+    protected override void ProcessInput()
     {
-        base.Update();
+        base.ProcessInput();
         if (tap)
         {
             Vector3 tapPosition = ConvertToWorldInputPosition(currentInputPosition.screen);

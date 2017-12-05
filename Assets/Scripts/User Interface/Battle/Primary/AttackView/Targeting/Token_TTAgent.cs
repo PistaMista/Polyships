@@ -19,7 +19,7 @@ public class Token_TTAgent : MovingUIAgent
         {
             if (value != onPedestal)
             {
-                transform.SetParent(value ? owner.stackPedestal.transform : owner.transform);
+                transform.SetParent(value ? owner.stackPedestal.transform : owner.childAgentDefaultParent);
                 if (value)
                 {
                     Vector3 stackStart = Vector3.up * (owner.stackPedestal.height / 2.0f - stackHeight / 2.0f);

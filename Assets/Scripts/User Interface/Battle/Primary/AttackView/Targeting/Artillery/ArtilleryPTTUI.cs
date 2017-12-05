@@ -46,8 +46,9 @@ public class ArtilleryPTTUI : PrimaryTTUI
         }
     }
 
-    public override void ConfirmTargeting()
+    protected override void ConfirmAttack()
     {
+        base.ConfirmAttack();
         Tile[] targets = new Tile[placedTokens.Count];
         for (int i = 0; i < targets.Length; i++)
         {
@@ -55,6 +56,5 @@ public class ArtilleryPTTUI : PrimaryTTUI
         }
 
         Battle.main.ExecuteArtilleryAttack(targets);
-        base.ConfirmTargeting();
     }
 }

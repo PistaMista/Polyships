@@ -120,7 +120,7 @@ public class TTUI : BoardViewUI
     protected override void Update()
     {
         base.Update();
-        if (State == UIState.ENABLING)
+        if ((int)State >= 2)
         {
             bool selectable = IsSelectable();
             if (heldToken)
