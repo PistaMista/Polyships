@@ -63,10 +63,6 @@ public class InputEnabledUI : BasicUI
                 dragging = true;
             }
         }
-        else
-        {
-            dragging = false;
-        }
 
         // initialInputPosition.world = ConvertToWorldInputPosition(initialInputPosition.screen);
         // currentInputPosition.world = ConvertToWorldInputPosition(currentInputPosition.screen);

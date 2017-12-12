@@ -64,9 +64,6 @@ public class BoardViewUI : InputEnabledUI
         MovingUIAgent parent = tileParents[position.x, position.y];
         if (parent == null)
         {
-            // parent = new GameObject("Tile parent: " + position);
-            // parent.transform.position = managedBoard.tiles[(int)position.x, (int)position.y].transform.position;
-            // tileParents[(int)position.x, (int)position.y] = parent;
             Vector3 finalPosition = managedBoard.tiles[position.x, position.y].transform.position;
             if (childAgentDefaultParent)
             {
@@ -78,7 +75,9 @@ public class BoardViewUI : InputEnabledUI
             parent.disabledPosition = parent.enabledPositions[0];
             parent.disabledPosition.y = -10;
 
-            parent.transform.localPosition = parent.enabledPositions[0];
+            parent.transform.localPosition = parent.disabledPosition;
+
+            parent.movementTime = 0.01f + position.magnitude / 150.0f;
             tileParents[position.x, position.y] = parent;
         }
 

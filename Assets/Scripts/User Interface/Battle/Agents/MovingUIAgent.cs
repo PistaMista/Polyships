@@ -11,22 +11,21 @@ public class MovingUIAgent : UIAgent
     public float movementFinishingDistance;
 
     public Vector3 globalVelocity;
-    Vector3 lastTargetPosition;
+    public Vector3 lastTargetPosition;
+    bool firstRun = true;
     protected override void Update()
     {
         base.Update();
         Vector3 targetPosition = (int)State >= 2 ? enabledPositions[GetTargetPositionIndex()] : disabledPosition;
-        if (targetPosition != lastTargetPosition)
+        if (targetPosition != lastTargetPosition || firstRun)
         {
             State = (int)State >= 2 ? UIState.ENABLING : UIState.DISABLING;
-        }
 
-        if (State == UIState.DISABLING || State == UIState.ENABLING)
-        {
             if (Vector3.Distance(transform.localPosition, targetPosition) < movementFinishingDistance)
             {
                 State = (int)State >= 2 ? UIState.ENABLED : UIState.DISABLED;
                 lastTargetPosition = targetPosition;
+                firstRun = false;
             }
             else
             {

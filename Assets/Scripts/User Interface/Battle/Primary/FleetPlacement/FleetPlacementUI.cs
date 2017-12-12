@@ -17,6 +17,8 @@ public class FleetPlacementUI : BoardViewUI
     public float cameraWaypointOffset;
     protected override void SetState(UIState state)
     {
+        SetInteractable(state == UIState.ENABLED);
+
         switch (state)
         {
             case UIState.ENABLING:
@@ -309,7 +311,138 @@ public class FleetPlacementUI : BoardViewUI
         BattleUIMaster.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
     }
 
+    protected override void ProcessInput()
+    {
+        base.ProcessInput();
+        if (tap)
+        {
+            bool newShipSelected = false;
+            foreach (Ship ship in allShips.Keys)
+            {
+                Vector3 localInputPosition = ship.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
+                if (Mathf.Abs(localInputPosition.x) < 0.5f && Mathf.Abs(localInputPosition.z) < ship.health / 2.0f)
+                {
+                    if (selectedShip != null)
+                    {
+                        if (allShips[selectedShip].occupiedTiles != null)
+                        {
+                            PlaceCurrentlySelectedShip();
+                        }
+                        UpdateShipWaypoints(selectedShip, false);
+                    }
 
+                    SelectShip(ship);
+                    UpdateShipWaypoints(selectedShip, true);
+                    newShipSelected = true;
+                    break;
+                }
+            }
+
+            if (!newShipSelected) //If no other ship was selected
+            {
+                Vector3 inputPositionInDrawer = shipDrawer.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
+                bool clickedOnBoard = GetTileAtInputPosition() != null;
+                bool clickedOnDrawer = Mathf.Abs(inputPositionInDrawer.x) < shipDrawerFlatSize / 2.0f && Mathf.Abs(inputPositionInDrawer.z) < shipDrawerFlatSize / 2.0f;
+                if (selectedShip != null) //If a ship is not selected
+                {
+                    if (!clickedOnBoard) //If the user clicked outside of the board
+                    {
+                        if (allShips[selectedShip].occupiedTiles != null) //If the ship was already on the board
+                        {
+                            if (clickedOnDrawer) //And the player clicks on the drawer
+                            {
+                                //Remove the ship from the board and put it back into the drawer
+                                ShipInfo info = allShips[selectedShip];
+                                info.occupiedTiles = null;
+                                allShips[selectedShip] = info;
+                            }
+                            else
+                            {
+                                //Place the ship back where it was
+                                PlaceCurrentlySelectedShip();
+                            }
+
+                            UpdateShipWaypoints(selectedShip, false);
+                            selectedShip = null;
+                            HideValidPositionMarkers();
+                        }
+                    }
+                }
+                else
+                {
+                    if (clickedOnDrawer && notplacedShips.Count == 0)
+                    {
+                        FinalizePlacement();
+                    }
+                }
+            }
+        }
+
+        if (pressed && selectedShip != null)
+        {
+            Tile candidateTile = GetTileAtInputPosition();
+            if (candidateTile != null)
+            {
+                if (!selectedTiles.Contains(candidateTile) && validTiles.Contains(candidateTile))
+                {
+                    if (selectedTiles.Count == 0)
+                    {
+                        SelectTile(candidateTile);
+                    }
+                    else
+                    {
+                        bool connects = false;
+                        bool outOfLine = false;
+
+                        foreach (Tile tile in selectedTiles)
+                        {
+                            float distance = Vector2.Distance(tile.coordinates, candidateTile.coordinates);
+                            if ((int)distance != distance)
+                            {
+                                outOfLine = true;
+                                break;
+                            }
+
+                            if (distance == 1)
+                            {
+                                connects = true;
+                            }
+                        }
+
+                        if (connects && !outOfLine)
+                        {
+                            SelectTile(candidateTile);
+                        }
+                    }
+
+                    if (selectedTiles.Count == selectedShip.health)
+                    {
+
+                        ShipInfo info = allShips[selectedShip];
+                        info.occupiedTiles = selectedTiles.ToArray();
+                        allShips[selectedShip] = info;
+
+                        PlaceCurrentlySelectedShip();
+                        UpdateShipWaypoints(selectedShip, false);
+                        HideValidPositionMarkers();
+                        selectedShip = null;
+                        invalidTiles = new List<Tile>();
+                        validTiles = new List<Tile>();
+                        selectedTiles = new List<Tile>();
+                    }
+                }
+            }
+        }
+
+        if (endPress)
+        {
+            foreach (Tile tile in selectedTiles)
+            {
+                ResetTileParent(tile.coordinates);
+            }
+            selectedTiles = new List<Tile>();
+        }
+    }
     float fadingDistance;
     protected override void Update()
     {
@@ -317,134 +450,7 @@ public class FleetPlacementUI : BoardViewUI
         switch (State)
         {
             case UIState.ENABLED:
-                if (tap)
-                {
-                    bool newShipSelected = false;
-                    foreach (Ship ship in allShips.Keys)
-                    {
-                        Vector3 localInputPosition = ship.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
-                        if (Mathf.Abs(localInputPosition.x) < 0.5f && Mathf.Abs(localInputPosition.z) < ship.health / 2.0f)
-                        {
-                            if (selectedShip != null)
-                            {
-                                if (allShips[selectedShip].occupiedTiles != null)
-                                {
-                                    PlaceCurrentlySelectedShip();
-                                }
-                                UpdateShipWaypoints(selectedShip, false);
-                            }
 
-                            SelectShip(ship);
-                            UpdateShipWaypoints(selectedShip, true);
-                            newShipSelected = true;
-                            break;
-                        }
-                    }
-
-                    if (!newShipSelected) //If no other ship was selected
-                    {
-                        Vector3 inputPositionInDrawer = shipDrawer.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
-                        bool clickedOnBoard = GetTileAtInputPosition() != null;
-                        bool clickedOnDrawer = Mathf.Abs(inputPositionInDrawer.x) < shipDrawerFlatSize / 2.0f && Mathf.Abs(inputPositionInDrawer.z) < shipDrawerFlatSize / 2.0f;
-                        if (selectedShip != null) //If a ship is not selected
-                        {
-                            if (!clickedOnBoard) //If the user clicked outside of the board
-                            {
-                                if (allShips[selectedShip].occupiedTiles != null) //If the ship was already on the board
-                                {
-                                    if (clickedOnDrawer) //And the player clicks on the drawer
-                                    {
-                                        //Remove the ship from the board and put it back into the drawer
-                                        ShipInfo info = allShips[selectedShip];
-                                        info.occupiedTiles = null;
-                                        allShips[selectedShip] = info;
-                                    }
-                                    else
-                                    {
-                                        //Place the ship back where it was
-                                        PlaceCurrentlySelectedShip();
-                                    }
-
-                                    UpdateShipWaypoints(selectedShip, false);
-                                    selectedShip = null;
-                                    HideValidPositionMarkers();
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (clickedOnDrawer && notplacedShips.Count == 0)
-                            {
-                                FinalizePlacement();
-                            }
-                        }
-                    }
-                }
-
-                if (pressed && selectedShip != null)
-                {
-                    Tile candidateTile = GetTileAtInputPosition();
-                    if (candidateTile != null)
-                    {
-                        if (!selectedTiles.Contains(candidateTile) && validTiles.Contains(candidateTile))
-                        {
-                            if (selectedTiles.Count == 0)
-                            {
-                                SelectTile(candidateTile);
-                            }
-                            else
-                            {
-                                bool connects = false;
-                                bool outOfLine = false;
-
-                                foreach (Tile tile in selectedTiles)
-                                {
-                                    float distance = Vector2.Distance(tile.coordinates, candidateTile.coordinates);
-                                    if ((int)distance != distance)
-                                    {
-                                        outOfLine = true;
-                                        break;
-                                    }
-
-                                    if (distance == 1)
-                                    {
-                                        connects = true;
-                                    }
-                                }
-
-                                if (connects && !outOfLine)
-                                {
-                                    SelectTile(candidateTile);
-                                }
-                            }
-
-                            if (selectedTiles.Count == selectedShip.health)
-                            {
-
-                                ShipInfo info = allShips[selectedShip];
-                                info.occupiedTiles = selectedTiles.ToArray();
-                                allShips[selectedShip] = info;
-
-                                PlaceCurrentlySelectedShip();
-                                UpdateShipWaypoints(selectedShip, false);
-                                HideValidPositionMarkers();
-                                selectedShip = null;
-                                invalidTiles = new List<Tile>();
-                                validTiles = new List<Tile>();
-                                selectedTiles = new List<Tile>();
-                            }
-                        }
-                    }
-                }
-
-                if (endPress)
-                {
-                    foreach (Tile tile in selectedTiles)
-                    {
-                        ResetTileParent(tile.coordinates);
-                    }
-                    selectedTiles = new List<Tile>();
-                }
 
                 Ship[] ships = new Ship[allShips.Keys.Count];
                 allShips.Keys.CopyTo(ships, 0);
