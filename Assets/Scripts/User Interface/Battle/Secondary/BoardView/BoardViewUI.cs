@@ -5,7 +5,7 @@ using UnityEngine;
 public class BoardViewUI : InputEnabledUI
 {
     protected Board managedBoard;
-    MovingUIAgent[,] tileParents;
+    TileParent_BoardViewAgent[,] tileParents;
 
     protected override void SetState(UIState state)
     {
@@ -43,7 +43,9 @@ public class BoardViewUI : InputEnabledUI
         {
             if (tileParents[position.x, position.y] != null)
             {
-                DestroyDynamicAgent(tileParents[position.x, position.y]);
+                TileParent_BoardViewAgent parent = tileParents[position.x, position.y];
+                parent.State = UIState.DISABLING;
+                dynamicUIAgents.Remove(parent);
                 tileParents[position.x, position.y] = null;
             }
         }
@@ -53,7 +55,7 @@ public class BoardViewUI : InputEnabledUI
     {
         if (tileParents == null)
         {
-            tileParents = new MovingUIAgent[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
+            tileParents = new TileParent_BoardViewAgent[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
         }
 
         if (reset)
@@ -61,7 +63,7 @@ public class BoardViewUI : InputEnabledUI
             ResetTileParent(position);
         }
 
-        MovingUIAgent parent = tileParents[position.x, position.y];
+        TileParent_BoardViewAgent parent = tileParents[position.x, position.y];
         if (parent == null)
         {
             Vector3 finalPosition = managedBoard.tiles[position.x, position.y].transform.position;
@@ -70,7 +72,7 @@ public class BoardViewUI : InputEnabledUI
                 finalPosition = childAgentDefaultParent.InverseTransformPoint(finalPosition);
             }
 
-            parent = (MovingUIAgent)CreateDynamicAgent("tile_parent");
+            parent = (TileParent_BoardViewAgent)CreateDynamicAgent("tile_parent");
             parent.enabledPositions = new Vector3[1] { finalPosition };
             parent.disabledPosition = parent.enabledPositions[0];
             parent.disabledPosition.y = -10;

@@ -12,7 +12,7 @@ public class MovingUIAgent : UIAgent
 
     public Vector3 globalVelocity;
     public Vector3 lastTargetPosition;
-    bool firstRun = true;
+    public bool firstRun = true;
     protected override void Update()
     {
         base.Update();
@@ -23,7 +23,6 @@ public class MovingUIAgent : UIAgent
 
             if (Vector3.Distance(transform.localPosition, targetPosition) < movementFinishingDistance)
             {
-                State = (int)State >= 2 ? UIState.ENABLED : UIState.DISABLED;
                 lastTargetPosition = targetPosition;
                 firstRun = false;
             }
@@ -33,6 +32,10 @@ public class MovingUIAgent : UIAgent
                 transform.localPosition = Vector3.SmoothDamp(transform.localPosition, targetPosition, ref localVelocity, movementTime, movementMaxSpeed);
                 globalVelocity = transform.parent ? transform.parent.TransformDirection(localVelocity) : localVelocity;
             }
+        }
+        else
+        {
+            State = (int)State >= 2 ? UIState.ENABLED : UIState.DISABLED;
         }
     }
 
