@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TileParent_BoardViewAgent : MovingUIAgent
+public class Tile_BoardViewAgent : MovingUIAgent
 {
     protected override void SetState(UIState state)
     {

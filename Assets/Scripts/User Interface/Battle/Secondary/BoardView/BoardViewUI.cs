@@ -5,10 +5,15 @@ using UnityEngine;
 public class BoardViewUI : InputEnabledUI
 {
     protected Board managedBoard;
-    TileParent_BoardViewAgent[,] tileParents;
+    Tile_BoardViewAgent[,] tileAgents;
 
     protected override void SetState(UIState state)
     {
+        if ((int)state < 2)
+        {
+            RemoveAllTileAgents();
+        }
+
         base.SetState(state);
         switch (state)
         {
@@ -21,50 +26,52 @@ public class BoardViewUI : InputEnabledUI
         }
     }
 
-    protected void ResetAllTileParents()
+    protected void RemoveAllTileAgents()
     {
-        if (tileParents != null)
+        if (tileAgents != null)
         {
-            for (int x = 0; x < tileParents.GetLength(0); x++)
+            for (int x = 0; x < tileAgents.GetLength(0); x++)
             {
-                for (int y = 0; y < tileParents.GetLength(1); y++)
+                for (int y = 0; y < tileAgents.GetLength(1); y++)
                 {
-                    Destroy(tileParents[x, y]);
-                    tileParents[x, y] = null;
+                    if (tileAgents[x, y] != null)
+                    {
+                        DestroyDynamicAgent(tileAgents[x, y]);
+                        tileAgents[x, y] = null;
+                    }
                 }
             }
         }
-
     }
 
-    protected void ResetTileParent(Vector2Int position)
+    protected void RemoveTileAgent(Vector2Int position)
     {
-        if (tileParents != null)
+        if (tileAgents != null)
         {
-            if (tileParents[position.x, position.y] != null)
+            if (tileAgents[position.x, position.y] != null)
             {
-                TileParent_BoardViewAgent parent = tileParents[position.x, position.y];
-                parent.State = UIState.DISABLING;
-                dynamicUIAgents.Remove(parent);
-                tileParents[position.x, position.y] = null;
+                Tile_BoardViewAgent tileAgent = tileAgents[position.x, position.y];
+                tileAgent.State = UIState.DISABLING;
+                dynamicUIAgents.Remove(tileAgent);
+                tileAgents[position.x, position.y] = null;
             }
         }
     }
 
-    protected MovingUIAgent GetTileParent(Vector2Int position, bool reset)
+    protected Tile_BoardViewAgent GetTileAgent(Vector2Int position, bool reset)
     {
-        if (tileParents == null)
+        if (tileAgents == null)
         {
-            tileParents = new TileParent_BoardViewAgent[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
+            tileAgents = new Tile_BoardViewAgent[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
         }
 
         if (reset)
         {
-            ResetTileParent(position);
+            RemoveTileAgent(position);
         }
 
-        TileParent_BoardViewAgent parent = tileParents[position.x, position.y];
-        if (parent == null)
+        Tile_BoardViewAgent tileAgent = tileAgents[position.x, position.y];
+        if (tileAgent == null)
         {
             Vector3 finalPosition = managedBoard.tiles[position.x, position.y].transform.position;
             if (childAgentDefaultParent)
@@ -72,18 +79,50 @@ public class BoardViewUI : InputEnabledUI
                 finalPosition = childAgentDefaultParent.InverseTransformPoint(finalPosition);
             }
 
-            parent = (TileParent_BoardViewAgent)CreateDynamicAgent("tile_parent");
-            parent.enabledPositions = new Vector3[1] { finalPosition };
-            parent.disabledPosition = parent.enabledPositions[0];
-            parent.disabledPosition.y = -10;
+            tileAgent = (Tile_BoardViewAgent)CreateDynamicAgent("tile_parent");
+            tileAgent.enabledPositions = new Vector3[1] { finalPosition };
+            tileAgent.disabledPosition = tileAgent.enabledPositions[0];
+            tileAgent.disabledPosition.y = -10;
 
-            parent.transform.localPosition = parent.disabledPosition;
+            tileAgent.transform.localPosition = tileAgent.disabledPosition;
 
-            parent.movementTime = 0.01f + position.magnitude / 150.0f;
-            tileParents[position.x, position.y] = parent;
+            tileAgent.movementTime = 0.01f + position.magnitude / 150.0f;
+            tileAgents[position.x, position.y] = tileAgent;
         }
 
-        return parent;
+        return tileAgent;
+    }
+
+    protected void SetTileSquareRender(Vector2Int position, Material material)
+    {
+        Tile_BoardViewAgent tileAgent = GetTileAgent(position, true);
+
+        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        marker.transform.SetParent(tileAgent.transform);
+        marker.transform.localPosition = Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+
+        marker.transform.localScale = Vector3.one * MiscellaneousVariables.it.boardTileSideLength;
+        marker.transform.Rotate(90, 0, 0);
+        Renderer renderer = marker.GetComponent<Renderer>();
+        renderer.material = material;
+    }
+
+    protected void SetTileSquareRender(Vector2Int position, Material material, Color color)
+    {
+        Tile_BoardViewAgent tileAgent = GetTileAgent(position, true);
+
+        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        marker.transform.SetParent(tileAgent.transform);
+        marker.transform.localPosition = Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+
+        marker.transform.localScale = Vector3.one * MiscellaneousVariables.it.boardTileSideLength;
+        marker.transform.Rotate(90, 0, 0);
+        Renderer renderer = marker.GetComponent<Renderer>();
+        renderer.material = material;
+
+        MaterialPropertyBlock block = new MaterialPropertyBlock();
+        block.SetColor("Color", color);
+        renderer.SetPropertyBlock(block);
     }
 
     protected Tile GetTileAtInputPosition()

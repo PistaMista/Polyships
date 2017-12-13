@@ -174,23 +174,14 @@ public class FleetPlacementUI : BoardViewUI
     {
         foreach (Tile tile in validTiles)
         {
-            ResetTileParent(tile.coordinates);
+            RemoveTileAgent(tile.coordinates);
         }
 
         foreach (Tile tile in invalidTiles)
         {
             if (!occupiedTiles.Contains(tile))
             {
-                MovingUIAgent parent = GetTileParent(tile.coordinates, true);
-
-                GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                marker.transform.SetParent(parent.transform);
-                marker.transform.localPosition = Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
-
-                marker.transform.localScale = Vector3.one * MiscellaneousVariables.it.boardTileSideLength;
-                marker.transform.Rotate(90, 0, 0);
-                Renderer renderer = marker.GetComponent<Renderer>();
-                renderer.material = invalidTileMaterial;
+                SetTileSquareRender(tile.coordinates, invalidTileMaterial);
             }
         }
     }
@@ -201,7 +192,7 @@ public class FleetPlacementUI : BoardViewUI
         {
             if (!occupiedTiles.Contains(tile))
             {
-                ResetTileParent(tile.coordinates);
+                RemoveTileAgent(tile.coordinates);
             }
         }
     }
@@ -236,16 +227,7 @@ public class FleetPlacementUI : BoardViewUI
     {
         foreach (Tile tile in allShips[selectedShip].occupiedTiles)
         {
-            MovingUIAgent parent = GetTileParent(tile.coordinates, true);
-
-            GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            marker.transform.SetParent(parent.transform);
-            marker.transform.localPosition = Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
-
-            marker.transform.localScale = Vector3.one * MiscellaneousVariables.it.boardTileSideLength;
-            marker.transform.Rotate(90, 0, 0);
-            Renderer renderer = marker.GetComponent<Renderer>();
-            renderer.material = occupiedTileMaterial;
+            SetTileSquareRender(tile.coordinates, occupiedTileMaterial);
         }
 
         occupiedTiles.AddRange(allShips[selectedShip].occupiedTiles);
@@ -283,16 +265,8 @@ public class FleetPlacementUI : BoardViewUI
     void SelectTile(Tile tile)
     {
         selectedTiles.Add(tile);
-        MovingUIAgent parent = GetTileParent(tile.coordinates, true);
 
-        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        marker.transform.SetParent(parent.transform);
-        marker.transform.localPosition = Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
-
-        marker.transform.localScale = Vector3.one * MiscellaneousVariables.it.boardTileSideLength;
-        marker.transform.Rotate(90, 0, 0);
-        Renderer renderer = marker.GetComponent<Renderer>();
-        renderer.material = selectedTileMaterial;
+        SetTileSquareRender(tile.coordinates, selectedTileMaterial);
     }
 
     void FinalizePlacement()
@@ -438,7 +412,7 @@ public class FleetPlacementUI : BoardViewUI
         {
             foreach (Tile tile in selectedTiles)
             {
-                ResetTileParent(tile.coordinates);
+                RemoveTileAgent(tile.coordinates);
             }
             selectedTiles = new List<Tile>();
         }
