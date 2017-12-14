@@ -11,27 +11,19 @@ public class MovingUIAgent : UIAgent
     public float movementFinishingDistance;
 
     public Vector3 globalVelocity;
-    public Vector3 lastTargetPosition;
-    public bool firstRun = true;
     protected override void Update()
     {
         base.Update();
         Vector3 targetPosition = (int)State >= 2 ? enabledPositions[GetTargetPositionIndex()] : disabledPosition;
-        if (targetPosition != lastTargetPosition || firstRun)
-        {
-            State = (int)State >= 2 ? UIState.ENABLING : UIState.DISABLING;
+        State = (int)State >= 2 ? UIState.ENABLING : UIState.DISABLING;
 
-            if (Vector3.Distance(transform.localPosition, targetPosition) < movementFinishingDistance)
-            {
-                lastTargetPosition = targetPosition;
-                firstRun = false;
-            }
-            else
-            {
-                Vector3 localVelocity = transform.parent ? transform.parent.InverseTransformDirection(globalVelocity) : globalVelocity;
-                transform.localPosition = Vector3.SmoothDamp(transform.localPosition, targetPosition, ref localVelocity, movementTime, movementMaxSpeed);
-                globalVelocity = transform.parent ? transform.parent.TransformDirection(localVelocity) : localVelocity;
-            }
+        if (Vector3.Distance(transform.localPosition, targetPosition) > movementFinishingDistance)
+        {
+            Vector3 localVelocity = transform.parent ? transform.parent.InverseTransformDirection(globalVelocity) : globalVelocity;
+            transform.localPosition = Vector3.SmoothDamp(transform.localPosition, targetPosition, ref localVelocity, movementTime, movementMaxSpeed);
+            globalVelocity = transform.parent ? transform.parent.TransformDirection(localVelocity) : localVelocity;
+
+            State = (int)State >= 2 ? UIState.ENABLING : UIState.DISABLING;
         }
         else
         {

@@ -128,12 +128,13 @@ public class Player : MonoBehaviour
             }
         }
 
+        Board targetBoard = board == Battle.main.attacker.board ? Battle.main.defender.board : Battle.main.attacker.board;
         hitTiles = new List<Tile>();
         if (data.hitTiles != null)
         {
             for (int i = 0; i < data.hitTiles.GetLength(0); i++)
             {
-                hitTiles.Add(board.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
+                hitTiles.Add(targetBoard.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
             }
         }
     }

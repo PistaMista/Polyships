@@ -9,6 +9,8 @@ public class AttackViewUI : BoardViewUI
     public TTUI[] targeters;
     public int referenceBoardWidthForPedestalScaling;
     public FireButton_AttackViewAgent fireButton;
+    public Material hitTileMaterial;
+    public Material missedTileMaterial;
     protected override void SetState(UIState state)
     {
         switch (state)
@@ -35,9 +37,21 @@ public class AttackViewUI : BoardViewUI
                 fireButton.disabledPosition = fireButton.enabledPositions[1];
                 fireButton.disabledPosition.y = -10;
                 fireButton.transform.position = fireButton.disabledPosition;
+
+
                 break;
         }
         base.SetState(state);
+
+        switch (state)
+        {
+            case UIState.ENABLING:
+                foreach (Tile tile in Battle.main.attacker.hitTiles)
+                {
+                    SetTileSquareRender(tile.coordinates, tile.containedShip ? hitTileMaterial : missedTileMaterial);
+                }
+                break;
+        }
     }
 
     protected override void ProcessInput()

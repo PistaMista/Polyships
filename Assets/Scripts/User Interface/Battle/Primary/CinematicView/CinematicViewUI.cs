@@ -35,6 +35,6 @@ public class CinematicViewUI : InputEnabledUI
     void Finish()
     {
         State = UIState.DISABLING;
-        BattleUIMaster.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
+        BattleUIMaster.EnablePrimaryBUI(BattleUIType.DAMAGE_REPORT);
     }
 }
