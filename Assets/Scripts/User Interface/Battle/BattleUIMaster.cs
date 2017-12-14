@@ -11,7 +11,8 @@ public enum BattleUIType
     ATTACK_VIEW,
     ATTACKER_INFO,
     DAMAGE_REPORT,
-    CINEMATIC_VIEW
+    CINEMATIC_VIEW,
+    BATTLE_RESULT_VIEW
 }
 public class BattleUIMaster : InputEnabledUI
 {

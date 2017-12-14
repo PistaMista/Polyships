@@ -6,16 +6,7 @@ public class TTUI : BoardViewUI
 {
     Player managedAttacker;
     public AttackViewUI attackViewUserInterface;
-    // public GameObject tokenPrefab;
     public Pedestal_TTAgent stackPedestal;
-    // public float stackPedestalHeight;
-    // public float stackPedestalWidth;
-    // public float stackPedestalTransitionTime;
-    // public float stackMaximumDeviation;
-    // public Vector3 defaultPedestalPosition;
-    // public Vector3 scaledPedestalPosition;
-    // public Vector3 stowedPedestalPosition;
-    // public Vector3 pedestalVelocity;
     public List<Token_TTAgent> placedTokens;
     public List<Token_TTAgent> stackTokens;
     protected Token_TTAgent[] allTokens;
