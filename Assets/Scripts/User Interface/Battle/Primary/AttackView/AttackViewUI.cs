@@ -57,6 +57,16 @@ public class AttackViewUI : BoardViewUI
     protected override void ProcessInput()
     {
         base.ProcessInput();
+        if (tap && !fireButton.pushed)
+        {
+            if (!GetTileAtInputPosition())
+            {
+                State = UIState.DISABLING;
+                BattleUIMaster.EnablePrimaryBUI(BattleUIType.BATTLE_OVERVIEW);
+            }
+        }
+
+
         if (activePrimaryTargeter)
         {
             if (endPress && fireButton.pushed)

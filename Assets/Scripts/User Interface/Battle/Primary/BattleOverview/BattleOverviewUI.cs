@@ -11,9 +11,9 @@ public class BattleOverviewUI : InputEnabledUI
         switch (state)
         {
             case UIState.ENABLING:
-                cameraWaypoint.transform.position = Vector3.up * CameraControl.CalculateCameraWaypointHeight(new Vector2(2 * MiscellaneousVariables.it.boardDistanceFromCenter + 20 * MiscellaneousVariables.it.flagVoxelScale, 0));
+                cameraWaypoint.transform.position = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(new Vector2(2 * MiscellaneousVariables.it.boardDistanceFromCenter + 20 * MiscellaneousVariables.it.flagVoxelScale, 0)) + MiscellaneousVariables.it.flagRenderHeight);
                 cameraWaypoint.transform.LookAt(Vector3.zero);
-                CameraControl.GoToWaypoint(cameraWaypoint, 1.2f);
+                CameraControl.GoToWaypoint(cameraWaypoint, 0.55f);
                 break;
         }
         SetInteractable(state == UIState.ENABLED);

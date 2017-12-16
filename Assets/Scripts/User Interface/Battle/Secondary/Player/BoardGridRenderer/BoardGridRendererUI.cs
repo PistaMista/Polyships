@@ -35,7 +35,7 @@ public class BoardGridRendererUI : CombatantUI
             line.disabledPosition = line.enabledPositions[0];
             line.disabledPosition.y = -10;
 
-            line.movementTime = line.movementTime * Random.Range(0.8f, 1.2f);
+            line.movementTime *= Random.Range(0.8f, 1.2f);
 
             line.transform.localPosition = line.disabledPosition;
         }

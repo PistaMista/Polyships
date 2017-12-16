@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class BoardViewUI : InputEnabledUI
 {
-    protected Board managedBoard;
+    public Board managedBoard;
     Tile_BoardViewAgent[,] tileAgents;
 
     protected override void SetState(UIState state)

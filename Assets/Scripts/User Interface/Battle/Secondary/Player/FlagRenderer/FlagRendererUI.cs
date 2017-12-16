@@ -29,7 +29,7 @@ public class FlagRendererUI : CombatantUI
     void Initialize()
     {
         childAgentDefaultParent.transform.position = managedBoard.owner.transform.position;
-        Vector3 startingPosition = -new Vector3(managedBoard.owner.flag.GetLength(0) / 2.0f, 0, managedBoard.owner.flag.GetLength(1) / 2.0f) * MiscellaneousVariables.it.flagVoxelScale /*+ ( ? (managedPlayer.boardCameraPoint.transform.position.y + 10) * Vector3.up : Vector3.zero)*/;
+        Vector3 startingPosition = -new Vector3(managedBoard.owner.flag.GetLength(0) / 2.0f, 0, managedBoard.owner.flag.GetLength(1) / 2.0f) * MiscellaneousVariables.it.flagVoxelScale + Vector3.up * MiscellaneousVariables.it.flagRenderHeight;
 
         for (int x = 0; x < managedBoard.owner.flag.GetLength(0); x++)
         {
@@ -41,8 +41,10 @@ public class FlagRendererUI : CombatantUI
                 voxel.disabledPosition = voxel.enabledPositions[0];
                 voxel.disabledPosition.y = -10;
 
+                voxel.transform.localPosition = voxel.disabledPosition;
+
                 voxel.xOffset = x;
-                voxel.movementTime = 0.05f + (x + z) / 40.0f;
+                voxel.movementTime = 0.025f + (x + z) / 80.0f;
 
                 Renderer rend = voxel.GetComponentInChildren<Renderer>();
                 MaterialPropertyBlock block = new MaterialPropertyBlock();

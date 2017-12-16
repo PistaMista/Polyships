@@ -111,7 +111,7 @@ public class Player : MonoBehaviour
 
         flagCameraPoint = new GameObject("Flag Camera Point").AddComponent<Waypoint>();
         flagCameraPoint.transform.SetParent(transform);
-        flagCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(MiscellaneousVariables.it.flagVoxelScale * new Vector2(flag.GetLength(0) + 3, flag.GetLength(1) + 3)));
+        flagCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(MiscellaneousVariables.it.flagVoxelScale * new Vector2(flag.GetLength(0) + 3, flag.GetLength(1) + 3)) + MiscellaneousVariables.it.flagRenderHeight);
         flagCameraPoint.transform.LookAt(transform);
     }
 

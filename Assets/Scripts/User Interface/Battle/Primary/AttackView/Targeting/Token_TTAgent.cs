@@ -31,6 +31,16 @@ public class Token_TTAgent : MovingUIAgent
             }
         }
     }
+
+    protected override void Update()
+    {
+        if ((int)state < 2)
+        {
+            disabledPosition = enabledPositions[1];
+            disabledPosition.y = owner.managedBoard.owner.boardCameraPoint.transform.position.y + 5.0f;
+        }
+        base.Update();
+    }
     protected override int GetTargetPositionIndex()
     {
         return onPedestal ? 0 : 1;
