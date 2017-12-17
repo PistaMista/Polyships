@@ -1,48 +1,69 @@
-﻿Shader "Custom/SeaShader" {
+﻿// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Custom/SeaShader" {
 	Properties {
 		_Color ("Color", Color) = (1,1,1,1)
-		_MainTex ("Albedo (RGB)", 2D) = "white" {}
-		_Glossiness ("Smoothness", Range(0,1)) = 0.5
-		_Metallic ("Metallic", Range(0,1)) = 0.0
+		_Noise("Noise", 2D) = "white" {} 
 	}
 	SubShader {
-		Tags { "RenderType"="Opaque" }
+		Tags { "RenderType"="Opaque" "LightMode"="ForwardBase" }
 		LOD 200
-		
+
+		Pass{
 		CGPROGRAM
-		// Physically based Standard lighting model, and enable shadows on all light types
-		#pragma surface surf Standard fullforwardshadows
+		#pragma vertex vert
+		#pragma fragment frag
+		#pragma multi_compile_fog
+			
+		#include "UnityCG.cginc"
+		
 
-		// Use shader model 3.0 target, to get nicer looking lighting
-		#pragma target 3.0
+		fixed4 _Color;
+		float4 _LightColor0;
 
-		sampler2D _MainTex;
 
-		struct Input {
-			float2 uv_MainTex;
+		struct appdata
+		{
+			float4 vertex : POSITION;
+			float3 normal : NORMAL;
 		};
 
-		half _Glossiness;
-		half _Metallic;
-		fixed4 _Color;
+		struct v2f
+		{
+			//UNITY_FOG_COORDS(1)
+			float4 vertex : SV_POSITION;
+			half4 color : COLOR;
+		};
 
-		// Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
-		// See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
-		// #pragma instancing_options assumeuniformscaling
-		UNITY_INSTANCING_CBUFFER_START(Props)
-			// put more per-instance properties here
-		UNITY_INSTANCING_CBUFFER_END
+			
+		v2f vert (appdata v)
+		{
+			v.vertex.y = v.vertex.y + sin(_Time * 30 + v.vertex.x) * 1;
+			
+			v2f o;
 
-		void surf (Input IN, inout SurfaceOutputStandard o) {
-			// Albedo comes from a texture tinted by color
-			fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
-			o.Albedo = c.rgb;
-			// Metallic and smoothness come from slider variables
-			o.Metallic = _Metallic;
-			o.Smoothness = _Glossiness;
-			o.Alpha = c.a;
+			float4 normal = float4(v.normal, 0.0);
+				float3 n = normalize(mul(normal, unity_WorldToObject));
+				float3 l = normalize(_WorldSpaceLightPos0);
+ 
+				float3 NdotL = max(0.0, dot(n, l));
+ 
+				float3 d = NdotL * _Color * _LightColor0;
+				o.color = float4(d, 1.0);
+				o.vertex = UnityObjectToClipPos(v.vertex);
+
+			
+			//UNITY_TRANSFER_FOG(o,o.vertex);
+			return o;
+		}
+
+		fixed4 frag (v2f i) : SV_Target
+		{
+			return i.color;
 		}
 		ENDCG
+		}
 	}
 	FallBack "Diffuse"
 }

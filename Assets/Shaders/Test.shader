@@ -1,10 +1,8 @@
-﻿Shader "Unlit/TileSquareShader"
+﻿Shader "Unlit/Test"
 {
 	Properties
 	{
-		_Color ("Color", Color) = (1, 1, 1, 1)
-		_EffectSlope ("Effect Slope", Vector) = (1, 1, 1, 1)
-		_EffectScale("Effect Scale", Float) = 1
+		_MainTex ("Texture", 2D) = "white" {}
 	}
 	SubShader
 	{
@@ -29,28 +27,30 @@
 
 			struct v2f
 			{
-				//UNITY_FOG_COORDS(1)
+				float2 uv : TEXCOORD0;
+				UNITY_FOG_COORDS(1)
 				float4 vertex : SV_POSITION;
 			};
 
-			float4 _Color;
-			float2 _EffectSlope;
-			float _EffectScale;
+			sampler2D _MainTex;
+			float4 _MainTex_ST;
 			
 			v2f vert (appdata v)
 			{
 				v2f o;
 				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 				UNITY_TRANSFER_FOG(o,o.vertex);
 				return o;
 			}
 			
 			fixed4 frag (v2f i) : SV_Target
 			{
-				float4 finalCol = _Color;
-				finalCol = finalCol * (0.9 + sin(_Time * _EffectScale + i.vertex.x * _EffectSlope.x + i.vertex.y * _EffectSlope.y) / 10.0);
-				
-				return finalCol;
+				// sample the texture
+				fixed4 col = tex2D(_MainTex, i.uv);
+				// apply fog
+				UNITY_APPLY_FOG(i.fogCoord, col);
+				return col;
 			}
 			ENDCG
 		}
