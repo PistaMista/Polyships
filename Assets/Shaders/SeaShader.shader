@@ -4,7 +4,9 @@
 Shader "Custom/SeaShader" {
 	Properties {
 		_Color ("Color", Color) = (1,1,1,1)
-		_Noise("Noise", 2D) = "white" {} 
+		_Noise("Noise", 2D) = "white" {}
+		_MaxElevation("Max Elevation", Float) = 10
+		_Speed("Speed", Float) = 1
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" "LightMode"="ForwardBase" }
@@ -18,15 +20,18 @@ Shader "Custom/SeaShader" {
 			
 		#include "UnityCG.cginc"
 		
-
+		sampler2D _Noise;
 		fixed4 _Color;
 		float4 _LightColor0;
+		float _MaxElevation;
+		float _Speed;
 
 
 		struct appdata
 		{
 			float4 vertex : POSITION;
 			float3 normal : NORMAL;
+			float2 texcoord : TEXCOORD0;
 		};
 
 		struct v2f
@@ -39,19 +44,22 @@ Shader "Custom/SeaShader" {
 			
 		v2f vert (appdata v)
 		{
-			v.vertex.y = v.vertex.y + sin(_Time * 30 + v.vertex.x) * 1;
+			//float sine = (sin(_Time * 12 + v.vertex.x) + 1) / 2.0;
+			float sine = tex2Dlod(_Noise, v.vertex);
+			v.vertex.y = v.vertex.y + sine * _MaxElevation;
 			
-			v2f o;
+			 v2f o;
 
-			float4 normal = float4(v.normal, 0.0);
-				float3 n = normalize(mul(normal, unity_WorldToObject));
-				float3 l = normalize(_WorldSpaceLightPos0);
+			// float4 normal = float4(v.normal, 0.0);
+			// float3 n = normalize(mul(normal, unity_WorldToObject));
+			// float3 l = normalize(_WorldSpaceLightPos0);
+			
+			// float3 NdotL = max(0.0, dot(n, l));
+			
  
-				float3 NdotL = max(0.0, dot(n, l));
- 
-				float3 d = NdotL * _Color * _LightColor0;
-				o.color = float4(d, 1.0);
-				o.vertex = UnityObjectToClipPos(v.vertex);
+			// float3 d = NdotL * _Color * _LightColor0;
+			o.color = _Color * (0.7 + sine * 0.3);
+			o.vertex = UnityObjectToClipPos(v.vertex);
 
 			
 			//UNITY_TRANSFER_FOG(o,o.vertex);
