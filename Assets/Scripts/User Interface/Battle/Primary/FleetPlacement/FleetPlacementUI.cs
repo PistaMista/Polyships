@@ -281,6 +281,11 @@ public class FleetPlacementUI : BoardViewUI
             ship.index = assignedShipIndex;
             assignedShipIndex++;
             ship.tiles = allShips[ship].occupiedTiles;
+
+            for (int tileIndex = 0; tileIndex < ship.tiles.Length; tileIndex++)
+            {
+                ship.tiles[tileIndex].containedShip = ship;
+            }
         }
 
         fadingDistance = (managedBoard.tiles.GetLength(0)) * (1 + cameraWaypointOffset * 2.0f) + 3;
@@ -400,8 +405,6 @@ public class FleetPlacementUI : BoardViewUI
                         ShipInfo info = allShips[selectedShip];
                         info.occupiedTiles = selectedTiles.ToArray();
                         allShips[selectedShip] = info;
-
-                        selectedTiles.ForEach(x => x.containedShip = selectedShip);
 
                         PlaceCurrentlySelectedShip();
                         UpdateShipWaypoints(selectedShip, false);
