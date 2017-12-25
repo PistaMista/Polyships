@@ -14,6 +14,8 @@ public enum ShipType
 
 public class Ship : MonoBehaviour
 {
+    //RULES
+    //Ships are not allowed to be modified until all ships are placed
     [Serializable]
     public struct ShipData
     {
@@ -102,10 +104,5 @@ public class Ship : MonoBehaviour
         {
             OnDestruction();
         }
-    }
-
-    public virtual void OnPlacement(FleetPlacementUI.ShipInfo thisShipInfo, FleetPlacementUI.ShipInfo[] otherShipInfo)
-    {
-
     }
 }

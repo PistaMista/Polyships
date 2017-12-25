@@ -34,6 +34,7 @@ public class BattleSetUpScreenUserInterface : SlidingUserInterface
             for (int y = 0; y < actualDimensions; y++)
             {
                 boardData.tiles[x, y].coordinates = new int[] { x, y };
+                boardData.tiles[x, y].containedShip = -1;
                 boardData.tiles[x, y].ownedByAttacker = true;
             }
         }
@@ -47,6 +48,7 @@ public class BattleSetUpScreenUserInterface : SlidingUserInterface
             for (int y = 0; y < actualDimensions; y++)
             {
                 boardData.tiles[x, y].coordinates = new int[] { x, y };
+                boardData.tiles[x, y].containedShip = -1;
             }
         }
 

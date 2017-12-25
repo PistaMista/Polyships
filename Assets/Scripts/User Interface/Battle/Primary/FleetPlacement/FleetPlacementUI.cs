@@ -54,6 +54,7 @@ public class FleetPlacementUI : BoardViewUI
                 validTiles = new List<Tile>();
                 invalidTiles = new List<Tile>();
                 occupiedTiles = new List<Tile>();
+                concealmentTiles = new Dictionary<Cruiser, List<Tile>>();
 
                 DestroyDynamicAgents<UIAgent>("");
                 MakeShipDrawer();
@@ -74,6 +75,8 @@ public class FleetPlacementUI : BoardViewUI
         public Vector3 localDrawerPosition;
         public Quaternion localDrawerRotation;
         public Tile[] occupiedTiles;
+        public Ship concealing;
+        public Cruiser concealedBy;
 
         public List<Vector3> waypoints;
         public Vector3 animationVelocity;
@@ -91,6 +94,7 @@ public class FleetPlacementUI : BoardViewUI
     List<Tile> obstructedTiles; //List of tiles where nothing can be placed
     List<Tile> validTiles; //List of tiles where the current ship can be placed
     List<Tile> invalidTiles; //List of tiles where the current ship cannot be placed
+    Dictionary<Cruiser, List<Tile>> concealmentTiles; //Tiles where the current ship can be concealed
 
     Ship selectedShip;
     List<Ship> notplacedShips;
@@ -214,6 +218,38 @@ public class FleetPlacementUI : BoardViewUI
 
     void RemovePlacedShip(Ship ship)
     {
+        ShipInfo concealedInfo;
+        if (ship.type == ShipType.CRUISER)
+        {
+            ShipInfo concealerInfo = allShips[ship];
+            if (concealerInfo.concealing)
+            {
+                concealedInfo = allShips[concealerInfo.concealing];
+                concealedInfo.concealedBy = null;
+                allShips[concealerInfo.concealing] = concealedInfo;
+
+                concealerInfo.concealing = null;
+                allShips[ship] = concealerInfo;
+            }
+            else
+            {
+                RemoveConcealmentArea((Cruiser)ship);
+            }
+        }
+
+        concealedInfo = allShips[ship];
+        if (concealedInfo.concealedBy)
+        {
+            AddConcealmentArea(concealedInfo.concealedBy);
+            ShipInfo concealerInfo = allShips[concealedInfo.concealedBy];
+            concealerInfo.concealing = null;
+            allShips[concealedInfo.concealedBy] = concealerInfo;
+
+            concealedInfo.concealedBy = null;
+            allShips[ship] = concealedInfo;
+        }
+
+
         foreach (Tile tile in allShips[ship].occupiedTiles)
         {
             occupiedTiles.Remove(tile);
@@ -238,14 +274,83 @@ public class FleetPlacementUI : BoardViewUI
         info.boardRotation = Quaternion.Euler(0, directional.z != 0 ? 0 : 90, 0);
         allShips[selectedShip] = info;
 
-        List<ShipInfo> otherShipInfo = new List<ShipInfo>(allShips.Values);
-        otherShipInfo.Remove(info);
-        selectedShip.OnPlacement(info, otherShipInfo.ToArray());
+        CalculatePlacedShipConcealment();
 
         notplacedShips.Remove(selectedShip);
         placedShips.Add(selectedShip);
 
+        //Calculate the concealment tiles cast by a cruiser
+        if (selectedShip.type == ShipType.CRUISER)
+        {
+            AddConcealmentArea((Cruiser)selectedShip);
+        }
+
         Debug.Log("Placed ship " + selectedShip.name);
+    }
+
+    void AddConcealmentArea(Cruiser cruiser)
+    {
+        List<Tile> tiles = new List<Tile>();
+
+        foreach (Tile shipTile in allShips[cruiser].occupiedTiles)
+        {
+            for (int x = -2; x <= 2; x++)
+            {
+                for (int y = -2; y <= 2; y++)
+                {
+                    Vector2Int p = shipTile.coordinates + new Vector2Int(x, y);
+                    if (!(Mathf.Abs(x) < 2 && Mathf.Abs(y) < 2) && p.x >= 0 && p.x < managedBoard.tiles.GetLength(0) && p.y >= 0 && p.y < managedBoard.tiles.GetLength(1))
+                    {
+                        Tile candidateTile = managedBoard.tiles[p.x, p.y];
+                        if (!tiles.Contains(candidateTile))
+                        {
+                            tiles.Add(candidateTile);
+                        }
+                    }
+                }
+            }
+        }
+
+        concealmentTiles.Add(cruiser, tiles);
+    }
+
+    void RemoveConcealmentArea(Cruiser cruiser)
+    {
+        if (concealmentTiles.ContainsKey(cruiser))
+        {
+            concealmentTiles.Remove(cruiser);
+        }
+    }
+
+    void CalculatePlacedShipConcealment()
+    {
+        foreach (KeyValuePair<Cruiser, List<Tile>> concealer in concealmentTiles)
+        {
+            bool containsAll = true;
+
+            for (int i = 0; i < allShips[selectedShip].occupiedTiles.Length; i++)
+            {
+                if (!concealer.Value.Contains(allShips[selectedShip].occupiedTiles[i]))
+                {
+                    containsAll = false;
+                    break;
+                }
+            }
+
+            if (containsAll)
+            {
+                ShipInfo info = allShips[concealer.Key];
+                info.concealing = selectedShip;
+                allShips[concealer.Key] = info;
+
+                info = allShips[selectedShip];
+                info.concealedBy = concealer.Key;
+                allShips[selectedShip] = info;
+
+                RemoveConcealmentArea(concealer.Key);
+                break;
+            }
+        }
     }
 
     void UpdateShipWaypoints(Ship ship, bool selectedMode)
