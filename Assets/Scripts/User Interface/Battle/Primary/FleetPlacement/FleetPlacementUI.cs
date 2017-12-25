@@ -67,7 +67,7 @@ public class FleetPlacementUI : BoardViewUI
     public float shipAnimationMaxSpeed;
     public float shipAnimationElevation;
 
-    struct ShipInfo
+    public struct ShipInfo
     {
         public Vector3 boardPosition;
         public Quaternion boardRotation;
@@ -237,6 +237,10 @@ public class FleetPlacementUI : BoardViewUI
         info.boardPosition = (info.occupiedTiles[0].transform.position + info.occupiedTiles[info.occupiedTiles.Length - 1].transform.position) / 2.0f;
         info.boardRotation = Quaternion.Euler(0, directional.z != 0 ? 0 : 90, 0);
         allShips[selectedShip] = info;
+
+        List<ShipInfo> otherShipInfo = new List<ShipInfo>(allShips.Values);
+        otherShipInfo.Remove(info);
+        selectedShip.OnPlacement(info, otherShipInfo.ToArray());
 
         notplacedShips.Remove(selectedShip);
         placedShips.Add(selectedShip);

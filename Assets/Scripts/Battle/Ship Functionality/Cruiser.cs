@@ -4,16 +4,28 @@ using UnityEngine;
 
 public class Cruiser : Ship
 {
+    public Ship concealing;
 
-    // Use this for initialization
-    void Start()
+    public override void OnDestruction()
     {
-
+        base.OnDestruction();
+        if (concealing)
+        {
+            concealing.concealed = false;
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    public override int[] GetMetadata()
     {
+        return new int[] { concealing ? concealing.index : -1 };
+    }
 
+    public override void AssignReferences(ShipData data)
+    {
+        base.AssignReferences(data);
+        if (data.metadata[0] >= 0)
+        {
+            concealing = owner.ships[data.metadata[0]];
+        }
     }
 }

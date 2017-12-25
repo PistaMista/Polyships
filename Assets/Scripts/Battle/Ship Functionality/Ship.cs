@@ -104,7 +104,7 @@ public class Ship : MonoBehaviour
         }
     }
 
-    public virtual void OnPlacement()
+    public virtual void OnPlacement(FleetPlacementUI.ShipInfo thisShipInfo, FleetPlacementUI.ShipInfo[] otherShipInfo)
     {
 
     }

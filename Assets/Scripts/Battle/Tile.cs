@@ -20,11 +20,8 @@ public class Tile : MonoBehaviour
             result.coordinates[0] = (int)tile.coordinates.x;
             result.coordinates[1] = (int)tile.coordinates.y;
             result.hit = tile.hit;
+            result.containedShip = tile.containedShip ? tile.containedShip.index : -1;
 
-            if (tile.containedShip)
-            {
-                result.containedShip = tile.containedShip.index + 1;
-            }
 
             return result;
         }
@@ -44,9 +41,9 @@ public class Tile : MonoBehaviour
     public void AssignReferences(TileData data)
     {
         owner = data.ownedByAttacker ? Battle.main.attacker : Battle.main.defender;
-        if (data.containedShip >= 1)
+        if (data.containedShip >= 0)
         {
-            containedShip = owner.ships[data.containedShip - 1];
+            containedShip = owner.ships[data.containedShip];
         }
     }
 }
