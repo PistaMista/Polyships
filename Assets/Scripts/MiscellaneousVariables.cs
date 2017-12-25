@@ -13,6 +13,7 @@ public class MiscellaneousVariables : MonoBehaviour
     public float boardCameraHeightModifier;
     public float boardDistanceFromCenter;
     public float flagVoxelScale;
+    public float flagRenderHeight;
     public SlidingUserInterface_Master titleInterfaceMaster;
     public static MiscellaneousVariables it;
 

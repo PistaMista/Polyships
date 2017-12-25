@@ -111,7 +111,7 @@ public class Player : MonoBehaviour
 
         flagCameraPoint = new GameObject("Flag Camera Point").AddComponent<Waypoint>();
         flagCameraPoint.transform.SetParent(transform);
-        flagCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(MiscellaneousVariables.it.flagVoxelScale * new Vector2(flag.GetLength(0) + 3, flag.GetLength(1) + 3)));
+        flagCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(MiscellaneousVariables.it.flagVoxelScale * new Vector2(flag.GetLength(0) + 3, flag.GetLength(1) + 3)) + MiscellaneousVariables.it.flagRenderHeight);
         flagCameraPoint.transform.LookAt(transform);
     }
 
@@ -128,12 +128,13 @@ public class Player : MonoBehaviour
             }
         }
 
+        Board targetBoard = board == Battle.main.attacker.board ? Battle.main.defender.board : Battle.main.attacker.board;
         hitTiles = new List<Tile>();
         if (data.hitTiles != null)
         {
             for (int i = 0; i < data.hitTiles.GetLength(0); i++)
             {
-                hitTiles.Add(board.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
+                hitTiles.Add(targetBoard.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
             }
         }
     }

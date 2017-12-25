@@ -88,6 +88,11 @@ public class InputEnabledUIMaster : InputEnabledUI
             initialInputPosition.screen = currentInputPosition.screen;
         }
 
+        if (endPress)
+        {
+            dragging = false;
+        }
+
 
 
 

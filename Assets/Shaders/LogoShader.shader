@@ -7,6 +7,7 @@ Shader "UI/Logo"
         _Color ("Tint", Color) = (1,1,1,1)
 		_EffectColor("Effect Color", Color) = (1, 1, 1, 1)
 		_EffectSpeed("Effect Speed", Float) = 1
+        _Frequency("Effect Frequency", Float) = 0
 
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -81,6 +82,7 @@ Shader "UI/Logo"
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
 			float _EffectSpeed;
+            float _Frequency;
 
             v2f vert(appdata_t v)
             {
@@ -100,23 +102,24 @@ Shader "UI/Logo"
 
             fixed4 frag(v2f IN) : SV_Target
             {
-                half4 color = (tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd) * IN.color;
-				half4 initial = color;
-				float colorMod = (1 - ((_Time * _EffectSpeed) % 2 + IN.texcoord.x ));
-				color.r += _EffectColor.r * colorMod;
-				color.g += _EffectColor.g * colorMod;
-				color.b += _EffectColor.b * colorMod;
+                half4 initialColor = (tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd) * IN.color;
+				half4 finalColor = initialColor;
+				//float colorMod = (1 - ((_Time * _EffectSpeed) % 2 + IN.texcoord.x ));
+                float colorMod = sin(IN.texcoord.x * _Frequency + _Time * _EffectSpeed - IN.texcoord.y);
+				finalColor.r += _EffectColor.r * colorMod;
+				finalColor.g += _EffectColor.g * colorMod;
+				finalColor.b += _EffectColor.b * colorMod;
 
                 //color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
 				//color.a += UnityGet2DClipping(IN.worldPosition.xy, _ClipRect) * 0.5;
 				
-				color.a = initial.a;
+				finalColor.a = initialColor.a;
 
                 // #ifdef UNITY_UI_ALPHACLIP
                 // clip (color.a - 0.001);
                 // #endif
 
-                return color;
+                return finalColor;
             }
         ENDCG
         }
