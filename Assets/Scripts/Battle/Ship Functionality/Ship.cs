@@ -104,13 +104,66 @@ public class Ship : MonoBehaviour
         }
     }
 
+    //PLACEMENT FUNCTIONS
     public struct PlacementInfo
     {
         public Vector3 localDrawerPosition;
         public Quaternion localDrawerRotation;
         public List<Vector3> waypoints;
         public Vector3 animationVelocity;
+        public Tile[] lastLocation;
     }
 
     public PlacementInfo placementInfo;
+
+    public virtual void Place(Tile[] location)
+    {
+        if (location != null)
+        {
+            for (int i = 0; i < tiles.Length; i++)
+            {
+                location[i].containedShip = this;
+            }
+
+
+            FleetPlacementUI.notplacedShips.Remove(this);
+            FleetPlacementUI.placedShips.Add(this);
+
+
+            FleetPlacementUI.it.ReevaluateTiles();
+        }
+        else
+        {
+
+        }
+
+        tiles = location;
+
+        FleetPlacementUI.selectedShip = null;
+    }
+
+    public virtual void Pickup()
+    {
+        placementInfo.lastLocation = tiles;
+
+        if (tiles != null)
+        {
+            for (int i = 0; i < tiles.Length; i++)
+            {
+                tiles[i].containedShip = null;
+            }
+        }
+
+        tiles = null;
+
+        FleetPlacementUI.it.ReevaluateTiles();
+
+        if (FleetPlacementUI.placedShips.Contains(this))
+        {
+            FleetPlacementUI.placedShips.Remove(this);
+            FleetPlacementUI.notplacedShips.Add(this);
+        }
+
+        FleetPlacementUI.selectedShip = this;
+    }
 }
