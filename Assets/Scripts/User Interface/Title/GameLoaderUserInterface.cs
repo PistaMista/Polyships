@@ -80,7 +80,6 @@ public class GameLoaderUserInterface : SlidingUserInterface
             newBattleData.saveSlot = slot;
             newBattleData.attacker.index = 0;
             newBattleData.defender.index = 1;
-            newBattleData.stage = BattleStage.SHIP_PLACEMENT;
         }
     }
 }

@@ -25,7 +25,7 @@ public class TurnNotifierUI : InputEnabledUI
         if (tap)
         {
             State = UIState.DISABLING;
-            if (Battle.main.attacker.ships == null)
+            if (Battle.main.attacker.board.ships == null)
             {
                 BattleUIMaster.EnablePrimaryBUI(BattleUIType.FLEET_PLACEMENT);
             }

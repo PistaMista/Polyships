@@ -60,7 +60,7 @@ public class Battle : MonoBehaviour
             List<Ship> result = new List<Ship>();
             for (int i = 0; i < array.Length; i++)
             {
-                result.Add(owner.ships[array[i]]);
+                result.Add(owner.board.ships[array[i]]);
             }
 
             return result;
@@ -195,7 +195,7 @@ public class Battle : MonoBehaviour
         attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
         defender.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
 
-        if (attacker.ships != null)
+        if (attacker.board.ships != null)
         {
             CollectAttackerCapabilities();
         }
@@ -231,15 +231,12 @@ public class Battle : MonoBehaviour
         lastAttacker.OnTurnEnd();
         attacker.OnTurnStart();
 
-        if (attacker.ships != null)
+        if (attacker.board.ships != null)
         {
             log.Insert(0, new TurnInfo(1));
-        }
-
-        if (attacker.ships != null)
-        {
             CollectAttackerCapabilities();
         }
+
         SaveToDisk();
     }
 
@@ -253,9 +250,9 @@ public class Battle : MonoBehaviour
     {
         AttackerCapabilities gathered = new AttackerCapabilities();
         gathered.maximumArtilleryCount = 1;
-        for (int i = 0; i < attacker.ships.Length; i++)
+        for (int i = 0; i < attacker.board.ships.Length; i++)
         {
-            Ship ship = attacker.ships[i];
+            Ship ship = attacker.board.ships[i];
             if (ship.health > 0)
             {
                 switch (ship.type)
@@ -291,7 +288,7 @@ public class Battle : MonoBehaviour
             //If there is a concealed ship in this tile displace the shot
             if (target.containedShip != null)
             {
-                if (target.containedShip.concealed)
+                if (target.containedShip.concealedBy)
                 {
                     Tile newTarget = null;
 

@@ -21,7 +21,7 @@ public class Ship : MonoBehaviour
         public bool ownedByAttacker;
         public int[,] tiles;
         public int health;
-        public bool concealed;
+        public int concealedBy;
         public ShipType type;
         public int[] metadata;
 
@@ -38,7 +38,7 @@ public class Ship : MonoBehaviour
             }
 
             result.health = ship.health;
-            result.concealed = ship.concealed;
+            result.concealedBy = ship.concealedBy ? ship.concealedBy.index : -1;
             result.type = ship.type;
             result.metadata = ship.GetMetadata();
             return result;
@@ -58,17 +58,29 @@ public class Ship : MonoBehaviour
         //owner - REF
         //tiles - REF
         health = data.health;
-        concealed = data.concealed;
+        //concealedBy - REF
         type = data.type;
     }
 
     public virtual void AssignReferences(ShipData data)
     {
         parentBoard = (data.ownedByAttacker ? Battle.main.attacker : Battle.main.defender).board;
-        tiles = new Tile[data.tiles.GetLength(0)];
-        for (int i = 0; i < data.tiles.GetLength(0); i++)
+        if (data.tiles != null)
         {
-            tiles[i] = parentBoard.tiles[data.tiles[i, 0], data.tiles[i, 1]];
+            tiles = new Tile[data.tiles.GetLength(0)];
+            for (int i = 0; i < data.tiles.GetLength(0); i++)
+            {
+                tiles[i] = parentBoard.tiles[data.tiles[i, 0], data.tiles[i, 1]];
+            }
+        }
+
+        Vector3 directional = tiles[0].transform.position - tiles[tiles.Length - 1].transform.position;
+        placementInfo.boardPosition = (tiles[0].transform.position + tiles[tiles.Length - 1].transform.position) / 2.0f;
+        placementInfo.boardRotation = Quaternion.Euler(0, directional.z != 0 ? 0 : 90, 0);
+
+        if (data.concealedBy >= 0)
+        {
+            concealedBy = (Cruiser)parentBoard.ships[data.concealedBy];
         }
 
         transform.SetParent(parentBoard.transform);
@@ -107,6 +119,9 @@ public class Ship : MonoBehaviour
     //PLACEMENT FUNCTIONS
     public struct PlacementInfo
     {
+        public Vector3 boardPosition;
+        public Quaternion boardRotation;
+
         public Vector3 localDrawerPosition;
         public Quaternion localDrawerRotation;
         public List<Vector3> waypoints;
@@ -115,31 +130,39 @@ public class Ship : MonoBehaviour
     }
 
     public PlacementInfo placementInfo;
-
     public virtual void Place(Tile[] location)
     {
         if (location != null)
         {
-            for (int i = 0; i < tiles.Length; i++)
+            for (int i = 0; i < location.Length; i++)
             {
                 location[i].containedShip = this;
             }
 
+            Vector3 directional = location[0].transform.position - location[location.Length - 1].transform.position;
+            placementInfo.boardPosition = (location[0].transform.position + location[location.Length - 1].transform.position) / 2.0f;
+            placementInfo.boardRotation = Quaternion.Euler(0, directional.z != 0 ? 0 : 90, 0);
 
-            FleetPlacementUI.notplacedShips.Remove(this);
-            FleetPlacementUI.placedShips.Add(this);
 
-
-            FleetPlacementUI.it.ReevaluateTiles();
+            parentBoard.placementInfo.notplacedShips.Remove(this);
+            parentBoard.placementInfo.placedShips.Add(this);
+            transform.SetParent(parentBoard.transform);
         }
         else
         {
-
+            // transform.SetParent(FleetPlacementUI.it.shipDrawer.transform);
         }
 
         tiles = location;
 
-        FleetPlacementUI.selectedShip = null;
+        placementInfo.waypoints = new List<Vector3>();
+
+        Vector3 targetPosition = location != null ? placementInfo.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : FleetPlacementUI.it.shipDrawer.transform.TransformPoint(placementInfo.localDrawerPosition);
+        placementInfo.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, targetPosition.z));
+        placementInfo.waypoints.Add(targetPosition);
+
+
+        parentBoard.placementInfo.selectedShip = null;
     }
 
     public virtual void Pickup()
@@ -156,14 +179,17 @@ public class Ship : MonoBehaviour
 
         tiles = null;
 
-        FleetPlacementUI.it.ReevaluateTiles();
-
-        if (FleetPlacementUI.placedShips.Contains(this))
+        if (parentBoard.placementInfo.placedShips.Contains(this))
         {
-            FleetPlacementUI.placedShips.Remove(this);
-            FleetPlacementUI.notplacedShips.Add(this);
+            parentBoard.placementInfo.placedShips.Remove(this);
+            parentBoard.placementInfo.notplacedShips.Add(this);
         }
 
-        FleetPlacementUI.selectedShip = this;
+        parentBoard.placementInfo.selectedShip = this;
+
+        parentBoard.ReevaluateTiles();
+
+        placementInfo.waypoints = new List<Vector3>();
+        placementInfo.waypoints.Add(new Vector3(transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, transform.position.z));
     }
 }

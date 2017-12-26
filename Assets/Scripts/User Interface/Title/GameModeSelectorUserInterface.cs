@@ -40,7 +40,7 @@ public class GameModeSelectorUserInterface : SlidingUserInterface
                 // }
                 toggleGroup.ResetColors(selectedMode);
 
-                if (GameLoaderUserInterface.saveSlotData.stage == BattleStage.NOT_INITIALIZED)
+                if (GameLoaderUserInterface.saveSlotData.log == null)
                 {
                     battleCreatorParent.anchoredPosition = Vector2.down * 120;
                     battleResumerParent.gameObject.SetActive(false);

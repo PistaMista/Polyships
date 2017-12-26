@@ -95,4 +95,102 @@ public class Board : MonoBehaviour
             }
         }
     }
+
+    //PLACEMENT FUNCTIONS
+    public struct PlacementInfo
+    {
+        public List<Tile> selectedTiles; //List of tiles selected to house the currently selected ship
+        public List<Tile> obstructedTiles; //List of tiles where nothing can be placed
+        public List<Tile> validTiles; //List of tiles where the current ship can be placed
+        public List<Tile> invalidTiles; //List of tiles where the current ship cannot be placed
+        public List<Tile> occupiedTiles
+        {
+            get
+            {
+                List<Tile> result = new List<Tile>();
+                placedShips.ForEach(x => { result.AddRange(x.tiles); });
+                return result;
+            }
+        }
+
+        public Ship selectedShip;
+        public List<Ship> notplacedShips;
+        public List<Ship> placedShips;
+        public List<Ship> allShips;
+    }
+
+    public PlacementInfo placementInfo;
+
+    public void ReevaluateTiles()
+    {
+        Vector2 boardSize = new Vector2(tiles.GetLength(0), tiles.GetLength(1));
+
+        placementInfo.obstructedTiles = new List<Tile>();
+
+        //Determine the tiles in which a 1-tile sized ship cannot be placed
+        foreach (Tile tile in placementInfo.occupiedTiles)
+        {
+            for (int x = (tile.coordinates.x == 0 ? 0 : -1); x <= ((tile.coordinates.x == boardSize.x - 1) ? 0 : 1); x++)
+            {
+                for (int y = (tile.coordinates.y == 0 ? 0 : -1); y <= ((tile.coordinates.y == boardSize.y - 1) ? 0 : 1); y++)
+                {
+                    Tile obstructedTile = tiles[x + (int)tile.coordinates.x, y + (int)tile.coordinates.y];
+                    if (!placementInfo.obstructedTiles.Contains(obstructedTile))
+                    {
+                        placementInfo.obstructedTiles.Add(obstructedTile);
+                    }
+                }
+            }
+        }
+
+
+
+        placementInfo.invalidTiles = new List<Tile>();
+        placementInfo.validTiles = new List<Tile>();
+
+        for (int x = 0; x < boardSize.x; x++)
+        {
+            for (int y = 0; y < boardSize.y; y++)
+            {
+                placementInfo.invalidTiles.Add(tiles[x, y]);
+            }
+        }
+
+        //Determine where the current ship can or cannot be placed
+        for (int axis = 0; axis < 2; axis++) //The axis we are sweeping across
+        {
+            for (int line = 0; line < (axis == 0 ? boardSize.y : boardSize.x); line++)
+            {
+                List<Tile> inlineValidTiles = new List<Tile>();
+                List<Tile> inlineNeighbouringValidTiles = new List<Tile>();
+                for (int depth = 0; depth < (axis == 0 ? boardSize.x : boardSize.y); depth++)
+                {
+                    Tile examined = tiles[axis == 0 ? depth : line, axis == 0 ? line : depth];
+                    if (!placementInfo.obstructedTiles.Contains(examined))
+                    {
+                        inlineNeighbouringValidTiles.Add(examined);
+                    }
+                    else
+                    {
+                        if (inlineNeighbouringValidTiles.Count >= placementInfo.selectedShip.health)
+                        {
+                            inlineValidTiles.AddRange(inlineNeighbouringValidTiles);
+                        }
+                        inlineNeighbouringValidTiles = new List<Tile>();
+                    }
+                }
+
+                inlineValidTiles.AddRange(inlineNeighbouringValidTiles);
+
+                foreach (Tile tile in inlineValidTiles)
+                {
+                    if (!placementInfo.validTiles.Contains(tile))
+                    {
+                        placementInfo.validTiles.Add(tile);
+                        placementInfo.invalidTiles.Remove(tile);
+                    }
+                }
+            }
+        }
+    }
 }

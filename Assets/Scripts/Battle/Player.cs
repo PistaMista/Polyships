@@ -104,7 +104,7 @@ public class Player : MonoBehaviour
 
     public void OnTurnStart()
     {
-        if (board != null)
+        if (board.ships != null)
         {
             for (int i = 0; i < board.ships.Length; i++)
             {
@@ -115,7 +115,7 @@ public class Player : MonoBehaviour
 
     public void OnTurnEnd()
     {
-        if (board != null)
+        if (board.ships != null)
         {
             for (int i = 0; i < board.ships.Length; i++)
             {

@@ -12,7 +12,7 @@ public class Cruiser : Ship
         base.Destroy();
         if (concealing)
         {
-            concealing.concealed = false;
+            concealing.concealedBy = null;
         }
     }
 
