@@ -57,7 +57,6 @@ public class Player : MonoBehaviour
     public void Initialize(PlayerData data)
     {
         index = data.index;
-
         board = new GameObject("Board").AddComponent<Board>();
         board.transform.SetParent(transform);
         board.Initialize(data.board);

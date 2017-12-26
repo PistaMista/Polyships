@@ -5,6 +5,7 @@ using UnityEngine;
 public class Cruiser : Ship
 {
     public Ship concealing;
+    public List<Tile> concealmentArea;
 
     public override void Destroy()
     {

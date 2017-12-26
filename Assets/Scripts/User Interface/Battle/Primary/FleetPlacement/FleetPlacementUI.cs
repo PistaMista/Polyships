@@ -22,15 +22,21 @@ public class FleetPlacementUI : BoardViewUI
         switch (state)
         {
             case UIState.ENABLING:
-                managedBoard = Battle.main.attacker.board;
+                managedBoard = new GameObject("Board").AddComponent<Board>();
+                managedBoard.Initialize(Battle.main.attacker.board);
+                managedBoard.AssignReferences(Battle.main.attacker.board);
                 break;
             case UIState.DISABLED:
-                if (managedBoard.owner.ships != null)
+                if (managedBoard == Battle.main.attacker.board)
                 {
-                    for (int i = 0; i < managedBoard.owner.ships.Length; i++)
+                    for (int i = 0; i < managedBoard.ships.Length; i++)
                     {
-                        managedBoard.owner.ships[i].gameObject.SetActive(false);
+                        managedBoard.ships[i].gameObject.SetActive(false);
                     }
+                }
+                else
+                {
+                    Destroy(managedBoard.gameObject);
                 }
                 break;
         }
@@ -48,13 +54,11 @@ public class FleetPlacementUI : BoardViewUI
 
                 notplacedShips = new List<Ship>();
                 placedShips = new List<Ship>();
-                allShips = new Dictionary<Ship, ShipInfo>();
 
                 selectedTiles = new List<Tile>();
                 validTiles = new List<Tile>();
                 invalidTiles = new List<Tile>();
                 occupiedTiles = new List<Tile>();
-                concealmentTiles = new Dictionary<Cruiser, List<Tile>>();
 
                 DestroyDynamicAgents<UIAgent>("");
                 MakeShipDrawer();
@@ -68,21 +72,6 @@ public class FleetPlacementUI : BoardViewUI
     public float shipAnimationMaxSpeed;
     public float shipAnimationElevation;
 
-    public struct ShipInfo
-    {
-        public Vector3 boardPosition;
-        public Quaternion boardRotation;
-        public Vector3 localDrawerPosition;
-        public Quaternion localDrawerRotation;
-        public Tile[] occupiedTiles;
-        public Ship concealing;
-        public Cruiser concealedBy;
-
-        public List<Vector3> waypoints;
-        public Vector3 animationVelocity;
-        public float rotationVelocity;
-    }
-
     public Material invalidTileMaterial;
     public Material occupiedTileMaterial;
     public Material selectedTileMaterial;
@@ -94,12 +83,10 @@ public class FleetPlacementUI : BoardViewUI
     List<Tile> obstructedTiles; //List of tiles where nothing can be placed
     List<Tile> validTiles; //List of tiles where the current ship can be placed
     List<Tile> invalidTiles; //List of tiles where the current ship cannot be placed
-    Dictionary<Cruiser, List<Tile>> concealmentTiles; //Tiles where the current ship can be concealed
 
     Ship selectedShip;
     List<Ship> notplacedShips;
     List<Ship> placedShips;
-    Dictionary<Ship, ShipInfo> allShips;
 
     void ReevaluateTiles()
     {
@@ -218,18 +205,18 @@ public class FleetPlacementUI : BoardViewUI
 
     void RemovePlacedShip(Ship ship)
     {
-        ShipInfo concealedInfo;
+        MiscShipInfo concealedInfo;
         if (ship.type == ShipType.CRUISER)
         {
-            ShipInfo concealerInfo = allShips[ship];
+            MiscShipInfo concealerInfo = miscShipInfo[ship];
             if (concealerInfo.concealing)
             {
-                concealedInfo = allShips[concealerInfo.concealing];
+                concealedInfo = miscShipInfo[concealerInfo.concealing];
                 concealedInfo.concealedBy = null;
-                allShips[concealerInfo.concealing] = concealedInfo;
+                miscShipInfo[concealerInfo.concealing] = concealedInfo;
 
                 concealerInfo.concealing = null;
-                allShips[ship] = concealerInfo;
+                miscShipInfo[ship] = concealerInfo;
             }
             else
             {
@@ -237,20 +224,20 @@ public class FleetPlacementUI : BoardViewUI
             }
         }
 
-        concealedInfo = allShips[ship];
+        concealedInfo = miscShipInfo[ship];
         if (concealedInfo.concealedBy)
         {
             AddConcealmentArea(concealedInfo.concealedBy);
-            ShipInfo concealerInfo = allShips[concealedInfo.concealedBy];
+            MiscShipInfo concealerInfo = miscShipInfo[concealedInfo.concealedBy];
             concealerInfo.concealing = null;
-            allShips[concealedInfo.concealedBy] = concealerInfo;
+            miscShipInfo[concealedInfo.concealedBy] = concealerInfo;
 
             concealedInfo.concealedBy = null;
-            allShips[ship] = concealedInfo;
+            miscShipInfo[ship] = concealedInfo;
         }
 
 
-        foreach (Tile tile in allShips[ship].occupiedTiles)
+        foreach (Tile tile in miscShipInfo[ship].occupiedTiles)
         {
             occupiedTiles.Remove(tile);
         }
@@ -261,18 +248,18 @@ public class FleetPlacementUI : BoardViewUI
 
     void PlaceCurrentlySelectedShip()
     {
-        foreach (Tile tile in allShips[selectedShip].occupiedTiles)
+        foreach (Tile tile in miscShipInfo[selectedShip].occupiedTiles)
         {
             SetTileSquareRender(tile.coordinates, occupiedTileMaterial);
         }
 
-        occupiedTiles.AddRange(allShips[selectedShip].occupiedTiles);
+        occupiedTiles.AddRange(miscShipInfo[selectedShip].occupiedTiles);
 
-        ShipInfo info = allShips[selectedShip];
+        MiscShipInfo info = miscShipInfo[selectedShip];
         Vector3 directional = info.occupiedTiles[0].transform.position - info.occupiedTiles[info.occupiedTiles.Length - 1].transform.position;
         info.boardPosition = (info.occupiedTiles[0].transform.position + info.occupiedTiles[info.occupiedTiles.Length - 1].transform.position) / 2.0f;
         info.boardRotation = Quaternion.Euler(0, directional.z != 0 ? 0 : 90, 0);
-        allShips[selectedShip] = info;
+        miscShipInfo[selectedShip] = info;
 
         CalculatePlacedShipConcealment();
 
@@ -292,7 +279,7 @@ public class FleetPlacementUI : BoardViewUI
     {
         List<Tile> tiles = new List<Tile>();
 
-        foreach (Tile shipTile in allShips[cruiser].occupiedTiles)
+        foreach (Tile shipTile in miscShipInfo[cruiser].occupiedTiles)
         {
             for (int x = -2; x <= 2; x++)
             {
@@ -328,9 +315,9 @@ public class FleetPlacementUI : BoardViewUI
         {
             bool containsAll = true;
 
-            for (int i = 0; i < allShips[selectedShip].occupiedTiles.Length; i++)
+            for (int i = 0; i < miscShipInfo[selectedShip].occupiedTiles.Length; i++)
             {
-                if (!concealer.Value.Contains(allShips[selectedShip].occupiedTiles[i]))
+                if (!concealer.Value.Contains(miscShipInfo[selectedShip].occupiedTiles[i]))
                 {
                     containsAll = false;
                     break;
@@ -339,13 +326,13 @@ public class FleetPlacementUI : BoardViewUI
 
             if (containsAll)
             {
-                ShipInfo info = allShips[concealer.Key];
+                MiscShipInfo info = miscShipInfo[concealer.Key];
                 info.concealing = selectedShip;
-                allShips[concealer.Key] = info;
+                miscShipInfo[concealer.Key] = info;
 
-                info = allShips[selectedShip];
+                info = miscShipInfo[selectedShip];
                 info.concealedBy = concealer.Key;
-                allShips[selectedShip] = info;
+                miscShipInfo[selectedShip] = info;
 
                 RemoveConcealmentArea(concealer.Key);
                 break;
@@ -355,9 +342,9 @@ public class FleetPlacementUI : BoardViewUI
 
     void UpdateShipWaypoints(Ship ship, bool selectedMode)
     {
-        bool placed = allShips[ship].occupiedTiles != null;
+        bool placed = miscShipInfo[ship].occupiedTiles != null;
 
-        ShipInfo info = allShips[ship];
+        MiscShipInfo info = miscShipInfo[ship];
         info.waypoints = new List<Vector3>();
 
         Vector3 targetPosition = placed ? info.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : shipDrawer.transform.TransformPoint(info.localDrawerPosition);
@@ -368,7 +355,7 @@ public class FleetPlacementUI : BoardViewUI
         {
             info.waypoints.Add(targetPosition);
         }
-        allShips[ship] = info;
+        miscShipInfo[ship] = info;
     }
 
     void SelectTile(Tile tile)
@@ -380,22 +367,26 @@ public class FleetPlacementUI : BoardViewUI
 
     void FinalizePlacement()
     {
-        managedBoard.owner.ships = placedShips.ToArray();
+        // managedBoard.owner.ships = placedShips.ToArray();
 
 
-        int assignedShipIndex = 0;
-        foreach (Ship ship in placedShips)
-        {
-            ship.transform.SetParent(managedBoard.owner.transform);
-            ship.index = assignedShipIndex;
-            assignedShipIndex++;
-            ship.tiles = allShips[ship].occupiedTiles;
+        // int assignedShipIndex = 0;
+        // foreach (Ship ship in placedShips)
+        // {
+        //     ship.transform.SetParent(managedBoard.owner.transform);
+        //     ship.index = assignedShipIndex;
+        //     assignedShipIndex++;
+        //     ship.tiles = miscShipInfo[ship].occupiedTiles;
 
-            for (int tileIndex = 0; tileIndex < ship.tiles.Length; tileIndex++)
-            {
-                ship.tiles[tileIndex].containedShip = ship;
-            }
-        }
+        //     for (int tileIndex = 0; tileIndex < ship.tiles.Length; tileIndex++)
+        //     {
+        //         ship.tiles[tileIndex].containedShip = ship;
+        //     }
+        // }
+
+        managedBoard.transform.SetParent(Battle.main.attacker.transform);
+        Destroy(Battle.main.attacker.board.gameObject);
+        Battle.main.attacker.board = managedBoard;
 
         fadingDistance = (managedBoard.tiles.GetLength(0)) * (1 + cameraWaypointOffset * 2.0f) + 3;
 
@@ -410,14 +401,14 @@ public class FleetPlacementUI : BoardViewUI
         if (tap)
         {
             bool newShipSelected = false;
-            foreach (Ship ship in allShips.Keys)
+            foreach (Ship ship in miscShipInfo.Keys)
             {
                 Vector3 localInputPosition = ship.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
                 if (Mathf.Abs(localInputPosition.x) < 0.5f && Mathf.Abs(localInputPosition.z) < ship.health / 2.0f)
                 {
                     if (selectedShip != null)
                     {
-                        if (allShips[selectedShip].occupiedTiles != null)
+                        if (miscShipInfo[selectedShip].occupiedTiles != null)
                         {
                             PlaceCurrentlySelectedShip();
                         }
@@ -440,14 +431,14 @@ public class FleetPlacementUI : BoardViewUI
                 {
                     if (!clickedOnBoard) //If the user clicked outside of the board
                     {
-                        if (allShips[selectedShip].occupiedTiles != null) //If the ship was already on the board
+                        if (miscShipInfo[selectedShip].occupiedTiles != null) //If the ship was already on the board
                         {
                             if (clickedOnDrawer) //And the player clicks on the drawer
                             {
                                 //Remove the ship from the board and put it back into the drawer
-                                ShipInfo info = allShips[selectedShip];
+                                MiscShipInfo info = miscShipInfo[selectedShip];
                                 info.occupiedTiles = null;
-                                allShips[selectedShip] = info;
+                                miscShipInfo[selectedShip] = info;
                             }
                             else
                             {
@@ -511,9 +502,9 @@ public class FleetPlacementUI : BoardViewUI
                     if (selectedTiles.Count == selectedShip.health)
                     {
 
-                        ShipInfo info = allShips[selectedShip];
+                        MiscShipInfo info = miscShipInfo[selectedShip];
                         info.occupiedTiles = selectedTiles.ToArray();
-                        allShips[selectedShip] = info;
+                        miscShipInfo[selectedShip] = info;
 
                         PlaceCurrentlySelectedShip();
                         UpdateShipWaypoints(selectedShip, false);
@@ -545,12 +536,12 @@ public class FleetPlacementUI : BoardViewUI
             case UIState.ENABLED:
 
 
-                Ship[] ships = new Ship[allShips.Keys.Count];
-                allShips.Keys.CopyTo(ships, 0);
+                Ship[] ships = new Ship[miscShipInfo.Keys.Count];
+                miscShipInfo.Keys.CopyTo(ships, 0);
 
                 foreach (Ship ship in ships)
                 {
-                    ShipInfo info = allShips[ship];
+                    MiscShipInfo info = miscShipInfo[ship];
 
                     if (info.waypoints != null)
                     {
@@ -570,7 +561,7 @@ public class FleetPlacementUI : BoardViewUI
                     Quaternion targetRotation = info.occupiedTiles == null ? info.localDrawerRotation : info.boardRotation;
                     ship.transform.rotation = Quaternion.RotateTowards(ship.transform.rotation, targetRotation, Mathf.Pow(Quaternion.Angle(ship.transform.rotation, targetRotation) * Time.deltaTime * 10.0f, 0.5f));
 
-                    allShips[ship] = info;
+                    miscShipInfo[ship] = info;
                 }
                 break;
             case UIState.DISABLING:
@@ -613,7 +604,7 @@ public class FleetPlacementUI : BoardViewUI
         {
             Ship ship = Instantiate(defaultShipLoadout[i]).GetComponent<Ship>();
             notplacedShips.Add(ship);
-            allShips.Add(ship, new ShipInfo());
+            miscShipInfo.Add(ship, new MiscShipInfo());
 
             ship.parentBoard = Battle.main.attacker;
             ship.transform.SetParent(shipDrawer.transform);
@@ -1260,10 +1251,10 @@ public class FleetPlacementUI : BoardViewUI
                 ship.transform.localPosition = startingPosition + positionStep * shipIndex;
                 ship.transform.localRotation = new Quaternion(0, 1, 0, group.vertical ? 1 : 0);
 
-                ShipInfo info = allShips[ship];
+                MiscShipInfo info = miscShipInfo[ship];
                 info.localDrawerPosition = ship.transform.localPosition;
                 info.localDrawerRotation = ship.transform.localRotation;
-                allShips[ship] = info;
+                miscShipInfo[ship] = info;
             }
 
             // GameObject tmp = GameObject.CreatePrimitive(PrimitiveType.Cube);

@@ -49,7 +49,7 @@ public class Ship : MonoBehaviour
     public Board parentBoard;
     public Tile[] tiles;
     public int health;
-    public bool concealed;
+    public Cruiser concealedBy;
     public ShipType type;
 
     public virtual void Initialize(ShipData data)
@@ -103,4 +103,14 @@ public class Ship : MonoBehaviour
             Destroy();
         }
     }
+
+    public struct PlacementInfo
+    {
+        public Vector3 localDrawerPosition;
+        public Quaternion localDrawerRotation;
+        public List<Vector3> waypoints;
+        public Vector3 animationVelocity;
+    }
+
+    public PlacementInfo placementInfo;
 }
