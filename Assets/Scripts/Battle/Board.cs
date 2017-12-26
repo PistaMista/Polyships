@@ -10,6 +10,9 @@ public class Board : MonoBehaviour
     {
         public bool ownedByAttacker;
         public Tile.TileData[,] tiles;
+        public Ship.ShipData[] ships;
+        public int intactShipCount;
+
         public static implicit operator BoardData(Board board)
         {
             BoardData result = new BoardData();
@@ -22,11 +25,24 @@ public class Board : MonoBehaviour
                     result.tiles[x, y] = board.tiles[x, y];
                 }
             }
+
+            if (board.ships != null)
+            {
+                result.ships = new Ship.ShipData[board.ships.Length];
+                for (int i = 0; i < board.ships.Length; i++)
+                {
+                    result.ships[i] = board.ships[i];
+                }
+            }
+
+            result.intactShipCount = board.intactShipCount;
             return result;
         }
     }
     public Player owner;
     public Tile[,] tiles;
+    public Ship[] ships;
+    public int intactShipCount;
 
     public void Initialize(BoardData data)
     {
@@ -44,6 +60,20 @@ public class Board : MonoBehaviour
                 tiles[x, y].Initialize(data.tiles[x, y]);
             }
         }
+
+        if (data.ships != null)
+        {
+            ships = new Ship[data.ships.Length];
+            for (int i = 0; i < data.ships.Length; i++)
+            {
+                Ship ship = Instantiate(MiscellaneousVariables.it.shipPrefabs[(int)data.ships[i].type]).GetComponent<Ship>();
+                ship.transform.SetParent(transform);
+                ship.Initialize(data.ships[i]);
+                ships[i] = ship;
+            }
+        }
+
+        intactShipCount = data.intactShipCount;
     }
 
     public void AssignReferences(BoardData data)
@@ -54,6 +84,14 @@ public class Board : MonoBehaviour
             for (int y = 0; y < tiles.GetLength(1); y++)
             {
                 tiles[x, y].AssignReferences(data.tiles[x, y]);
+            }
+        }
+
+        if (data.ships != null)
+        {
+            for (int i = 0; i < ships.Length; i++)
+            {
+                ships[i].AssignReferences(data.ships[i]);
             }
         }
     }

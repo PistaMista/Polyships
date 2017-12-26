@@ -615,7 +615,7 @@ public class FleetPlacementUI : BoardViewUI
             notplacedShips.Add(ship);
             allShips.Add(ship, new ShipInfo());
 
-            ship.owner = Battle.main.attacker;
+            ship.parentBoard = Battle.main.attacker;
             ship.transform.SetParent(shipDrawer.transform);
 
             if (toAdd.Count == 0)

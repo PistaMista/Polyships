@@ -5,14 +5,6 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
 
-public enum BattleStage
-{
-    NOT_INITIALIZED,
-    SHIP_PLACEMENT,
-    FIGHTING,
-    FINISHED
-}
-
 public class Battle : MonoBehaviour
 {
     public struct TurnInfo
@@ -131,7 +123,6 @@ public class Battle : MonoBehaviour
         public Player.PlayerData attacker;
         public Player.PlayerData defender;
         public int saveSlot;
-        public BattleStage stage;
         public TurnInfoData[] log;
         public int tutorialStage;
 
@@ -141,7 +132,6 @@ public class Battle : MonoBehaviour
             result.attacker = battle.attacker;
             result.defender = battle.defender;
             result.saveSlot = battle.saveSlot;
-            result.stage = battle.stage;
             result.log = new TurnInfoData[battle.log.Count];
             for (int i = 0; i < battle.log.Count; i++)
             {
@@ -157,7 +147,6 @@ public class Battle : MonoBehaviour
     public Player defender;
     public List<TurnInfo> log;
     public int saveSlot;
-    public BattleStage stage;
     public int tutorialStage;
     public void SaveToDisk()
     {
@@ -184,7 +173,6 @@ public class Battle : MonoBehaviour
         //LOG - REF
 
         saveSlot = data.saveSlot;
-        stage = data.stage;
         tutorialStage = data.tutorialStage;
     }
 
@@ -362,7 +350,7 @@ public class Battle : MonoBehaviour
         foreach (KeyValuePair<Ship, List<int>> shipHitInfo in shipHits)
         {
             log[0].damagedShips.Add(shipHitInfo.Key);
-            shipHitInfo.Key.OnDamaged(shipHitInfo.Value.ToArray());
+            shipHitInfo.Key.Damage(shipHitInfo.Value.ToArray());
             if (shipHitInfo.Key.health <= 0)
             {
                 log[0].destroyedShips.Add(shipHitInfo.Key);

@@ -6,9 +6,9 @@ public class Cruiser : Ship
 {
     public Ship concealing;
 
-    public override void OnDestruction()
+    public override void Destroy()
     {
-        base.OnDestruction();
+        base.Destroy();
         if (concealing)
         {
             concealing.concealed = false;
@@ -25,7 +25,7 @@ public class Cruiser : Ship
         base.AssignReferences(data);
         if (data.metadata[0] >= 0)
         {
-            concealing = owner.ships[data.metadata[0]];
+            concealing = parentBoard.ships[data.metadata[0]];
         }
     }
 }

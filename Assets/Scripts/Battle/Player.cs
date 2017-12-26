@@ -12,8 +12,6 @@ public class Player : MonoBehaviour
         public Board.BoardData board;
         public bool computerControlled;
         public float[,,] flag;
-        public Ship.ShipData[] ships;
-        public int intactShipCount;
         public int[,] hitTiles;
         public static implicit operator PlayerData(Player player)
         {
@@ -33,17 +31,6 @@ public class Player : MonoBehaviour
                 }
             }
 
-            if (player.ships != null)
-            {
-                result.ships = new Ship.ShipData[player.ships.Length];
-                for (int i = 0; i < player.ships.Length; i++)
-                {
-                    result.ships[i] = player.ships[i];
-                }
-            }
-
-
-            result.intactShipCount = player.intactShipCount;
             result.hitTiles = new int[player.hitTiles.Count, 2];
             for (int i = 0; i < player.hitTiles.Count; i++)
             {
@@ -60,8 +47,6 @@ public class Player : MonoBehaviour
     public Board board;
     public bool computerControlled;
     public Color[,] flag;
-    public Ship[] ships;
-    public int intactShipCount;
     public List<Tile> hitTiles;
 
 
@@ -88,20 +73,6 @@ public class Player : MonoBehaviour
             }
         }
 
-        if (data.ships != null)
-        {
-            ships = new Ship[data.ships.Length];
-            for (int i = 0; i < data.ships.Length; i++)
-            {
-                Ship ship = Instantiate(MiscellaneousVariables.it.shipPrefabs[(int)data.ships[i].type]).GetComponent<Ship>();
-                ship.transform.SetParent(transform);
-                ship.Initialize(data.ships[i]);
-                ships[i] = ship;
-            }
-        }
-
-        intactShipCount = data.intactShipCount;
-
         //hitTiles - REF
 
         boardCameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
@@ -120,13 +91,6 @@ public class Player : MonoBehaviour
     public void AssignReferences(PlayerData data)
     {
         board.AssignReferences(data.board);
-        if (data.ships != null)
-        {
-            for (int i = 0; i < ships.Length; i++)
-            {
-                ships[i].AssignReferences(data.ships[i]);
-            }
-        }
 
         Board targetBoard = board == Battle.main.attacker.board ? Battle.main.defender.board : Battle.main.attacker.board;
         hitTiles = new List<Tile>();
@@ -141,22 +105,22 @@ public class Player : MonoBehaviour
 
     public void OnTurnStart()
     {
-        if (ships != null)
+        if (board != null)
         {
-            for (int i = 0; i < ships.Length; i++)
+            for (int i = 0; i < board.ships.Length; i++)
             {
-                ships[i].OnTurnStart();
+                board.ships[i].OnTurnStart();
             }
         }
     }
 
     public void OnTurnEnd()
     {
-        if (ships != null)
+        if (board != null)
         {
-            for (int i = 0; i < ships.Length; i++)
+            for (int i = 0; i < board.ships.Length; i++)
             {
-                ships[i].OnTurnEnd();
+                board.ships[i].OnTurnEnd();
             }
         }
     }

@@ -14,8 +14,6 @@ public enum ShipType
 
 public class Ship : MonoBehaviour
 {
-    //RULES
-    //Ships are not allowed to be modified until all ships are placed
     [Serializable]
     public struct ShipData
     {
@@ -31,7 +29,7 @@ public class Ship : MonoBehaviour
         {
             ShipData result = new ShipData();
             result.index = ship.index;
-            result.ownedByAttacker = ship.owner == Battle.main.attacker;
+            result.ownedByAttacker = ship.parentBoard.owner == Battle.main.attacker;
             result.tiles = new int[ship.tiles.Length, 2];
             for (int i = 0; i < ship.tiles.Length; i++)
             {
@@ -48,7 +46,7 @@ public class Ship : MonoBehaviour
     }
 
     public int index;
-    public Player owner;
+    public Board parentBoard;
     public Tile[] tiles;
     public int health;
     public bool concealed;
@@ -66,14 +64,14 @@ public class Ship : MonoBehaviour
 
     public virtual void AssignReferences(ShipData data)
     {
-        owner = data.ownedByAttacker ? Battle.main.attacker : Battle.main.defender;
+        parentBoard = (data.ownedByAttacker ? Battle.main.attacker : Battle.main.defender).board;
         tiles = new Tile[data.tiles.GetLength(0)];
         for (int i = 0; i < data.tiles.GetLength(0); i++)
         {
-            tiles[i] = owner.board.tiles[data.tiles[i, 0], data.tiles[i, 1]];
+            tiles[i] = parentBoard.tiles[data.tiles[i, 0], data.tiles[i, 1]];
         }
 
-        transform.SetParent(owner.transform);
+        transform.SetParent(parentBoard.transform);
         gameObject.SetActive(false);
     }
 
@@ -92,17 +90,17 @@ public class Ship : MonoBehaviour
 
     }
 
-    public virtual void OnDestruction()
+    public virtual void Destroy()
     {
-        owner.intactShipCount--;
+        parentBoard.intactShipCount--;
     }
 
-    public virtual void OnDamaged(int[] hitTilesIndexes)
+    public virtual void Damage(int[] hitTilesIndexes)
     {
         health -= hitTilesIndexes.Length;
         if (health <= 0)
         {
-            OnDestruction();
+            Destroy();
         }
     }
 }
