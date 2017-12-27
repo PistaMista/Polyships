@@ -67,10 +67,13 @@ public class Ship : MonoBehaviour
         parentBoard = (data.ownedByAttacker ? Battle.main.attacker : Battle.main.defender).board;
         if (data.tiles != null)
         {
-            tiles = new Tile[data.tiles.GetLength(0)];
-            for (int i = 0; i < data.tiles.GetLength(0); i++)
+            if (data.tiles.Length > 0)
             {
-                tiles[i] = parentBoard.tiles[data.tiles[i, 0], data.tiles[i, 1]];
+                tiles = new Tile[data.tiles.GetLength(0)];
+                for (int i = 0; i < data.tiles.GetLength(0); i++)
+                {
+                    tiles[i] = parentBoard.tiles[data.tiles[i, 0], data.tiles[i, 1]];
+                }
             }
         }
 
@@ -132,11 +135,35 @@ public class Ship : MonoBehaviour
     public PlacementInfo placementInfo;
     public virtual void Place(Tile[] location)
     {
+        location = location != null ? (location.Length == 0 ? null : location) : null;
         if (location != null)
         {
             for (int i = 0; i < location.Length; i++)
             {
                 location[i].containedShip = this;
+            }
+
+            foreach (Ship ship in parentBoard.placementInfo.placedShips)
+            {
+                if (ship.type == ShipType.CRUISER)
+                {
+                    Cruiser cruiser = (Cruiser)ship;
+                    bool containsAll = true;
+                    for (int i = 0; i < location.Length; i++)
+                    {
+                        if (!cruiser.concealmentArea.Contains(location[i]))
+                        {
+                            containsAll = false;
+                            break;
+                        }
+                    }
+
+                    if (containsAll)
+                    {
+                        concealedBy = cruiser;
+                        cruiser.concealing = this;
+                    }
+                }
             }
 
             Vector3 directional = location[0].transform.position - location[location.Length - 1].transform.position;
@@ -178,6 +205,12 @@ public class Ship : MonoBehaviour
         }
 
         tiles = null;
+
+        if (concealedBy)
+        {
+            concealedBy.concealing = null;
+            concealedBy = null;
+        }
 
         if (parentBoard.placementInfo.placedShips.Contains(this))
         {

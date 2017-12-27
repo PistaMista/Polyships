@@ -19,25 +19,56 @@ public class Cruiser : Ship
     public override void Place(Tile[] location)
     {
         base.Place(location);
-
-        concealmentArea = new List<Tile>();
-        foreach (Tile shipTile in tiles)
+        if (location != null)
         {
-            for (int x = -2; x <= 2; x++)
+            concealmentArea = new List<Tile>();
+            foreach (Tile shipTile in location)
             {
-                for (int y = -2; y <= 2; y++)
+                for (int x = -2; x <= 2; x++)
                 {
-                    Vector2Int p = shipTile.coordinates + new Vector2Int(x, y);
-                    if ((!(Mathf.Abs(x) < 2 && Mathf.Abs(y) < 2)) && p.x >= 0 && p.x < parentBoard.tiles.GetLength(0) && p.y >= 0 && p.y < parentBoard.tiles.GetLength(1))
+                    for (int y = -2; y <= 2; y++)
                     {
-                        Tile candidateTile = parentBoard.tiles[p.x, p.y];
-                        if (!concealmentArea.Contains(candidateTile))
+                        Vector2Int p = shipTile.coordinates + new Vector2Int(x, y);
+                        if (p.x >= 0 && p.x < parentBoard.tiles.GetLength(0) && p.y >= 0 && p.y < parentBoard.tiles.GetLength(1))
                         {
-                            concealmentArea.Add(candidateTile);
+                            Tile candidateTile = parentBoard.tiles[p.x, p.y];
+                            if (!concealmentArea.Contains(candidateTile))
+                            {
+                                concealmentArea.Add(candidateTile);
+                            }
                         }
                     }
                 }
             }
+
+            foreach (Tile shipTile in location)
+            {
+                for (int x = -1; x <= 1; x++)
+                {
+                    for (int y = -1; y <= 1; y++)
+                    {
+                        Vector2Int p = shipTile.coordinates + new Vector2Int(x, y);
+                        if (p.x >= 0 && p.x < parentBoard.tiles.GetLength(0) && p.y >= 0 && p.y < parentBoard.tiles.GetLength(1))
+                        {
+                            Tile candidateTile = parentBoard.tiles[p.x, p.y];
+                            if (concealmentArea.Contains(candidateTile))
+                            {
+                                concealmentArea.Remove(candidateTile);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public override void Pickup()
+    {
+        base.Pickup();
+        if (concealing)
+        {
+            concealing.concealedBy = null;
+            concealing = null;
         }
     }
 
