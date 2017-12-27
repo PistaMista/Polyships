@@ -13,6 +13,7 @@ public class Cruiser : Ship
         if (concealing)
         {
             concealing.concealedBy = null;
+            concealing = null;
         }
     }
 

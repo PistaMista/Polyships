@@ -108,6 +108,11 @@ public class Ship : MonoBehaviour
     public virtual void Destroy()
     {
         parentBoard.intactShipCount--;
+        if (concealedBy)
+        {
+            concealedBy.concealing = null;
+            concealedBy = null;
+        }
     }
 
     public virtual void Damage(int[] hitTilesIndexes)
