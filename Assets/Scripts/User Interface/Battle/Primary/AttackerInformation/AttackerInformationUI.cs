@@ -42,7 +42,7 @@ public class AttackerInformationUI : BoardViewUI
 
                         if (tileMaterial != null)
                         {
-                            SetTileSquareRender(tile.coordinates, tileMaterial);
+                            SetTileSquareRender(tile.coordinates, tileMaterial, 1);
                         }
                     }
                 }

@@ -48,7 +48,7 @@ public class AttackViewUI : BoardViewUI
             case UIState.ENABLING:
                 foreach (Tile tile in Battle.main.attacker.hitTiles)
                 {
-                    SetTileSquareRender(tile.coordinates, tile.containedShip ? hitTileMaterial : missedTileMaterial);
+                    SetTileSquareRender(tile.coordinates, tile.containedShip ? hitTileMaterial : missedTileMaterial, 1);
                 }
                 break;
         }

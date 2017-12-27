@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Tile_BoardViewAgent : MovingUIAgent
 {
+    public int id;
     protected override void SetState(UIState state)
     {
         base.SetState(state);

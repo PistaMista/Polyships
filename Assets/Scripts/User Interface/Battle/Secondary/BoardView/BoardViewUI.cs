@@ -93,18 +93,24 @@ public class BoardViewUI : InputEnabledUI
         return tileAgent;
     }
 
-    protected void SetTileSquareRender(Vector2Int position, Material material)
+    protected void SetTileSquareRender(Vector2Int position, Material material, int id)
     {
-        Tile_BoardViewAgent tileAgent = GetTileAgent(position, true);
+        Tile_BoardViewAgent tileAgent = GetTileAgent(position, false);
 
-        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        marker.transform.SetParent(tileAgent.transform);
-        marker.transform.localPosition = Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
 
-        marker.transform.localScale = Vector3.one * MiscellaneousVariables.it.boardTileSideLength;
-        marker.transform.Rotate(90, 0, 0);
-        Renderer renderer = marker.GetComponent<Renderer>();
-        renderer.material = material;
+        if (tileAgent.id != id)
+        {
+            tileAgent = GetTileAgent(position, true);
+            GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            marker.transform.SetParent(tileAgent.transform);
+            marker.transform.localPosition = Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+
+            marker.transform.localScale = Vector3.one * MiscellaneousVariables.it.boardTileSideLength;
+            marker.transform.Rotate(90, 0, 0);
+            Renderer renderer = marker.GetComponent<Renderer>();
+            renderer.material = material;
+            tileAgent.id = id;
+        }
     }
 
     protected void SetTileSquareRender(Vector2Int position, Material material, Color color)

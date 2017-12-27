@@ -188,6 +188,7 @@ public class Ship : MonoBehaviour
         placementInfo.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, targetPosition.z));
         placementInfo.waypoints.Add(targetPosition);
 
+        parentBoard.ReevaluateTiles();
 
         parentBoard.placementInfo.selectedShip = null;
     }

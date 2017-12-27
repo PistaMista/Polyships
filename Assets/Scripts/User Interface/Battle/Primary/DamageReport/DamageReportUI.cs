@@ -19,7 +19,7 @@ public class DamageReportUI : BoardViewUI
                 CameraControl.GoToWaypoint(Battle.main.attacker.boardCameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime);
                 foreach (Tile tile in Battle.main.defender.hitTiles)
                 {
-                    SetTileSquareRender(tile.coordinates, tile.containedShip ? hitTileMaterial : missedTileMaterial);
+                    SetTileSquareRender(tile.coordinates, tile.containedShip ? hitTileMaterial : missedTileMaterial, 1);
                 }
                 break;
         }

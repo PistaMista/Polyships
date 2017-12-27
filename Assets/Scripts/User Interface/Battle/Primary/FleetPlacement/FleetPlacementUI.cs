@@ -81,26 +81,10 @@ public class FleetPlacementUI : BoardViewUI
     public Material concealmentTileMaterial;
     public Material selectedTileMaterial;
 
-    void SetInvalidPositionMarkers(bool enabled)
+    void UpdateMarkers()
     {
-        foreach (Tile tile in managedBoard.placementInfo.invalidTiles)
-        {
-            if (!managedBoard.placementInfo.occupiedTiles.Contains(tile))
-            {
-                if (enabled)
-                {
-                    SetTileSquareRender(tile.coordinates, invalidTileMaterial);
-                }
-                else
-                {
-                    RemoveTileAgent(tile.coordinates);
-                }
-            }
-        }
-    }
-
-    void SetConcealmentTileMarkers(bool enabled)
-    {
+        List<Tile> setTiles = new List<Tile>();
+        //CONCEALMENT
         foreach (Ship ship in managedBoard.placementInfo.placedShips)
         {
             if (ship.type == ShipType.CRUISER)
@@ -108,41 +92,66 @@ public class FleetPlacementUI : BoardViewUI
                 Cruiser cruiser = (Cruiser)ship;
                 foreach (Tile tile in cruiser.concealmentArea)
                 {
-                    if (!managedBoard.placementInfo.occupiedTiles.Contains(tile) && !managedBoard.placementInfo.invalidTiles.Contains(tile))
+                    if (!managedBoard.placementInfo.occupiedTiles.Contains(tile) && !managedBoard.placementInfo.invalidTiles.Contains(tile) && !managedBoard.placementInfo.selectedTiles.Contains(tile))
                     {
-                        if (enabled && cruiser.concealing == null)
+                        if (cruiser.concealing == null)
                         {
-                            SetTileSquareRender(tile.coordinates, concealmentTileMaterial);
-                        }
-                        else
-                        {
-                            RemoveTileAgent(tile.coordinates);
+                            SetTileSquareRender(tile.coordinates, concealmentTileMaterial, 1);
+                            setTiles.Add(tile);
                         }
                     }
                 }
             }
         }
-    }
+        //INVALID
+        foreach (Tile tile in managedBoard.placementInfo.invalidTiles)
+        {
+            if (!managedBoard.placementInfo.occupiedTiles.Contains(tile) && !managedBoard.placementInfo.selectedTiles.Contains(tile))
+            {
+                SetTileSquareRender(tile.coordinates, invalidTileMaterial, 2);
+                setTiles.Add(tile);
+            }
+        }
+        //SELECTED
+        foreach (Tile tile in managedBoard.placementInfo.selectedTiles)
+        {
+            if (!managedBoard.placementInfo.occupiedTiles.Contains(tile))
+            {
+                SetTileSquareRender(tile.coordinates, selectedTileMaterial, 3);
+                setTiles.Add(tile);
+            }
+        }
+        //OCCUPIED
+        foreach (Tile tile in managedBoard.placementInfo.occupiedTiles)
+        {
+            if (tile.containedShip.concealedBy)
+            {
+                SetTileSquareRender(tile.coordinates, concealmentTileMaterial, 1);
+            }
+            else
+            {
+                SetTileSquareRender(tile.coordinates, occupiedTileMaterial, 4);
+            }
+            setTiles.Add(tile);
+        }
 
-    // void SetOccupiedTileMarkers(bool enabled)
-    // {
-    //     foreach (Tile tile in managedBoard.placementInfo.occupiedTiles)
-    //     {
-    //         if (enabled)
-    //         {
-    //             SetTileSquareRender(tile.coordinates, occupiedTileMaterial);
-    //         }
-    //         else
-    //         {
-    //             RemoveTileAgent(tile.coordinates);
-    //         }
-    //     }
-    // }
+        for (int x = 0; x < managedBoard.tiles.GetLength(0); x++)
+        {
+            for (int y = 0; y < managedBoard.tiles.GetLength(1); y++)
+            {
+                Tile candidate = managedBoard.tiles[x, y];
+                if (!setTiles.Contains(candidate))
+                {
+                    RemoveTileAgent(candidate.coordinates);
+                }
+            }
+        }
+    }
 
     void SelectTile(Tile tile)
     {
         managedBoard.placementInfo.selectedTiles.Add(tile);
-        SetTileSquareRender(tile.coordinates, selectedTileMaterial);
+        UpdateMarkers();
     }
 
     void FinalizePlacement()
@@ -181,8 +190,7 @@ public class FleetPlacementUI : BoardViewUI
                     {
                         RemoveTileAgent(tile.coordinates);
                     }
-                    SetConcealmentTileMarkers(true);
-                    SetInvalidPositionMarkers(true);
+                    UpdateMarkers();
                     break;
                 }
             }
@@ -207,8 +215,7 @@ public class FleetPlacementUI : BoardViewUI
                             managedBoard.placementInfo.selectedShip.Place(managedBoard.placementInfo.selectedShip.placementInfo.lastLocation);
                         }
 
-                        SetInvalidPositionMarkers(false);
-                        SetConcealmentTileMarkers(false);
+                        UpdateMarkers();
                     }
                 }
                 else
@@ -261,13 +268,8 @@ public class FleetPlacementUI : BoardViewUI
                     if (managedBoard.placementInfo.selectedTiles.Count == managedBoard.placementInfo.selectedShip.health)
                     {
                         managedBoard.placementInfo.selectedShip.Place(managedBoard.placementInfo.selectedTiles.ToArray());
-
-                        managedBoard.placementInfo.selectedTiles.ForEach(x => SetTileSquareRender(x.coordinates, occupiedTileMaterial));
-                        SetInvalidPositionMarkers(false);
-                        SetConcealmentTileMarkers(false);
-                        managedBoard.placementInfo.invalidTiles = new List<Tile>();
-                        managedBoard.placementInfo.validTiles = new List<Tile>();
                         managedBoard.placementInfo.selectedTiles = new List<Tile>();
+                        UpdateMarkers();
                     }
                 }
             }
@@ -277,12 +279,8 @@ public class FleetPlacementUI : BoardViewUI
         {
             if (managedBoard.placementInfo.selectedShip)
             {
-                foreach (Tile tile in managedBoard.placementInfo.selectedTiles)
-                {
-                    RemoveTileAgent(tile.coordinates);
-                }
                 managedBoard.placementInfo.selectedTiles = new List<Tile>();
-                SetConcealmentTileMarkers(true);
+                UpdateMarkers();
             }
         }
     }
