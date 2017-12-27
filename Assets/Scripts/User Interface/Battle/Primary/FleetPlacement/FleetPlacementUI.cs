@@ -76,9 +76,10 @@ public class FleetPlacementUI : BoardViewUI
     public float shipAnimationMaxSpeed;
     public float shipAnimationElevation;
 
-    public Material invalidTileMaterial;
-    public Material occupiedTileMaterial;
-    public Material concealmentTileMaterial;
+    public Material invalidPlacementTileMaterial;
+    public Material shipTileMaterial;
+    public Material concealmentAreaTileMaterial;
+    public Material concealedShipTileMaterial;
     public Material selectedTileMaterial;
 
     void UpdateMarkers()
@@ -96,7 +97,7 @@ public class FleetPlacementUI : BoardViewUI
                     {
                         if (cruiser.concealing == null)
                         {
-                            SetTileSquareRender(tile.coordinates, concealmentTileMaterial, 1);
+                            SetTileSquareRender(tile.coordinates, concealmentAreaTileMaterial, 1);
                             setTiles.Add(tile);
                         }
                     }
@@ -108,7 +109,7 @@ public class FleetPlacementUI : BoardViewUI
         {
             if (!managedBoard.placementInfo.occupiedTiles.Contains(tile) && !managedBoard.placementInfo.selectedTiles.Contains(tile))
             {
-                SetTileSquareRender(tile.coordinates, invalidTileMaterial, 2);
+                SetTileSquareRender(tile.coordinates, invalidPlacementTileMaterial, 2);
                 setTiles.Add(tile);
             }
         }
@@ -126,11 +127,11 @@ public class FleetPlacementUI : BoardViewUI
         {
             if (tile.containedShip.concealedBy)
             {
-                SetTileSquareRender(tile.coordinates, concealmentTileMaterial, 1);
+                SetTileSquareRender(tile.coordinates, concealedShipTileMaterial, 4);
             }
             else
             {
-                SetTileSquareRender(tile.coordinates, occupiedTileMaterial, 4);
+                SetTileSquareRender(tile.coordinates, shipTileMaterial, 5);
             }
             setTiles.Add(tile);
         }

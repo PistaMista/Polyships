@@ -6,8 +6,8 @@ public class AttackerInformationUI : BoardViewUI
 {
     public Material missedTileMaterial;
     public Material hitTileMaterial;
-    public Material sunkTileMaterial;
     public Material intactTileMaterial;
+    public Material concealedShipTileMaterial;
     protected override void SetState(UIState state)
     {
         managedBoard = Battle.main.attacker.board;
@@ -27,7 +27,7 @@ public class AttackerInformationUI : BoardViewUI
                         {
                             if (tile.containedShip)
                             {
-                                tileMaterial = tile.containedShip.health == 0 ? sunkTileMaterial : hitTileMaterial;
+                                tileMaterial = hitTileMaterial;
                             }
                             else
                             {
@@ -36,7 +36,7 @@ public class AttackerInformationUI : BoardViewUI
                         }
                         else if (tile.containedShip)
                         {
-                            tileMaterial = intactTileMaterial;
+                            tileMaterial = tile.containedShip.concealedBy == null ? intactTileMaterial : concealedShipTileMaterial;
                         }
 
 

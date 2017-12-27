@@ -11,6 +11,7 @@ public class FireButton_AttackViewAgent : MovingUIAgent
     public bool pushed;
     public GameObject buttonPart;
     public Vector3 initialPartPosition;
+    public Vector3 partVelocity;
     public AttackViewUI owner;
     public float pushRadius;
 
@@ -25,7 +26,7 @@ public class FireButton_AttackViewAgent : MovingUIAgent
     protected override void Update()
     {
         base.Update();
-        buttonPart.transform.localPosition = pushed ? Vector3.zero : initialPartPosition;
+        buttonPart.transform.localPosition = Vector3.SmoothDamp(buttonPart.transform.localPosition, pushed ? Vector3.zero : initialPartPosition, ref partVelocity, 0.2f, Mathf.Infinity);
     }
 
     protected override int GetTargetPositionIndex()

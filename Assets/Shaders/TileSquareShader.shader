@@ -4,7 +4,8 @@
 	{
 		_Color ("Color", Color) = (1, 1, 1, 1)
 		_EffectSlope ("Effect Slope", Vector) = (1, 1, 1, 1)
-		_EffectScale("Effect Scale", Float) = 1
+		_EffectSpeed("Effect Speed", Float) = 1
+		_EffectDip("Effect Dip", Float) = 0.1
 	}
 	SubShader
 	{
@@ -35,7 +36,8 @@
 
 			float4 _Color;
 			float2 _EffectSlope;
-			float _EffectScale;
+			float _EffectSpeed;
+			float _EffectDip;
 			
 			v2f vert (appdata v)
 			{
@@ -48,7 +50,7 @@
 			fixed4 frag (v2f i) : SV_Target
 			{
 				float4 finalCol = _Color;
-				finalCol = finalCol * (0.9 + sin(_Time * _EffectScale + i.vertex.x * _EffectSlope.x + i.vertex.y * _EffectSlope.y) / 10.0);
+				finalCol = finalCol * ((1 - _EffectDip) + sin(_Time * _EffectSpeed + i.vertex.x * _EffectSlope.x + i.vertex.y * _EffectSlope.y) * _EffectDip);
 				
 				return finalCol;
 			}
