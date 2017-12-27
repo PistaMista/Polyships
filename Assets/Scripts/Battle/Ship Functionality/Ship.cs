@@ -153,20 +153,23 @@ public class Ship : MonoBehaviour
                 if (ship.type == ShipType.CRUISER)
                 {
                     Cruiser cruiser = (Cruiser)ship;
-                    bool containsAll = true;
-                    for (int i = 0; i < location.Length; i++)
+                    if (cruiser.concealing == null)
                     {
-                        if (!cruiser.concealmentArea.Contains(location[i]))
+                        bool containsAll = true;
+                        for (int i = 0; i < location.Length; i++)
                         {
-                            containsAll = false;
-                            break;
+                            if (!cruiser.concealmentArea.Contains(location[i]))
+                            {
+                                containsAll = false;
+                                break;
+                            }
                         }
-                    }
 
-                    if (containsAll)
-                    {
-                        concealedBy = cruiser;
-                        cruiser.concealing = this;
+                        if (containsAll)
+                        {
+                            concealedBy = cruiser;
+                            cruiser.concealing = this;
+                        }
                     }
                 }
             }

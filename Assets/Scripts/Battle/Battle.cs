@@ -290,8 +290,6 @@ public class Battle : MonoBehaviour
             {
                 if (target.containedShip.concealedBy)
                 {
-                    Tile newTarget = null;
-
                     for (int x = (target.coordinates.x == 0 ? 0 : -1); x <= ((target.coordinates.x == defender.board.tiles.GetLength(0) - 1) ? 0 : 1); x++)
                     {
                         for (int y = (target.coordinates.y == 0 ? 0 : -1); y <= ((target.coordinates.y == defender.board.tiles.GetLength(1) - 1) ? 0 : 1); y++)
@@ -299,20 +297,14 @@ public class Battle : MonoBehaviour
                             if (!(y == 0 && x == 0))
                             {
                                 Tile candidate = defender.board.tiles[x + (int)target.coordinates.x, y + (int)target.coordinates.y];
-                                if (!attacker.hitTiles.Contains(candidate))
+                                if (!attacker.hitTiles.Contains(candidate) && candidate.containedShip == null)
                                 {
-                                    newTarget = candidate;
+                                    target = candidate;
                                     break;
                                 }
                             }
                         }
                     }
-
-                    if (newTarget == null)
-                    {
-                        continue;
-                    }
-                    target = newTarget;
                 }
             }
 

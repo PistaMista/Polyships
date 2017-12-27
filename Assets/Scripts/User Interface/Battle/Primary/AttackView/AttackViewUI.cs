@@ -57,7 +57,7 @@ public class AttackViewUI : BoardViewUI
     protected override void ProcessInput()
     {
         base.ProcessInput();
-        if (tap && !fireButton.pushed)
+        if (tap && !fireButton.pushed && selectedTargeter == null)
         {
             if (!GetTileAtInputPosition())
             {

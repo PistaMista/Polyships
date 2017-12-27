@@ -9,6 +9,7 @@ public class MovingUIAgent : UIAgent
     public float movementMaxSpeed;
     public float movementTime;
     public float movementFinishingDistance;
+    public bool snapOntoFinalPosition = true;
 
     public Vector3 globalVelocity;
     protected override void Update()
@@ -28,6 +29,10 @@ public class MovingUIAgent : UIAgent
         else
         {
             State = (int)State >= 2 ? UIState.ENABLED : UIState.DISABLED;
+            if (snapOntoFinalPosition)
+            {
+                transform.localPosition = targetPosition;
+            }
         }
     }
 

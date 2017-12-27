@@ -150,7 +150,21 @@ public class FleetPlacementUI : BoardViewUI
 
     void SelectTile(Tile tile)
     {
-        managedBoard.placementInfo.selectedTiles.Add(tile);
+        if (managedBoard.placementInfo.selectedTiles.Count > 1)
+        {
+            if (Vector2Int.Distance(managedBoard.placementInfo.selectedTiles[0].coordinates, tile.coordinates) == 1)
+            {
+                managedBoard.placementInfo.selectedTiles.Insert(0, tile);
+            }
+            else
+            {
+                managedBoard.placementInfo.selectedTiles.Add(tile);
+            }
+        }
+        else
+        {
+            managedBoard.placementInfo.selectedTiles.Add(tile);
+        }
         UpdateMarkers();
     }
 
