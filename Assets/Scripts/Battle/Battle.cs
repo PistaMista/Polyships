@@ -297,7 +297,7 @@ public class Battle : MonoBehaviour
                             if (!(y == 0 && x == 0))
                             {
                                 Tile candidate = defender.board.tiles[x + (int)target.coordinates.x, y + (int)target.coordinates.y];
-                                if (!attacker.hitTiles.Contains(candidate) && candidate.containedShip == null)
+                                if (!attacker.hitTiles.Contains(candidate) && !actualHits.Contains(candidate) && candidate.containedShip == null)
                                 {
                                     target = candidate;
                                     break;
