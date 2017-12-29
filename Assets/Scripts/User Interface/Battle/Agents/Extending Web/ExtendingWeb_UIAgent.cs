@@ -6,6 +6,15 @@ public class ExtendingWeb_UIAgent : UIAgent
 {
     public Material lineMaterial;
     public float lineWidth;
+    public float extensionTime;
+    public float extensionMaxSpeed;
+    public Vector3[] testPoints; //Intended length is 7
+
+    void Awake()
+    {
+        Set(testPoints, new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 }, new int[] { 5, 6 }, new int[0], new int[0], new int[0], new int[0] });
+        SetState(UIState.ENABLING);
+    }
 
     protected override void SetState(UIState state)
     {
@@ -17,6 +26,8 @@ public class ExtendingWeb_UIAgent : UIAgent
     protected override void Update()
     {
         base.Update();
+        //extensionProgress = Mathf.SmoothDamp(extensionProgress, (int)state < 2 ? 0.0f : 100.0f, ref extensionSpeed, extensionTime, extensionMaxSpeed);
+        extensionProgress = 100f;
         if (extensionProgress != lastExtensionProgress)
         {
             float extendedDistance = longestBranchLength * extensionProgress;
@@ -51,11 +62,14 @@ public class ExtendingWeb_UIAgent : UIAgent
                     }
                 }
             }
+
+            lastExtensionProgress = extensionProgress;
         }
     }
 
     float longestBranchLength;
     float extensionProgress;
+    float extensionSpeed;
     Node[] nodes;
     struct Node
     {
@@ -80,10 +94,12 @@ public class ExtendingWeb_UIAgent : UIAgent
         {
             this.nodes = nodes;
             renderer = new GameObject("Branch Line").AddComponent<LineRenderer>();
-            renderer.transform.SetParent(lineParent);
+            renderer.transform.SetParent(lineParent, false);
             renderer.material = renderMaterial;
             renderer.widthMultiplier = lineWidth;
-            renderer.numCapVertices = 1;
+            renderer.numCapVertices = 8;
+            renderer.numCornerVertices = 8;
+            renderer.useWorldSpace = false;
 
             renderer.positionCount = nodes.Length;
         }
@@ -106,6 +122,15 @@ public class ExtendingWeb_UIAgent : UIAgent
         branches = new List<Branch>();
         longestBranchLength = 0;
         StartBranchingFromNode(0, 0);
+
+        //TEST
+        // foreach (Branch branch in branches)
+        // {
+        //     for (int i = 0; i < branch.nodes.Length; i++)
+        //     {
+        //         branch.renderer.SetPosition(i, this.nodes[branch.nodes[i]].position);
+        //     }
+        // }
     }
 
     void StartBranchingFromNode(int node, int inputNode)
