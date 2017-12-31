@@ -126,6 +126,8 @@ public class Ship : MonoBehaviour
         }
     }
 
+
+
     //PLACEMENT FUNCTIONS
     public struct PlacementInfo
     {
@@ -145,45 +147,28 @@ public class Ship : MonoBehaviour
         location = location != null ? (location.Length == 0 ? null : location) : null;
         if (location != null)
         {
+
+
             for (int i = 0; i < location.Length; i++)
             {
                 location[i].containedShip = this;
-            }
-
-            foreach (Ship ship in parentBoard.placementInfo.placedShips)
-            {
-                if (ship.type == ShipType.CRUISER)
-                {
-                    Cruiser cruiser = (Cruiser)ship;
-                    if (cruiser.concealing == null)
-                    {
-                        bool containsAll = true;
-                        for (int i = 0; i < location.Length; i++)
-                        {
-                            if (!cruiser.concealmentArea.Contains(location[i]))
-                            {
-                                containsAll = false;
-                                break;
-                            }
-                        }
-
-                        if (containsAll)
-                        {
-                            concealedBy = cruiser;
-                            cruiser.concealing = this;
-                        }
-                    }
-                }
             }
 
             Vector3 directional = location[0].transform.position - location[location.Length - 1].transform.position;
             placementInfo.boardPosition = (location[0].transform.position + location[location.Length - 1].transform.position) / 2.0f;
             placementInfo.boardRotation = Quaternion.Euler(0, directional.z != 0 ? 0 : 90, 0);
 
-
             parentBoard.placementInfo.notplacedShips.Remove(this);
             parentBoard.placementInfo.placedShips.Add(this);
             transform.SetParent(parentBoard.transform);
+
+            foreach (Ship ship in parentBoard.placementInfo.placedShips)
+            {
+                if (ship != this)
+                {
+                    ship.OnOtherShipPlacementOntoBoard(this, location);
+                }
+            }
         }
         else
         {
@@ -203,12 +188,19 @@ public class Ship : MonoBehaviour
         parentBoard.placementInfo.selectedShip = null;
     }
 
+    public virtual void OnOtherShipPlacementOntoBoard(Ship placedShip, Tile[] location)
+    {
+
+    }
+
     public virtual void Pickup()
     {
         placementInfo.lastLocation = tiles;
 
         if (tiles != null)
         {
+
+
             for (int i = 0; i < tiles.Length; i++)
             {
                 tiles[i].containedShip = null;
@@ -217,17 +209,20 @@ public class Ship : MonoBehaviour
 
         tiles = null;
 
-        if (concealedBy)
-        {
-            concealedBy.concealing = null;
-            concealedBy = null;
-        }
-
         if (parentBoard.placementInfo.placedShips.Contains(this))
         {
             parentBoard.placementInfo.placedShips.Remove(this);
             parentBoard.placementInfo.notplacedShips.Add(this);
         }
+
+        if (placementInfo.lastLocation != null)
+        {
+            foreach (Ship ship in parentBoard.placementInfo.placedShips)
+            {
+                ship.OnOtherShipPickupFromBoard(this, placementInfo.lastLocation);
+            }
+        }
+
 
         parentBoard.placementInfo.selectedShip = this;
 
@@ -235,5 +230,10 @@ public class Ship : MonoBehaviour
 
         placementInfo.waypoints = new List<Vector3>();
         placementInfo.waypoints.Add(new Vector3(transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, transform.position.z));
+    }
+
+    public virtual void OnOtherShipPickupFromBoard(Ship pickedShip, Tile[] location)
+    {
+
     }
 }

@@ -10,11 +10,11 @@ public class ExtendingWeb_UIAgent : UIAgent
     public float extensionMaxSpeed;
     public Vector3[] testPoints; //Intended length is 7
 
-    void Awake()
-    {
-        Set(testPoints, new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 }, new int[] { 5, 6 }, new int[0], new int[0], new int[0], new int[0] });
-        SetState(UIState.ENABLING);
-    }
+    // void Awake()
+    // {
+    //     Set(testPoints, new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 }, new int[] { 5, 6 }, new int[0], new int[0], new int[0], new int[0] });
+    //     SetState(UIState.ENABLING);
+    // }
 
     protected override void SetState(UIState state)
     {
@@ -26,8 +26,15 @@ public class ExtendingWeb_UIAgent : UIAgent
     protected override void Update()
     {
         base.Update();
-        //extensionProgress = Mathf.SmoothDamp(extensionProgress, (int)state < 2 ? 0.0f : 100.0f, ref extensionSpeed, extensionTime, extensionMaxSpeed);
-        extensionProgress = 100f;
+        if (state == UIState.ENABLING || state == UIState.DISABLING)
+        {
+            extensionProgress = Mathf.SmoothDamp(extensionProgress, (int)state < 2 ? 0.0f : 1.0f, ref extensionSpeed, extensionTime, extensionMaxSpeed);
+            if (Mathf.Abs(extensionProgress - (int)state < 2 ? 0.0f : 1.0f) < 0.01f)
+            {
+                State = (int)state < 2 ? UIState.DISABLED : UIState.ENABLED;
+            }
+        }
+
         if (extensionProgress != lastExtensionProgress)
         {
             float extendedDistance = longestBranchLength * extensionProgress;
@@ -36,7 +43,7 @@ public class ExtendingWeb_UIAgent : UIAgent
                 for (int node = 0; node < branch.nodes.Length; node++)
                 {
                     branch.renderer.gameObject.SetActive(true);
-                    Node actualNode = nodes[node];
+                    Node actualNode = nodes[branch.nodes[node]];
                     Node inputNode = nodes[actualNode.inputNode];
                     if (extendedDistance > inputNode.distanceFromFirstNode)
                     {

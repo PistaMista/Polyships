@@ -17,6 +17,38 @@ public class Cruiser : Ship
         }
     }
 
+    public override void OnOtherShipPlacementOntoBoard(Ship placedShip, Tile[] location)
+    {
+        base.OnOtherShipPlacementOntoBoard(placedShip, location);
+        if (concealing == null)
+        {
+            bool containsAll = true;
+            for (int i = 0; i < location.Length; i++)
+            {
+                if (!concealmentArea.Contains(location[i]))
+                {
+                    containsAll = false;
+                    break;
+                }
+            }
+
+            if (containsAll)
+            {
+                placedShip.concealedBy = this;
+                concealing = placedShip;
+            }
+        }
+    }
+
+    public override void OnOtherShipPickupFromBoard(Ship pickedShip, Tile[] location)
+    {
+        if (pickedShip == concealing)
+        {
+            pickedShip.concealedBy = null;
+            concealing = null;
+        }
+    }
+
     public override void Place(Tile[] location)
     {
         base.Place(location);
