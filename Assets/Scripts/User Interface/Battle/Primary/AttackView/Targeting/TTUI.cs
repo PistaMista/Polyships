@@ -24,7 +24,7 @@ public class TTUI : BoardViewUI
 
         if (allTokens != null)
         {
-            DestroyDynamicAgents<Token_TTAgent>("");
+            RemoveDynamicAgents<Token_TTAgent>("", true);
         }
         allTokens = null;
         heldToken = null;

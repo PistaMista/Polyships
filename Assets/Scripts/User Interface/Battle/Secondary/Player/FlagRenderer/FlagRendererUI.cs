@@ -16,7 +16,7 @@ public class FlagRendererUI : CombatantUI
                 }
                 break;
             case UIState.DISABLED:
-                DestroyDynamicAgents<FlagVoxel_FlagRendererAgent>("");
+                RemoveDynamicAgents<FlagVoxel_FlagRendererAgent>("", true);
                 break;
         }
     }

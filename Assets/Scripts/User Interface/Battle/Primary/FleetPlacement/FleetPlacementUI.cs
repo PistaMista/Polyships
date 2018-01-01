@@ -63,7 +63,7 @@ public class FleetPlacementUI : BoardViewUI
                 managedBoard.placementInfo.validTiles = new List<Tile>();
                 managedBoard.placementInfo.invalidTiles = new List<Tile>();
 
-                DestroyDynamicAgents<UIAgent>("");
+                RemoveDynamicAgents<UIAgent>("", true);
                 MakeShipDrawer();
                 managedBoard.ships = managedBoard.placementInfo.allShips.ToArray();
 
@@ -143,7 +143,7 @@ public class FleetPlacementUI : BoardViewUI
                 Tile candidate = managedBoard.tiles[x, y];
                 if (!setTiles.Contains(candidate))
                 {
-                    RemoveTileAgent(candidate.coordinates);
+                    RemoveTileAgent(candidate.coordinates, false);
                 }
             }
         }
@@ -201,10 +201,10 @@ public class FleetPlacementUI : BoardViewUI
                     ship.Pickup();
                     newShipSelected = true;
 
-                    foreach (Tile tile in managedBoard.placementInfo.validTiles)
-                    {
-                        RemoveTileAgent(tile.coordinates);
-                    }
+                    // foreach (Tile tile in managedBoard.placementInfo.validTiles)
+                    // {
+                    //     RemoveTileAgent(tile.coordinates);
+                    // }
                     UpdateMarkers();
                     break;
                 }

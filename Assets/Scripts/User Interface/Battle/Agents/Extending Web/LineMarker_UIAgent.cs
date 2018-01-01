@@ -4,25 +4,16 @@ using UnityEngine;
 
 public class LineMarker_UIAgent : UIAgent
 {
-    public BoardViewUI owner;
     public Material lineMaterial;
     public float lineWidth;
     public float extensionTime;
     public float extensionMaxSpeed;
-    public Vector3[] testPoints; //Intended length is 7
-
-    // void Awake()
-    // {
-    //     Set(testPoints, new int[][] { new int[] { 1, 2 }, new int[] { 3, 4 }, new int[] { 5, 6 }, new int[0], new int[0], new int[0], new int[0] });
-    //     SetState(UIState.ENABLING);
-    // }
 
     protected override void SetState(UIState state)
     {
         base.SetState(state);
         if (state == UIState.DISABLED)
         {
-            owner.dynamicUIAgents.Remove(this);
             Destroy(gameObject);
         }
     }
@@ -134,15 +125,6 @@ public class LineMarker_UIAgent : UIAgent
         branches = new List<Branch>();
         longestBranchLength = 0;
         StartBranchingFromNode(0, 0);
-
-        //TEST
-        // foreach (Branch branch in branches)
-        // {
-        //     for (int i = 0; i < branch.nodes.Length; i++)
-        //     {
-        //         branch.renderer.SetPosition(i, this.nodes[branch.nodes[i]].position);
-        //     }
-        // }
     }
 
     void StartBranchingFromNode(int node, int inputNode)

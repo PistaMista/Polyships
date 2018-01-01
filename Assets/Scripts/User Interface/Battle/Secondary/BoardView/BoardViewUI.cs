@@ -6,13 +6,12 @@ public class BoardViewUI : InputEnabledUI
 {
     public Board managedBoard;
     Tile_BoardViewAgent[,] tileAgents;
-    List<LineMarker_UIAgent> lineMarkers = new List<LineMarker_UIAgent>();
 
     protected override void SetState(UIState state)
     {
         if ((int)state < 2)
         {
-            RemoveAllTileAgents();
+            RemoveDynamicAgents<Tile_BoardViewAgent>("", state == UIState.DISABLED);
         }
 
         base.SetState(state);
@@ -27,32 +26,14 @@ public class BoardViewUI : InputEnabledUI
         }
     }
 
-    void UpdateLineMarkers()
-    {
-        RemoveLineMarkers();
-    }
-
-    void RemoveLineMarkers()
-    {
-        lineMarkers.ForEach(x => { x.State = UIState.DISABLING; dynamicUIAgents.Remove(x); });
-        lineMarkers = new List<LineMarker_UIAgent>();
-    }
-
-    protected void RemoveAllTileAgents()
-    {
-        DestroyDynamicAgents<Tile_BoardViewAgent>("");
-        tileAgents = new Tile_BoardViewAgent[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
-    }
-
-    protected void RemoveTileAgent(Vector2Int position)
+    protected void RemoveTileAgent(Vector2Int position, bool instant)
     {
         if (tileAgents != null)
         {
-            if (tileAgents[position.x, position.y] != null)
+            Tile_BoardViewAgent tileAgent = tileAgents[position.x, position.y];
+            if (tileAgent != null)
             {
-                Tile_BoardViewAgent tileAgent = tileAgents[position.x, position.y];
-                tileAgent.State = UIState.DISABLING;
-                dynamicUIAgents.Remove(tileAgent);
+                RemoveDynamicAgent(tileAgent, instant);
                 tileAgents[position.x, position.y] = null;
             }
         }
@@ -67,7 +48,7 @@ public class BoardViewUI : InputEnabledUI
 
         if (reset)
         {
-            RemoveTileAgent(position);
+            RemoveTileAgent(position, false);
         }
 
         Tile_BoardViewAgent tileAgent = tileAgents[position.x, position.y];

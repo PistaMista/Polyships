@@ -31,26 +31,44 @@ public class UIAgent : MonoBehaviour
             SetState(value);
         }
     }
-    protected void DestroyDynamicAgents<T>(string nameFilter)
+    protected UIAgent[] RemoveDynamicAgents<T>(string nameFilter, bool instant)
     {
-        dynamicUIAgents.ForEach(x => Destroy(x.gameObject));
+        List<UIAgent> removedAgents = new List<UIAgent>();
         foreach (UIAgent agent in dynamicUIAgents)
         {
-            if (ReferenceEquals(agent, typeof(T)))
+            bool typeMatch = agent is T;
+            bool nameMatch = agent.name.Contains(nameFilter);
+            if (typeMatch && nameMatch)
             {
-                if (agent.name.Contains(nameFilter))
+                if (instant)
                 {
                     Destroy(agent.gameObject);
                 }
+                else
+                {
+                    agent.State = UIState.DISABLING;
+                }
+
+                removedAgents.Add(agent);
             }
         }
-        dynamicUIAgents = new List<UIAgent>();
+
+        removedAgents.ForEach(x => dynamicUIAgents.Remove(x));
+        return removedAgents.ToArray();
     }
 
-    protected void DestroyDynamicAgent(UIAgent agent)
+    protected void RemoveDynamicAgent(UIAgent agent, bool instant)
     {
+        if (instant)
+        {
+            Destroy(agent.gameObject);
+        }
+        else
+        {
+            agent.State = UIState.DISABLING;
+        }
+
         dynamicUIAgents.Remove(agent);
-        Destroy(agent.gameObject);
     }
 
     protected UIAgent CreateDynamicAgent(string name)
