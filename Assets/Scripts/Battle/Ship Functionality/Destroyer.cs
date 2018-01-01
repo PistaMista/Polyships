@@ -9,13 +9,29 @@ public class Destroyer : Ship
 
     public override int[] GetMetadata()
     {
-        return new int[] { torpedoCount };
+        List<int> result = new List<int>();
+        result.Add(torpedoCount);
+
+        for (int i = 0; i < firingAreaBlockages.Length; i++)
+        {
+            result.Add(firingAreaBlockages[i]);
+        }
+
+        return result.ToArray();
     }
 
     public override void Initialize(ShipData data)
     {
         base.Initialize(data);
         torpedoCount = data.metadata[0];
+
+        List<int> blockages = new List<int>();
+        for (int i = 1; i < data.metadata.Length; i++)
+        {
+            blockages.Add(data.metadata[i]);
+        }
+
+        firingAreaBlockages = blockages.ToArray();
     }
 
     public override void Place(Tile[] location)

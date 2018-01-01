@@ -147,6 +147,8 @@ public class FleetPlacementUI : BoardViewUI
                 }
             }
         }
+
+        SetDestroyerFiringAreaMarkers(true);
     }
 
     void SelectTile(Tile tile)

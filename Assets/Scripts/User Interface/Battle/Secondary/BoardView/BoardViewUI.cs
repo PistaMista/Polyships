@@ -12,6 +12,7 @@ public class BoardViewUI : InputEnabledUI
         if ((int)state < 2)
         {
             RemoveDynamicAgents<Tile_BoardViewAgent>("", state == UIState.DISABLED);
+            RemoveDynamicAgents<LineMarker_UIAgent>("", state == UIState.DISABLED);
         }
 
         base.SetState(state);
@@ -26,6 +27,71 @@ public class BoardViewUI : InputEnabledUI
         }
     }
 
+    protected void SetDestroyerFiringAreaMarkers(bool enabled)
+    {
+        RemoveDynamicAgents<LineMarker_UIAgent>("Destroyer Firing Area", false);
+
+        if (enabled)
+        {
+            foreach (Ship ship in managedBoard.ships)
+            {
+                if (ship.tiles != null && ship.tiles.Length > 0 && ship.type == ShipType.DESTROYER)
+                {
+                    Destroyer destroyer = (Destroyer)ship;
+                    LineMarker_UIAgent marker = (LineMarker_UIAgent)CreateDynamicAgent("destroyer_firing_area_marker");
+
+                    Vector3[] nodes = new Vector3[managedBoard.tiles.GetLength(0) * 2];
+                    Vector2Int destroyerPos = destroyer.tiles[1].coordinates;
+
+                    for (int x = 0; x < managedBoard.tiles.GetLength(0); x++)
+                    {
+                        Vector3 position = managedBoard.tiles[x, destroyerPos.y].transform.position;
+                        position.y = MiscellaneousVariables.it.boardUIRenderHeight + 0.01f;
+                        nodes[x] = position;
+
+
+                        int limitedY = destroyer.firingAreaBlockages[x];
+                        if (limitedY >= 0)
+                        {
+                            position = managedBoard.tiles[x, limitedY].transform.position;
+                            position.y = MiscellaneousVariables.it.boardUIRenderHeight + 0.01f;
+                            nodes[x + managedBoard.tiles.GetLength(0)] = position;
+                        }
+                        else
+                        {
+                            position = managedBoard.tiles[x, 0].transform.position;
+                            position.y = MiscellaneousVariables.it.boardUIRenderHeight + 0.01f;
+                            position.z += managedBoard.tiles.GetLength(0) * 1.5f;
+                            nodes[x + managedBoard.tiles.GetLength(0)] = position;
+                        }
+                    }
+
+                    int[][] connections = new int[nodes.Length][];
+                    for (int x = 0; x < managedBoard.tiles.GetLength(0); x++)
+                    {
+                        connections[x] = new int[(x == 0 || x == managedBoard.tiles.GetLength(0) - 1 ? 1 : 2) + (x == destroyerPos.x ? 1 : 0)];
+                        connections[x + managedBoard.tiles.GetLength(0)] = new int[0];
+                    }
+
+                    for (int x = 0; x < managedBoard.tiles.GetLength(0); x++)
+                    {
+                        connections[x][0] = x + managedBoard.tiles.GetLength(0);
+                        if (x < destroyerPos.x)
+                        {
+                            connections[x + 1][1] = x;
+                        }
+                        else if (x != managedBoard.tiles.GetLength(0) - 1)
+                        {
+                            connections[x][(x == 0 ? 1 : (x == destroyerPos.x ? 2 : 1))] = x + 1;
+                        }
+                    }
+
+                    marker.Set(nodes, connections, destroyerPos.x);
+                    marker.State = UIState.ENABLING;
+                }
+            }
+        }
+    }
     protected void RemoveTileAgent(Vector2Int position, bool instant)
     {
         if (tileAgents != null)

@@ -25,7 +25,7 @@ public class LineMarker_UIAgent : UIAgent
         if (state == UIState.ENABLING || state == UIState.DISABLING)
         {
             extensionProgress = Mathf.SmoothDamp(extensionProgress, (int)state < 2 ? 0.0f : 1.0f, ref extensionSpeed, extensionTime, extensionMaxSpeed);
-            if (Mathf.Abs(extensionProgress - (int)state < 2 ? 0.0f : 1.0f) < 0.01f)
+            if (Mathf.Abs(extensionProgress - ((int)state < 2 ? 0.0f : 1.0f)) < 0.01f)
             {
                 State = (int)state < 2 ? UIState.DISABLED : UIState.ENABLED;
             }
@@ -108,7 +108,7 @@ public class LineMarker_UIAgent : UIAgent
         }
     }
     List<Branch> branches;
-    public void Set(Vector3[] nodes, int[][] connections)
+    public void Set(Vector3[] nodes, int[][] connections, int startingNode)
     {
         //SET UP NODES
         this.nodes = new Node[nodes.Length];
@@ -124,7 +124,7 @@ public class LineMarker_UIAgent : UIAgent
         }
         branches = new List<Branch>();
         longestBranchLength = 0;
-        StartBranchingFromNode(0, 0);
+        StartBranchingFromNode(startingNode, startingNode);
     }
 
     void StartBranchingFromNode(int node, int inputNode)
