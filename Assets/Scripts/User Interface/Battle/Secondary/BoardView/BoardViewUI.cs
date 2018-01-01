@@ -6,6 +6,7 @@ public class BoardViewUI : InputEnabledUI
 {
     public Board managedBoard;
     Tile_BoardViewAgent[,] tileAgents;
+    List<LineMarker_UIAgent> lineMarkers = new List<LineMarker_UIAgent>();
 
     protected override void SetState(UIState state)
     {
@@ -26,22 +27,21 @@ public class BoardViewUI : InputEnabledUI
         }
     }
 
+    void UpdateLineMarkers()
+    {
+        RemoveLineMarkers();
+    }
+
+    void RemoveLineMarkers()
+    {
+        lineMarkers.ForEach(x => { x.State = UIState.DISABLING; dynamicUIAgents.Remove(x); });
+        lineMarkers = new List<LineMarker_UIAgent>();
+    }
+
     protected void RemoveAllTileAgents()
     {
-        if (tileAgents != null)
-        {
-            for (int x = 0; x < tileAgents.GetLength(0); x++)
-            {
-                for (int y = 0; y < tileAgents.GetLength(1); y++)
-                {
-                    if (tileAgents[x, y] != null)
-                    {
-                        DestroyDynamicAgent(tileAgents[x, y]);
-                        tileAgents[x, y] = null;
-                    }
-                }
-            }
-        }
+        DestroyDynamicAgents<Tile_BoardViewAgent>("");
+        tileAgents = new Tile_BoardViewAgent[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
     }
 
     protected void RemoveTileAgent(Vector2Int position)

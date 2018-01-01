@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ExtendingWeb_UIAgent : UIAgent
+public class LineMarker_UIAgent : UIAgent
 {
+    public BoardViewUI owner;
     public Material lineMaterial;
     public float lineWidth;
     public float extensionTime;
@@ -19,7 +20,11 @@ public class ExtendingWeb_UIAgent : UIAgent
     protected override void SetState(UIState state)
     {
         base.SetState(state);
-
+        if (state == UIState.DISABLED)
+        {
+            owner.dynamicUIAgents.Remove(this);
+            Destroy(gameObject);
+        }
     }
 
     float lastExtensionProgress;

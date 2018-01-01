@@ -38,18 +38,25 @@ public class Destroyer : Ship
 
     void CalculateFiringArea()
     {
-        Tile centerTile = tiles[1];
         firingAreaBlockages = new int[parentBoard.tiles.GetLength(0)];
         for (int i = 0; i < firingAreaBlockages.Length; i++)
         {
             firingAreaBlockages[i] = -1;
         }
 
-        foreach (Tile tile in parentBoard.placementInfo.occupiedTiles)
+        if (tiles != null)
         {
-            if (tile.coordinates.y >= centerTile.coordinates.y)
+            Tile centerTile = tiles[1];
+
+            foreach (Tile tile in parentBoard.placementInfo.occupiedTiles)
             {
-                firingAreaBlockages[tile.coordinates.x] = tile.coordinates.y;
+                if (tile.coordinates.y >= centerTile.coordinates.y && tile.containedShip != this)
+                {
+                    if (firingAreaBlockages[tile.coordinates.x] < 0 || tile.coordinates.y < firingAreaBlockages[tile.coordinates.x])
+                    {
+                        firingAreaBlockages[tile.coordinates.x] = tile.coordinates.y;
+                    }
+                }
             }
         }
     }

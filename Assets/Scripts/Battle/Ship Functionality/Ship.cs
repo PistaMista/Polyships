@@ -162,6 +162,8 @@ public class Ship : MonoBehaviour
             parentBoard.placementInfo.placedShips.Add(this);
             transform.SetParent(parentBoard.transform);
 
+            tiles = location;
+
             foreach (Ship ship in parentBoard.placementInfo.placedShips)
             {
                 if (ship != this)
@@ -173,9 +175,8 @@ public class Ship : MonoBehaviour
         else
         {
             // transform.SetParent(FleetPlacementUI.it.shipDrawer.transform);
+            tiles = location;
         }
-
-        tiles = location;
 
         placementInfo.waypoints = new List<Vector3>();
 

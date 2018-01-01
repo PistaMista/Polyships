@@ -108,7 +108,7 @@ public class Board : MonoBehaviour
             get
             {
                 List<Tile> result = new List<Tile>();
-                placedShips.ForEach(x => { result.AddRange(x.tiles); });
+                placedShips.ForEach(x => { if (x.tiles != null) result.AddRange(x.tiles); });
                 return result;
             }
         }
