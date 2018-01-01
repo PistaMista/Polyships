@@ -244,12 +244,14 @@ public class Battle : MonoBehaviour
     {
         public int maximumArtilleryCount;
         public int maximumTorpedoCount;
+        public bool[] torpedoFiringArea;
     }
     public AttackerCapabilities attackerCapabilities;
     void CollectAttackerCapabilities()
     {
         AttackerCapabilities gathered = new AttackerCapabilities();
         gathered.maximumArtilleryCount = 1;
+        gathered.torpedoFiringArea = new bool[attacker.board.tiles.GetLength(0)];
         for (int i = 0; i < attacker.board.ships.Length; i++)
         {
             Ship ship = attacker.board.ships[i];
@@ -261,7 +263,15 @@ public class Battle : MonoBehaviour
                         gathered.maximumArtilleryCount += ((Battleship)ship).artilleryBonus;
                         break;
                     case ShipType.DESTROYER:
-                        gathered.maximumTorpedoCount += ((Destroyer)ship).torpedoCount;
+                        Destroyer destroyer = (Destroyer)ship;
+                        gathered.maximumTorpedoCount += destroyer.torpedoCount;
+                        for (int x = 0; x < destroyer.firingAreaBlockages.Length; x++)
+                        {
+                            if (destroyer.firingAreaBlockages[x] < 0)
+                            {
+                                gathered.torpedoFiringArea[x] = true;
+                            }
+                        }
                         break;
                 }
             }
@@ -347,6 +357,87 @@ public class Battle : MonoBehaviour
         }
 
         attacker.hitTiles.AddRange(actualHits);
+
+        NextTurn();
+    }
+
+    public void ExecuteTorpedoAttack(int[] targets)
+    {
+        //Determine the final hits to ships and other tiles
+        List<Tile> impacts = new List<Tile>();
+        List<Tile> hits = new List<Tile>();
+        Dictionary<Ship, List<int>> shipDamage = new Dictionary<Ship, List<int>>();
+
+        for (int targetIndex = 0; targetIndex < targets.Length; targetIndex++)
+        {
+            int target = targets[targetIndex];
+            List<Tile> singularHits = new List<Tile>();
+            Tile impact = null;
+
+            for (int y = defender.board.tiles.GetLength(1); y >= 0; y--)
+            {
+                Tile candidate = defender.board.tiles[target, y];
+                if (candidate.containedShip)
+                {
+                    impact = candidate;
+                    break;
+                }
+            }
+
+            if (impact)
+            {
+                if (impact.containedShip.health < impact.containedShip.maxHealth)
+                {
+                    singularHits.AddRange(impact.containedShip.tiles);
+                }
+                else
+                {
+                    singularHits.Add(impact);
+                }
+
+                foreach (Tile hit in singularHits)
+                {
+                    if (!attacker.hitTiles.Contains(hit) && !hits.Contains(hit))
+                    {
+                        hits.Add(hit);
+                        if (hit.containedShip)
+                        {
+                            if (!shipDamage.ContainsKey(hit.containedShip))
+                            {
+                                shipDamage.Add(hit.containedShip, new List<int>());
+                            }
+
+                            for (int i = 0; i < hit.containedShip.tiles.Length; i++)
+                            {
+                                if (hit.containedShip.tiles[i] == hit)
+                                {
+                                    shipDamage[hit.containedShip].Add(i);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        //Apply the hits
+        log[0].torpedoImpacts.AddRange(impacts);
+        log[0].damagedTiles.AddRange(hits);
+
+        hits.ForEach(x => x.hit = true);
+
+        foreach (KeyValuePair<Ship, List<int>> shipHitInfo in shipDamage)
+        {
+            log[0].damagedShips.Add(shipHitInfo.Key);
+            shipHitInfo.Key.Damage(shipHitInfo.Value.ToArray());
+            if (shipHitInfo.Key.health <= 0)
+            {
+                log[0].destroyedShips.Add(shipHitInfo.Key);
+            }
+        }
+
+        attacker.hitTiles.AddRange(hits);
 
         NextTurn();
     }

@@ -49,6 +49,7 @@ public class Ship : MonoBehaviour
     public Board parentBoard;
     public Tile[] tiles;
     public int health;
+    public int maxHealth;
     public Cruiser concealedBy;
     public ShipType type;
 

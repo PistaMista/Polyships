@@ -14,6 +14,7 @@ public class MiscellaneousVariables : MonoBehaviour
     public float boardDistanceFromCenter;
     public float flagVoxelScale;
     public float flagRenderHeight;
+    public int maximumTorpedoAttacksPerTurn;
     public SlidingUserInterface_Master titleInterfaceMaster;
     public static MiscellaneousVariables it;
 

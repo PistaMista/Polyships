@@ -35,7 +35,7 @@ public class BoardViewUI : InputEnabledUI
         {
             foreach (Ship ship in managedBoard.ships)
             {
-                if (ship.tiles != null && ship.tiles.Length > 0 && ship.type == ShipType.DESTROYER)
+                if (ship.tiles != null && ship.tiles.Length > 0 && ship.type == ShipType.DESTROYER && ship.health > 0)
                 {
                     Destroyer destroyer = (Destroyer)ship;
                     LineMarker_UIAgent marker = (LineMarker_UIAgent)CreateDynamicAgent("destroyer_firing_area_marker");

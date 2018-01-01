@@ -172,7 +172,7 @@ public class Board : MonoBehaviour
                     }
                     else
                     {
-                        if (inlineNeighbouringValidTiles.Count >= placementInfo.selectedShip.health)
+                        if (inlineNeighbouringValidTiles.Count >= placementInfo.selectedShip.maxHealth)
                         {
                             inlineValidTiles.AddRange(inlineNeighbouringValidTiles);
                         }

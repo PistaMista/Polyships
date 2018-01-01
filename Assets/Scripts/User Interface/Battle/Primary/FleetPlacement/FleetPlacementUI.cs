@@ -193,7 +193,7 @@ public class FleetPlacementUI : BoardViewUI
             foreach (Ship ship in managedBoard.placementInfo.allShips)
             {
                 Vector3 localInputPosition = ship.transform.InverseTransformPoint(ConvertToWorldInputPosition(currentInputPosition.screen));
-                if (Mathf.Abs(localInputPosition.x) < 0.5f && Mathf.Abs(localInputPosition.z) < ship.health / 2.0f)
+                if (Mathf.Abs(localInputPosition.x) < 0.5f && Mathf.Abs(localInputPosition.z) < ship.maxHealth / 2.0f)
                 {
                     if (managedBoard.placementInfo.selectedShip != null)
                     {
@@ -282,7 +282,7 @@ public class FleetPlacementUI : BoardViewUI
                         }
                     }
 
-                    if (managedBoard.placementInfo.selectedTiles.Count == managedBoard.placementInfo.selectedShip.health)
+                    if (managedBoard.placementInfo.selectedTiles.Count == managedBoard.placementInfo.selectedShip.maxHealth)
                     {
                         managedBoard.placementInfo.selectedShip.Place(managedBoard.placementInfo.selectedTiles.ToArray());
                         managedBoard.placementInfo.selectedTiles = new List<Tile>();
@@ -406,7 +406,7 @@ public class FleetPlacementUI : BoardViewUI
 
         for (int i = 0; i < groups.Length; i++)
         {
-            groups[i].rect.height = groups[i].ships[0].health + shipPaletteGroupPadding;
+            groups[i].rect.height = groups[i].ships[0].maxHealth + shipPaletteGroupPadding;
             groups[i].rect.width = (groups[i].ships[0].transform.localScale.x + 0.5f) * groups[i].ships.Length + shipPaletteGroupPadding;
             groups[i].horizontalCorners = CalculateCorners(groups[i].rect, false);
             groups[i].verticalCorners = CalculateCorners(groups[i].rect, true);

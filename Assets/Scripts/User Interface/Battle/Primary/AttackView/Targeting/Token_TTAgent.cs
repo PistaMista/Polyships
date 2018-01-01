@@ -28,6 +28,8 @@ public class Token_TTAgent : MovingUIAgent
                 }
 
                 onPedestal = value;
+
+                OnPedestalStateChange();
             }
         }
     }
@@ -44,5 +46,10 @@ public class Token_TTAgent : MovingUIAgent
     protected override int GetTargetPositionIndex()
     {
         return onPedestal ? 0 : 1;
+    }
+
+    protected virtual void OnPedestalStateChange()
+    {
+
     }
 }
