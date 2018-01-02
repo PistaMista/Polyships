@@ -14,6 +14,36 @@ public class TorpedoPTTUI : PrimaryTTUI
         if (placedTokens.Count < MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn || !token.OnPedestal)
         {
             base.PickupToken(token);
+            SetTargetableLaneMarkers(true);
+        }
+    }
+
+    protected override void DropHeldToken()
+    {
+        base.DropHeldToken();
+        SetTargetableLaneMarkers(false);
+    }
+
+    void SetTargetableLaneMarkers(bool enabled)
+    {
+        if (enabled)
+        {
+            bool[] lanes = Battle.main.attackerCapabilities.torpedoFiringArea;
+            for (int x = 0; x < lanes.Length; x++)
+            {
+                if (lanes[x])
+                {
+                    LineMarker_UIAgent laneMarker = (LineMarker_UIAgent)CreateDynamicAgent("targetable_line");
+                    Vector3 mod = Vector3.up * (MiscellaneousVariables.it.boardUIRenderHeight + 0.01f);
+                    laneMarker.extensionTime = laneMarker.extensionTime * (0.6f + (float)x / lanes.Length * 0.6f);
+                    laneMarker.Set(new Vector3[] { managedBoard.tiles[x, managedBoard.tiles.GetLength(1) - 1].transform.position + mod + Vector3.forward * managedBoard.tiles.GetLength(1), managedBoard.tiles[x, 0].transform.position + mod + Vector3.back }, new int[][] { new int[] { 1 }, new int[0] });
+                    laneMarker.State = UIState.ENABLING;
+                }
+            }
+        }
+        else
+        {
+            RemoveDynamicAgents<LineMarker_UIAgent>("Destroyer Firing Area", false);
         }
     }
 

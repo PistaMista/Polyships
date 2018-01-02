@@ -5,6 +5,7 @@ using UnityEngine;
 public class UIAgent : MonoBehaviour
 {
     public UIState state;
+    public bool parentStateIndependent = false;
     public UIAgent[] staticUIAgents = new UIAgent[0];
     public List<UIAgent> dynamicUIAgents = new List<UIAgent>();
     public GameObject[] dynamicUIAgentPaletteObjects;
@@ -115,7 +116,7 @@ public class UIAgent : MonoBehaviour
         this.state = state;
         if (!changeStateCausedByUpdate)
         {
-            allAgents.ForEach(x => { if (x.State != state) { x.State = state; } });
+            allAgents.ForEach(x => { if (x.State != state && !x.parentStateIndependent) { x.State = state; } });
         }
         gameObject.SetActive(state != UIState.DISABLED);
     }

@@ -127,6 +127,11 @@ public class LineMarker_UIAgent : UIAgent
         StartBranchingFromNode(startingNode, startingNode);
     }
 
+    public void Set(Vector3[] nodes, int[][] connections)
+    {
+        Set(nodes, connections, 0);
+    }
+
     void StartBranchingFromNode(int node, int inputNode)
     {
         List<int> newBranchNodes = new List<int>();

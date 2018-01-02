@@ -15,7 +15,6 @@ public class PrimaryTTUI : TTUI
         {
             attackViewUserInterface.activePrimaryTargeter = this;
         }
-        heldToken = null;
     }
 
     public override bool IsSelectable()

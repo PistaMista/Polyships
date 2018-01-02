@@ -150,12 +150,28 @@ public class Battle : MonoBehaviour
     public int tutorialStage;
     public void SaveToDisk()
     {
-        BinaryFormatter formatter = new BinaryFormatter();
-        FileStream stream = new FileStream(Path.Combine(Application.persistentDataPath, saveSlot.ToString()), FileMode.Create);
+        bool success = true;
+        BattleData saveData;
+        try
+        {
+            saveData = (BattleData)this;
+        }
+        catch (System.Exception)
+        {
+            success = false;
+            Debug.LogError("An error occured during saving the game state.");
+            throw;
+        }
 
-        formatter.Serialize(stream, (BattleData)this);
+        if (success)
+        {
+            BinaryFormatter formatter = new BinaryFormatter();
+            FileStream stream = new FileStream(Path.Combine(Application.persistentDataPath, saveSlot.ToString()), FileMode.Create);
 
-        stream.Close();
+            formatter.Serialize(stream, saveData);
+
+            stream.Close();
+        }
     }
 
     public void Initialize(BattleData data)
@@ -444,6 +460,25 @@ public class Battle : MonoBehaviour
         }
 
         attacker.hitTiles.AddRange(hits);
+
+        //Take away the consumed torpedoes from the destroyers
+        int ammoCost = targets.Length;
+        for (int i = 0; i < attacker.board.ships.Length; i++)
+        {
+            Ship ship = attacker.board.ships[i];
+            if (ship.health > 0 && ship.type == ShipType.DESTROYER)
+            {
+                Destroyer destroyer = (Destroyer)ship;
+                int initialTorpedoCount = destroyer.torpedoCount;
+                destroyer.torpedoCount -= Mathf.Clamp(ammoCost, 0, destroyer.torpedoCount);
+
+                ammoCost -= initialTorpedoCount - destroyer.torpedoCount;
+                if (ammoCost == 0)
+                {
+                    break;
+                }
+            }
+        }
 
         NextTurn();
     }

@@ -119,6 +119,7 @@ public class TTUI : BoardViewUI
                 if (endPress)
                 {
                     DropHeldToken();
+                    heldToken = null;
                 }
             }
             else
