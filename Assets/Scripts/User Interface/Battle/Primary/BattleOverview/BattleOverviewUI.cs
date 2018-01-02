@@ -36,5 +36,9 @@ public class BattleOverviewUI : InputEnabledUI
                 BattleUIMaster.EnablePrimaryBUI(BattleUIType.ATTACK_VIEW);
             }
         }
+        else if (endPress && inputPoints == 2)
+        {
+            Battle.main.QuitBattle();
+        }
     }
 }

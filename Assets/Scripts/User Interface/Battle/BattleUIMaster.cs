@@ -30,18 +30,18 @@ public class BattleUIMaster : InputEnabledUI
         for (int i = 0; i < it.primaryBUIs.Length; i++)
         {
             UIAgent x = it.primaryBUIs[i];
-            if (x.State != UIState.DISABLED)
+            if ((int)x.State >= 2)
             {
-                x.State = UIState.DISABLED;
+                x.State = UIState.DISABLING;
             }
         }
 
         for (int i = 0; i < it.secondaryBUIs.Length; i++)
         {
             UIAgent x = it.secondaryBUIs[i];
-            if (x.State != UIState.DISABLED)
+            if ((int)x.State >= 2)
             {
-                x.State = UIState.DISABLED;
+                x.State = UIState.DISABLING;
             }
         }
     }

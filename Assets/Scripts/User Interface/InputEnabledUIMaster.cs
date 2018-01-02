@@ -12,6 +12,7 @@ public class InputEnabledUIMaster : InputEnabledUI
     protected override void ProcessInput()
     {
         Shared();
+        inputPoints = Input.touchCount;
 
         if (dragging)
         {

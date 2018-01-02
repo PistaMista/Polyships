@@ -30,7 +30,7 @@ public class FleetPlacementUI : BoardViewUI
                 managedBoard.transform.position = Battle.main.attacker.board.transform.position;
                 break;
             case UIState.DISABLED:
-                if (Battle.main.defender)
+                if (Battle.main.defender != null && Battle.main.defender.board.ships != null)
                 {
                     for (int i = 0; i < Battle.main.defender.board.ships.Length; i++)
                     {
@@ -39,7 +39,7 @@ public class FleetPlacementUI : BoardViewUI
                 }
                 else
                 {
-                    Destroy(managedBoard);
+                    Destroy(managedBoard.gameObject);
                 }
                 break;
         }
@@ -243,6 +243,10 @@ public class FleetPlacementUI : BoardViewUI
                     }
                 }
             }
+        }
+        else if (endPress && inputPoints == 2)
+        {
+            Battle.main.QuitBattle();
         }
 
         if (pressed && managedBoard.placementInfo.selectedShip != null)
