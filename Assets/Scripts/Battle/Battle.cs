@@ -393,7 +393,7 @@ public class Battle : MonoBehaviour
             for (int y = defender.board.tiles.GetLength(1) - 1; y >= 0; y--)
             {
                 Tile candidate = defender.board.tiles[target, y];
-                if (candidate.containedShip)
+                if (candidate.containedShip && candidate.containedShip.health > 0)
                 {
                     impact = candidate;
                     break;
