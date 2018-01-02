@@ -374,13 +374,17 @@ public class Battle : MonoBehaviour
             List<Tile> singularHits = new List<Tile>();
             Tile impact = null;
 
-            for (int y = defender.board.tiles.GetLength(1); y >= 0; y--)
+            for (int y = defender.board.tiles.GetLength(1) - 1; y >= 0; y--)
             {
                 Tile candidate = defender.board.tiles[target, y];
                 if (candidate.containedShip)
                 {
                     impact = candidate;
                     break;
+                }
+                else
+                {
+                    singularHits.Add(candidate);
                 }
             }
 
@@ -395,25 +399,27 @@ public class Battle : MonoBehaviour
                     singularHits.Add(impact);
                 }
 
-                foreach (Tile hit in singularHits)
-                {
-                    if (!attacker.hitTiles.Contains(hit) && !hits.Contains(hit))
-                    {
-                        hits.Add(hit);
-                        if (hit.containedShip)
-                        {
-                            if (!shipDamage.ContainsKey(hit.containedShip))
-                            {
-                                shipDamage.Add(hit.containedShip, new List<int>());
-                            }
+                impacts.Add(impact);
+            }
 
-                            for (int i = 0; i < hit.containedShip.tiles.Length; i++)
+            foreach (Tile hit in singularHits)
+            {
+                if (!attacker.hitTiles.Contains(hit) && !hits.Contains(hit))
+                {
+                    hits.Add(hit);
+                    if (hit.containedShip)
+                    {
+                        if (!shipDamage.ContainsKey(hit.containedShip))
+                        {
+                            shipDamage.Add(hit.containedShip, new List<int>());
+                        }
+
+                        for (int i = 0; i < hit.containedShip.tiles.Length; i++)
+                        {
+                            if (hit.containedShip.tiles[i] == hit)
                             {
-                                if (hit.containedShip.tiles[i] == hit)
-                                {
-                                    shipDamage[hit.containedShip].Add(i);
-                                    break;
-                                }
+                                shipDamage[hit.containedShip].Add(i);
+                                break;
                             }
                         }
                     }
