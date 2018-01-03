@@ -5,12 +5,20 @@ using UnityEngine;
 public class Destroyer : Ship
 {
     public int torpedoCount;
+    public int torpedoCapacity;
+    public int torpedoReloadTime;
+    public int torpedoReloadBatchSize;
+    int torpedoReloadTimeLeft;
     public int[] firingAreaBlockages;
 
     public override int[] GetMetadata()
     {
         List<int> result = new List<int>();
         result.Add(torpedoCount);
+        result.Add(torpedoCapacity);
+        result.Add(torpedoReloadTime);
+        result.Add(torpedoReloadBatchSize);
+        result.Add(torpedoReloadTimeLeft);
 
         for (int i = 0; i < firingAreaBlockages.Length; i++)
         {
@@ -24,14 +32,32 @@ public class Destroyer : Ship
     {
         base.Initialize(data);
         torpedoCount = data.metadata[0];
+        torpedoCapacity = data.metadata[1];
+        torpedoReloadTime = data.metadata[2];
+        torpedoReloadBatchSize = data.metadata[3];
+        torpedoReloadTimeLeft = data.metadata[4];
 
         List<int> blockages = new List<int>();
-        for (int i = 1; i < data.metadata.Length; i++)
+        for (int i = 5; i < data.metadata.Length; i++)
         {
             blockages.Add(data.metadata[i]);
         }
 
         firingAreaBlockages = blockages.ToArray();
+    }
+
+    public override void OnTurnStart()
+    {
+        base.OnTurnStart();
+        if (torpedoCount < torpedoCapacity && health > 0)
+        {
+            torpedoReloadTimeLeft--;
+            if (torpedoReloadTimeLeft <= 0)
+            {
+                torpedoReloadTimeLeft = torpedoReloadTime;
+                torpedoCount = Mathf.Clamp(torpedoCount + torpedoReloadBatchSize, 0, torpedoCapacity);
+            }
+        }
     }
 
     public override void Place(Tile[] location)
