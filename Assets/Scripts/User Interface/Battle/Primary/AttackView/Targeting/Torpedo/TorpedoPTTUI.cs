@@ -60,9 +60,9 @@ public class TorpedoPTTUI : PrimaryTTUI
         {
             Tile candidateTargetTile = GetTileAtInputPosition();
 
-            if (candidateTargetTile != null && !placedTokens.Find(x => x.value && ((Tile)x.value).coordinates.x == candidateTargetTile.coordinates.x) && Battle.main.attackerCapabilities.torpedoFiringArea[candidateTargetTile.coordinates.x])
+            if (candidateTargetTile != null && !placedTokens.Find(x => x.value != null && (int)x.value == candidateTargetTile.coordinates.x) && Battle.main.attackerCapabilities.torpedoFiringArea[candidateTargetTile.coordinates.x])
             {
-                token.value = candidateTargetTile;
+                token.value = candidateTargetTile.coordinates.x;
                 token.enabledPositions[1] = new Vector3(candidateTargetTile.transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight, managedBoard.tiles[0, managedBoard.tiles.GetLength(1) - 1].transform.position.z + 1.2f);
             }
         }
@@ -91,7 +91,7 @@ public class TorpedoPTTUI : PrimaryTTUI
         int[] targets = new int[placedTokens.Count];
         for (int i = 0; i < targets.Length; i++)
         {
-            targets[i] = ((Tile)placedTokens[i].value).coordinates.x;
+            targets[i] = (int)placedTokens[i].value;
         }
 
         Battle.main.ExecuteTorpedoAttack(targets);

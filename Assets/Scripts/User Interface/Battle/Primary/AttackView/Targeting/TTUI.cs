@@ -12,7 +12,7 @@ public class TTUI : BoardViewUI
     protected Token_TTAgent[] allTokens;
     protected Token_TTAgent heldToken;
 
-    public void ResetTargeting() //Resets the targeting completely
+    public virtual void ResetTargeting() //Resets the targeting completely
     {
         Vector3 pedestalDirectional = stackPedestal.enabledPositions[0] - managedBoard.owner.boardCameraPoint.transform.position;
         stackPedestal.enabledPositions[1] = managedBoard.owner.boardCameraPoint.transform.position + pedestalDirectional.normalized * pedestalDirectional.magnitude / (managedBoard.tiles.GetLength(0) / (float)attackViewUserInterface.referenceBoardWidthForPedestalScaling);

@@ -22,7 +22,7 @@ public class ArtilleryPTTUI : PrimaryTTUI
         {
             Tile candidateTargetTile = GetTileAtInputPosition();
 
-            if (candidateTargetTile != null && !placedTokens.Find(x => x.value && x.value == candidateTargetTile))
+            if (candidateTargetTile != null && !placedTokens.Find(x => x.value != null && x.value == candidateTargetTile))
             {
                 token.value = candidateTargetTile;
                 token.enabledPositions[1] = candidateTargetTile.transform.position + MiscellaneousVariables.it.boardUIRenderHeight * Vector3.up;

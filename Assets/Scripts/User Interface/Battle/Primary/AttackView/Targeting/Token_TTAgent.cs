@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Token_TTAgent : MovingUIAgent
 {
-    public Object value;
+    public object value;
     public TTUI owner;
     public float stackHeight;
     public float maxStackDeviation;

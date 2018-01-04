@@ -260,6 +260,7 @@ public class Battle : MonoBehaviour
     {
         public int maximumArtilleryCount;
         public int maximumTorpedoCount;
+        public int maximumAircraftCount;
         public bool[] torpedoFiringArea;
     }
     public AttackerCapabilities attackerCapabilities;
@@ -288,6 +289,9 @@ public class Battle : MonoBehaviour
                                 gathered.torpedoFiringArea[x] = true;
                             }
                         }
+                        break;
+                    case ShipType.CARRIER:
+                        gathered.maximumAircraftCount += ((Carrier)ship).aircraftCount;
                         break;
                 }
             }
