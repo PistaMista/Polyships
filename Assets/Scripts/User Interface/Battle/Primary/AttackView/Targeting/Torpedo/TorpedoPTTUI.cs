@@ -49,22 +49,12 @@ public class TorpedoPTTUI : PrimaryTTUI
 
     protected override void CalculateTokenValue(Token_TTAgent token)
     {
-        float velocityThreshold = managedBoard.tiles.GetLength(0) / 5.0f;
-        bool angleMatch = Vector3.Angle(token.globalVelocity, stackPedestal.enabledPositions[0] - token.transform.position) < 30;
+        Tile candidateTargetTile = GetTileAtInputPosition();
 
-        if (token.globalVelocity.magnitude > velocityThreshold && angleMatch)
+        if (candidateTargetTile != null && !placedTokens.Find(x => x.value != null && (int)x.value == candidateTargetTile.coordinates.x) && Battle.main.attackerCapabilities.torpedoFiringArea[candidateTargetTile.coordinates.x])
         {
-            token.value = null;
-        }
-        else
-        {
-            Tile candidateTargetTile = GetTileAtInputPosition();
-
-            if (candidateTargetTile != null && !placedTokens.Find(x => x.value != null && (int)x.value == candidateTargetTile.coordinates.x) && Battle.main.attackerCapabilities.torpedoFiringArea[candidateTargetTile.coordinates.x])
-            {
-                token.value = candidateTargetTile.coordinates.x;
-                token.enabledPositions[1] = new Vector3(candidateTargetTile.transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight, managedBoard.tiles[0, managedBoard.tiles.GetLength(1) - 1].transform.position.z + 1.2f);
-            }
+            token.value = candidateTargetTile.coordinates.x;
+            token.enabledPositions[1] = new Vector3(candidateTargetTile.transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight, managedBoard.tiles[0, managedBoard.tiles.GetLength(1) - 1].transform.position.z + 1.2f);
         }
     }
 

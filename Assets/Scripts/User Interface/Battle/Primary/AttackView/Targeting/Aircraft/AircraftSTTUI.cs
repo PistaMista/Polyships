@@ -38,42 +38,41 @@ public class AircraftSTTUI : SecondaryTTUI
             if (ship.type == ShipType.CARRIER)
             {
                 Carrier carrier = (Carrier)ship;
-                carrier.polarSearchTargets = toAssign.GetRange(0, carrier.aircraftCount).ToArray();
-                toAssign.RemoveRange(0, carrier.aircraftCount);
+                carrier.polarSearchTargets = toAssign.GetRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count)).ToArray();
+                toAssign.RemoveRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count));
             }
         }
     }
 
     protected override void CalculateTokenValue(Token_TTAgent token)
     {
-        float velocityThreshold = managedBoard.tiles.GetLength(0) / 5.0f;
-        bool angleMatch = Vector3.Angle(token.globalVelocity, stackPedestal.enabledPositions[0] - token.transform.position) < 30;
 
-        if (token.globalVelocity.magnitude > velocityThreshold && angleMatch)
+        Vector3 startingPosition = managedBoard.tiles[0, 0].transform.position;
+        Vector3 rawPosition = ConvertToWorldInputPosition(currentInputPosition.screen) - startingPosition;
+        Vector2Int calculatedPosition = new Vector2Int(Mathf.FloorToInt(rawPosition.x), Mathf.FloorToInt(rawPosition.z));
+
+        if (calculatedPosition.y < 0 && calculatedPosition.x >= 0 && calculatedPosition.x < managedBoard.tiles.GetLength(0) - 1)
         {
-            token.value = null;
+            token.value = calculatedPosition.x;
+            token.enabledPositions[1] = new Vector3(startingPosition.x + calculatedPosition.x + 0.5f, MiscellaneousVariables.it.boardUIRenderHeight, startingPosition.z - 1);
         }
-        else
+        else if (calculatedPosition.x < 0 && calculatedPosition.y >= 0 && calculatedPosition.y < managedBoard.tiles.GetLength(1) - 1)
         {
-            // Tile candidateTargetTile = GetTileAtInputPosition();
-
-            // if (candidateTargetTile != null && !placedTokens.Find(x => x.value != null && ((Tile)x.value).coordinates.x == candidateTargetTile.coordinates.x) && Battle.main.attackerCapabilities.torpedoFiringArea[candidateTargetTile.coordinates.x])
-            // {
-            //     token.value = candidateTargetTile;
-            //     token.enabledPositions[1] = new Vector3(candidateTargetTile.transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight, managedBoard.tiles[0, managedBoard.tiles.GetLength(1) - 1].transform.position.z + 1.2f);
-            // }
+            token.value = managedBoard.tiles.GetLength(0) - 1 + calculatedPosition.y;
+            token.enabledPositions[1] = new Vector3(startingPosition.x - 1, MiscellaneousVariables.it.boardUIRenderHeight, startingPosition.z + calculatedPosition.y + 0.5f);
         }
     }
 
     protected override Vector3 CalculateHeldTokenTargetPosition(Vector3 inputPosition)
     {
-        Vector3 localBoardPosition = inputPosition - managedBoard.transform.position;
-        bool hoveringOverBoard = Mathf.Abs(localBoardPosition.x) < managedBoard.tiles.GetLength(0) / 2.0f && Mathf.Abs(localBoardPosition.z) < managedBoard.tiles.GetLength(1) / 2.0f;
-
-        if (hoveringOverBoard)
+        Vector3 startingPosition = managedBoard.tiles[0, 0].transform.position;
+        Vector3 calculatedPosition = inputPosition - startingPosition;
+        calculatedPosition.x = Mathf.FloorToInt(calculatedPosition.x);
+        calculatedPosition.z = Mathf.FloorToInt(calculatedPosition.z);
+        if (calculatedPosition.z < 0 || calculatedPosition.x < 0)
         {
-            inputPosition.y = hoveringOverBoard ? MiscellaneousVariables.it.boardUIRenderHeight : stackPedestal.transform.TransformPoint(heldToken.enabledPositions[0]).y;
-            inputPosition.z = managedBoard.tiles[0, managedBoard.tiles.GetLength(1) - 1].transform.position.z + 1.2f;
+            inputPosition.y = MiscellaneousVariables.it.boardUIRenderHeight;
+            ((AircraftToken_TTAgent)heldToken).horizontal = calculatedPosition.x < 0;
             return inputPosition;
         }
         else

@@ -11,22 +11,12 @@ public class ArtilleryPTTUI : PrimaryTTUI
 
     protected override void CalculateTokenValue(Token_TTAgent token)
     {
-        float velocityThreshold = managedBoard.tiles.GetLength(0) / 5.0f;
-        bool angleMatch = Vector3.Angle(token.globalVelocity, stackPedestal.enabledPositions[0] - token.transform.position) < 30;
+        Tile candidateTargetTile = GetTileAtInputPosition();
 
-        if (token.globalVelocity.magnitude > velocityThreshold && angleMatch)
+        if (candidateTargetTile != null && !placedTokens.Find(x => x.value != null && x.value == candidateTargetTile))
         {
-            token.value = null;
-        }
-        else
-        {
-            Tile candidateTargetTile = GetTileAtInputPosition();
-
-            if (candidateTargetTile != null && !placedTokens.Find(x => x.value != null && x.value == candidateTargetTile))
-            {
-                token.value = candidateTargetTile;
-                token.enabledPositions[1] = candidateTargetTile.transform.position + MiscellaneousVariables.it.boardUIRenderHeight * Vector3.up;
-            }
+            token.value = candidateTargetTile;
+            token.enabledPositions[1] = candidateTargetTile.transform.position + MiscellaneousVariables.it.boardUIRenderHeight * Vector3.up;
         }
     }
 

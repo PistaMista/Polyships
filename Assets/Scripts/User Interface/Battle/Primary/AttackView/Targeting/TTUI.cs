@@ -77,21 +77,38 @@ public class TTUI : BoardViewUI
 
     protected virtual void DropHeldToken()
     {
-        CalculateTokenValue(heldToken);
-        if (heldToken.value == null)
+        Vector3 positionRelativeToPedestal = heldToken.transform.position - stackPedestal.enabledPositions[0];
+        positionRelativeToPedestal.y = 0;
+        float velocityThreshold = managedBoard.tiles.GetLength(0) / 5.0f;
+        bool angleMatch = Vector3.Angle(heldToken.globalVelocity, stackPedestal.enabledPositions[0] - heldToken.transform.position) < 30;
+
+        if (positionRelativeToPedestal.magnitude < stackPedestal.radius || (heldToken.globalVelocity.magnitude > velocityThreshold && angleMatch))
         {
-            stackTokens.Add(heldToken);
-            Debug.Log("Dropped token onto pedestal");
-            heldToken.OnPedestal = true;
+            DropHeldTokenOntoPedestal();
         }
         else
         {
-            placedTokens.Add(heldToken);
-            Debug.Log("Dropped token onto the field");
-            heldToken.OnPedestal = false;
+            CalculateTokenValue(heldToken);
+            if (heldToken.value == null)
+            {
+                DropHeldTokenOntoPedestal();
+            }
+            else
+            {
+                placedTokens.Add(heldToken);
+                Debug.Log("Dropped token onto the field");
+                heldToken.OnPedestal = false;
+            }
         }
 
         attackViewUserInterface.selectedTargeter = null;
+    }
+
+    void DropHeldTokenOntoPedestal()
+    {
+        stackTokens.Add(heldToken);
+        Debug.Log("Dropped token onto pedestal");
+        heldToken.OnPedestal = true;
     }
 
     protected virtual Vector3 CalculateHeldTokenTargetPosition(Vector3 inputPosition)
@@ -140,7 +157,10 @@ public class TTUI : BoardViewUI
     protected void CheckTokensForPickup()
     {
         Vector3 pressedPosition = ConvertToWorldInputPosition(currentInputPosition.screen);
-        if (Vector3.Distance(pressedPosition, stackPedestal.enabledPositions[0]) < 3.0f && stackTokens.Count > 0)
+        Vector3 positionRelativeToPedestal = pressedPosition - stackPedestal.enabledPositions[0];
+        positionRelativeToPedestal.y = 0;
+
+        if (positionRelativeToPedestal.magnitude < stackPedestal.radius && stackTokens.Count > 0)
         {
             PickupToken(stackTokens[stackTokens.Count - 1]);
         }
