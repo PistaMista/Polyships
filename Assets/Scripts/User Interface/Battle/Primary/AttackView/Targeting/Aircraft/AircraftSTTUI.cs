@@ -69,7 +69,7 @@ public class AircraftSTTUI : SecondaryTTUI
         Vector3 calculatedPosition = inputPosition - startingPosition;
         calculatedPosition.x = Mathf.FloorToInt(calculatedPosition.x);
         calculatedPosition.z = Mathf.FloorToInt(calculatedPosition.z);
-        if (calculatedPosition.z < 0 || calculatedPosition.x < 0)
+        if ((calculatedPosition.z < 0 && calculatedPosition.x < managedBoard.tiles.GetLength(0) - 1) || (calculatedPosition.x < 0 && calculatedPosition.y < managedBoard.tiles.GetLength(1) - 1))
         {
             inputPosition.y = MiscellaneousVariables.it.boardUIRenderHeight;
             ((AircraftToken_TTAgent)heldToken).horizontal = calculatedPosition.x < 0;
@@ -85,5 +85,16 @@ public class AircraftSTTUI : SecondaryTTUI
     {
         currentTargets = new List<int>();
         base.ResetTargeting();
+    }
+
+    protected override void SetState(UIState state)
+    {
+        base.SetState(state);
+        RemoveDynamicAgents<LineMarker_UIAgent>("", false);
+        if (state == UIState.ENABLING)
+        {
+
+        }
+
     }
 }

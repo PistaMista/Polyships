@@ -29,6 +29,7 @@ public class AircraftToken_TTAgent : Token_TTAgent
 
             marker.Set(nodes, new int[][] { new int[] { 1 }, new int[0] });
             marker.transform.localPosition = Vector3.zero;
+            marker.transform.rotation = Quaternion.LookRotation(Vector3.back);
             marker.State = UIState.ENABLING;
         }
     }

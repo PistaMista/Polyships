@@ -262,6 +262,7 @@ public class Battle : MonoBehaviour
         public int maximumTorpedoCount;
         public int maximumAircraftCount;
         public bool[] torpedoFiringArea;
+        public int[,] airReconResults;
     }
     public AttackerCapabilities attackerCapabilities;
     void CollectAttackerCapabilities()
@@ -269,6 +270,8 @@ public class Battle : MonoBehaviour
         AttackerCapabilities gathered = new AttackerCapabilities();
         gathered.maximumArtilleryCount = 1;
         gathered.torpedoFiringArea = new bool[attacker.board.tiles.GetLength(0)];
+
+        List<int[]> airReconResults = new List<int[]>();
         for (int i = 0; i < attacker.board.ships.Length; i++)
         {
             Ship ship = attacker.board.ships[i];
@@ -291,10 +294,23 @@ public class Battle : MonoBehaviour
                         }
                         break;
                     case ShipType.CARRIER:
-                        gathered.maximumAircraftCount += ((Carrier)ship).aircraftCount;
+                        Carrier carrier = (Carrier)ship;
+                        gathered.maximumAircraftCount += carrier.aircraftCount;
+                        for (int resultID = 0; resultID < carrier.polarSearchResults.GetLength(0); resultID++)
+                        {
+                            airReconResults.Add(new int[] { carrier.polarSearchResults[resultID, 0], carrier.polarSearchResults[resultID, 1] });
+                        }
                         break;
                 }
             }
+        }
+
+        gathered.airReconResults = new int[airReconResults.Count, 2];
+
+        for (int i = 0; i < airReconResults.Count; i++)
+        {
+            gathered.airReconResults[i, 0] = airReconResults[i][0];
+            gathered.airReconResults[i, 1] = airReconResults[i][1];
         }
 
         attackerCapabilities = gathered;
