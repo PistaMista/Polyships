@@ -38,7 +38,7 @@ public class AircraftToken_TTAgent : Token_TTAgent
         base.Update();
         if (marker != null)
         {
-            marker.transform.rotation = Quaternion.LookRotation(horizontal ? Vector3.left : Vector3.back);
+            marker.transform.rotation = Quaternion.RotateTowards(marker.transform.rotation, Quaternion.LookRotation(horizontal ? Vector3.left : Vector3.back), markerRotationSpeed * Time.deltaTime);
         }
     }
 }
