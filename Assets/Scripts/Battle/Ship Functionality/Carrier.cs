@@ -9,6 +9,30 @@ public class Carrier : Ship
     public int[] polarSearchTargets = new int[0];
     public int[,] polarSearchResults = new int[0, 0];
 
+    public override int[] GetMetadata()
+    {
+        List<int> result = new List<int>();
+        for (int i = 0; i < polarSearchResults.GetLength(0); i++)
+        {
+            result.Add(polarSearchResults[i, 0]);
+            result.Add(polarSearchResults[i, 1]);
+        }
+
+        return result.ToArray();
+    }
+
+    public override void AssignReferences(ShipData data)
+    {
+        base.AssignReferences(data);
+        polarSearchResults = new int[data.metadata.Length / 2, 2];
+
+        for (int i = 1; i < data.metadata.Length; i += 2)
+        {
+            polarSearchResults[(i - 1) / 2, 0] = data.metadata[i - 1];
+            polarSearchResults[(i - 1) / 2, 1] = data.metadata[i];
+        }
+    }
+
     public override void OnTurnStart()
     {
         base.OnTurnStart();

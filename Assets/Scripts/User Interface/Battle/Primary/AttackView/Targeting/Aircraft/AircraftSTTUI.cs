@@ -90,11 +90,36 @@ public class AircraftSTTUI : SecondaryTTUI
     protected override void SetState(UIState state)
     {
         base.SetState(state);
-        RemoveDynamicAgents<LineMarker_UIAgent>("", false);
+        RemoveDynamicAgents<LineMarker_UIAgent>("air_recon_line", false);
         if (state == UIState.ENABLING)
         {
+            int[,] results = Battle.main.attackerCapabilities.airReconResults;
+            for (int i = 0; i < results.GetLength(0); i++)
+            {
+                LineMarker_UIAgent marker = (LineMarker_UIAgent)CreateDynamicAgent("air_recon_line");
+                marker.lineWidth = (1.00f - MiscellaneousVariables.it.boardTileSideLength) * 1.1f;
 
+                int lineIndex = results[i, 0];
+                float linePosition = (lineIndex % (Battle.main.defender.board.tiles.GetLength(0) - 1)) + 1.0f - Battle.main.defender.board.tiles.GetLength(0) / 2.0f;
+                bool lineVertical = lineIndex < linePosition;
+
+                marker.transform.position = managedBoard.transform.position + linePosition * (lineVertical ? Vector3.forward : Vector3.right) + Vector3.up * (MiscellaneousVariables.it.boardUIRenderHeight + 0.0105f);
+                marker.transform.rotation = new Quaternion(0, 1, 0, lineVertical ? 1 : 0);
+
+                Vector3[] nodes = new Vector3[5];
+                int[][] connections = new int[][] { new int[] { 1 }, new int[] { 2 }, new int[] { 3 }, new int[] { 4 }, new int[0] };
+
+                nodes[0] = Vector3.forward * managedBoard.tiles.GetLength(0) / 1.8f;
+                nodes[4] = Vector3.back * managedBoard.tiles.GetLength(0) / 1.8f;
+
+                nodes[1] = Vector3.forward * managedBoard.tiles.GetLength(0) / 8.0f;
+                nodes[3] = Vector3.back * managedBoard.tiles.GetLength(0) / 8.0f;
+
+                nodes[2] = Vector3.right * managedBoard.tiles.GetLength(0) / 8.0f * results[i, 1];
+
+                marker.State = UIState.ENABLING;
+                marker.Set(nodes, connections);
+            }
         }
-
     }
 }

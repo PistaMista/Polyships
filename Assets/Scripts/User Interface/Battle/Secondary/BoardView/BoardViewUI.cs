@@ -54,6 +54,7 @@ public class BoardViewUI : InputEnabledUI
                         if (limitedY >= 0)
                         {
                             position = managedBoard.tiles[x, limitedY].transform.position;
+                            position.z -= 0.5f;
                             position.y = MiscellaneousVariables.it.boardUIRenderHeight + 0.01f;
                             nodes[x + managedBoard.tiles.GetLength(0)] = position;
                         }
