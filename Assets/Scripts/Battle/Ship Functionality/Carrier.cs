@@ -6,7 +6,7 @@ public class Carrier : Ship
 {
     public int aircraftCount;
     public int aircraftCapacity;
-    public int[] polarSearchTargets = new int[0];
+    public int[] polarSearchTargets;
     public int[,] polarSearchResults = new int[0, 0];
 
     public override int[] GetMetadata()
@@ -33,12 +33,12 @@ public class Carrier : Ship
         }
     }
 
-    public override void OnTurnStart()
+    public override void OnTurnEnd()
     {
-        base.OnTurnStart();
+        base.OnTurnEnd();
         if (health > 0)
         {
-            if (polarSearchTargets != null)
+            if (polarSearchTargets != null && polarSearchTargets.Length > 0)
             {
                 polarSearchResults = new int[polarSearchTargets.Length, 2];
                 for (int i = 0; i < polarSearchTargets.Length; i++)
