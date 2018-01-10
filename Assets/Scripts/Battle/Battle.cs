@@ -240,11 +240,12 @@ public class Battle : MonoBehaviour
 
     public void NextTurn()
     {
+        attacker.OnTurnEnd();
+        
         Player lastAttacker = attacker;
         attacker = defender;
         defender = lastAttacker;
-
-        lastAttacker.OnTurnEnd();
+        
         attacker.OnTurnStart();
 
         if (attacker.board.ships != null)
