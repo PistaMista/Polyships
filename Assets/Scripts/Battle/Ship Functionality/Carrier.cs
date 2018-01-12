@@ -52,15 +52,18 @@ public class Carrier : Ship
 
                     foreach (Ship ship in Battle.main.defender.board.ships)
                     {
-                        foreach (Tile tile in ship.tiles)
+                        if (ship.health > 0)
                         {
-                            float relativePosition = (lineVertical ? tile.coordinates.x : tile.coordinates.y) - linePosition;
-                            float distance = Mathf.Abs(relativePosition);
-
-                            if (distance < closestTileDistance)
+                            foreach (Tile tile in ship.tiles)
                             {
-                                currentResult = (int)Mathf.Sign(relativePosition);
-                                closestTileDistance = distance;
+                                float relativePosition = (lineVertical ? tile.coordinates.x : tile.coordinates.y) - linePosition;
+                                float distance = Mathf.Abs(relativePosition);
+
+                                if (distance < closestTileDistance)
+                                {
+                                    currentResult = (int)Mathf.Sign(relativePosition);
+                                    closestTileDistance = distance;
+                                }
                             }
                         }
                     }
@@ -72,7 +75,7 @@ public class Carrier : Ship
         }
         else
         {
-            polarSearchResults = null;
+            polarSearchResults = new int[0, 0];
         }
 
         polarSearchTargets = null;
