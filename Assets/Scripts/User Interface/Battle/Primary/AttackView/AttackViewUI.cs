@@ -67,7 +67,7 @@ public class AttackViewUI : BoardViewUI
         }
 
 
-        if (activePrimaryTargeter)
+        if (activePrimaryTargeter && !selectedTargeter)
         {
             if (endPress && fireButton.pushed)
             {
