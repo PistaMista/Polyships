@@ -151,26 +151,6 @@ public class FleetPlacementUI : BoardViewUI
         SetDestroyerFiringAreaMarkers(true);
     }
 
-    void SelectTile(Tile tile)
-    {
-        if (managedBoard.placementInfo.selectedTiles.Count > 1)
-        {
-            if (Vector2Int.Distance(managedBoard.placementInfo.selectedTiles[0].coordinates, tile.coordinates) == 1)
-            {
-                managedBoard.placementInfo.selectedTiles.Insert(0, tile);
-            }
-            else
-            {
-                managedBoard.placementInfo.selectedTiles.Add(tile);
-            }
-        }
-        else
-        {
-            managedBoard.placementInfo.selectedTiles.Add(tile);
-        }
-        UpdateMarkers();
-    }
-
     void FinalizePlacement()
     {
         Destroy(Battle.main.attacker.board.gameObject);
@@ -254,44 +234,10 @@ public class FleetPlacementUI : BoardViewUI
             Tile candidateTile = GetTileAtInputPosition();
             if (candidateTile != null)
             {
-                if (!managedBoard.placementInfo.selectedTiles.Contains(candidateTile) && managedBoard.placementInfo.validTiles.Contains(candidateTile))
+
+                if (managedBoard.SelectTileForPlacement(candidateTile))
                 {
-                    if (managedBoard.placementInfo.selectedTiles.Count == 0)
-                    {
-                        SelectTile(candidateTile);
-                    }
-                    else
-                    {
-                        bool connects = false;
-                        bool outOfLine = false;
-
-                        foreach (Tile tile in managedBoard.placementInfo.selectedTiles)
-                        {
-                            float distance = Vector2.Distance(tile.coordinates, candidateTile.coordinates);
-                            if ((int)distance != distance)
-                            {
-                                outOfLine = true;
-                                break;
-                            }
-
-                            if (distance == 1)
-                            {
-                                connects = true;
-                            }
-                        }
-
-                        if (connects && !outOfLine)
-                        {
-                            SelectTile(candidateTile);
-                        }
-                    }
-
-                    if (managedBoard.placementInfo.selectedTiles.Count == managedBoard.placementInfo.selectedShip.maxHealth)
-                    {
-                        managedBoard.placementInfo.selectedShip.Place(managedBoard.placementInfo.selectedTiles.ToArray());
-                        managedBoard.placementInfo.selectedTiles = new List<Tile>();
-                        UpdateMarkers();
-                    }
+                    UpdateMarkers();
                 }
             }
         }

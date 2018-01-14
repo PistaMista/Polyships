@@ -193,4 +193,72 @@ public class Board : MonoBehaviour
             }
         }
     }
+
+    public bool SelectTileForPlacement(Tile tile)
+    {
+        bool selectTile = false;
+        if (placementInfo.selectedShip != null && !placementInfo.selectedTiles.Contains(tile) && placementInfo.validTiles.Contains(tile))
+        {
+            if (placementInfo.selectedTiles.Count == 0)
+            {
+                selectTile = true;
+            }
+            else
+            {
+                bool connects = false;
+                bool outOfLine = false;
+
+                foreach (Tile existingTile in placementInfo.selectedTiles)
+                {
+                    float distance = Vector2.Distance(existingTile.coordinates, tile.coordinates);
+                    if ((int)distance != distance)
+                    {
+                        outOfLine = true;
+                        break;
+                    }
+
+                    if (distance == 1)
+                    {
+                        connects = true;
+                    }
+                }
+
+                if (connects && !outOfLine)
+                {
+                    selectTile = true;
+                }
+            }
+        }
+
+        if (selectTile)
+        {
+            if (placementInfo.selectedTiles.Count > 1)
+            {
+                if (Vector2Int.Distance(placementInfo.selectedTiles[0].coordinates, tile.coordinates) == 1)
+                {
+                    placementInfo.selectedTiles.Insert(0, tile);
+                }
+                else
+                {
+                    placementInfo.selectedTiles.Add(tile);
+                }
+            }
+            else
+            {
+                placementInfo.selectedTiles.Add(tile);
+            }
+
+            if (placementInfo.selectedTiles.Count == placementInfo.selectedShip.maxHealth)
+            {
+                placementInfo.selectedShip.Place(placementInfo.selectedTiles.ToArray());
+                placementInfo.selectedTiles = new List<Tile>();
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+
 }
