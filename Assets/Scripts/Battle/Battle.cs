@@ -241,18 +241,18 @@ public class Battle : MonoBehaviour
     public void NextTurn()
     {
         attacker.OnTurnEnd();
-        
+
         Player lastAttacker = attacker;
         attacker = defender;
         defender = lastAttacker;
-        
-        attacker.OnTurnStart();
 
         if (attacker.board.ships != null)
         {
             log.Insert(0, new TurnInfo(1));
             CollectAttackerCapabilities();
         }
+
+        attacker.OnTurnStart();
 
         SaveToDisk();
     }
