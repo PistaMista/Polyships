@@ -123,4 +123,16 @@ public class Player : MonoBehaviour
             }
         }
     }
+
+    //PLACEMENT AI
+    public void PlaceShips()
+    {
+
+    }
+
+    //BATTLE AI
+    public void PerformTurn()
+    {
+
+    }
 }
