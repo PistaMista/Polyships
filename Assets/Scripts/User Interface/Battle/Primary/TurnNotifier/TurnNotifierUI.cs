@@ -54,6 +54,6 @@ public class TurnNotifierUI : InputEnabledUI
     {
         Battle.main.attacker.aiModule.DoTurn();
         State = UIState.DISABLING;
-        BattleUIMaster.EnablePrimaryBUI(BattleUIType.CINEMATIC_VIEW);
+        BattleUIMaster.EnablePrimaryBUI(Battle.main.log.Count > 1 ? BattleUIType.CINEMATIC_VIEW : BattleUIType.TURN_NOTIFIER);
     }
 }

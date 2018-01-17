@@ -13,7 +13,6 @@ public class CinematicViewUI : InputEnabledUI
         {
             case UIState.ENABLING:
                 processedTurn = Battle.main.log[1];
-                //TEST
                 cinematicTime = 1.0f;
                 break;
         }

@@ -1,9 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class AIModule : ScriptableObject
 {
+    [Serializable]
     public struct AIModuleData
     {
         public static implicit operator AIModuleData(AIModule module)
@@ -26,6 +28,6 @@ public class AIModule : ScriptableObject
 
     public void DoTurn()
     {
-
+        Battle.main.NextTurn();
     }
 }

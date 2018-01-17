@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class TTUI : BoardViewUI
 {
-    Player managedAttacker;
+    int lastTurnCount;
     public AttackViewUI attackViewUserInterface;
     public Pedestal_TTAgent stackPedestal;
     public List<Token_TTAgent> placedTokens;
@@ -191,9 +191,9 @@ public class TTUI : BoardViewUI
         {
             case UIState.ENABLING:
                 managedBoard = Battle.main.defender.board;
-                if (managedAttacker != Battle.main.attacker) //If the last attacker played his turn reset the targeter
+                if (lastTurnCount != Battle.main.log.Count) //If the last attacker played his turn reset the targeter
                 {
-                    managedAttacker = Battle.main.attacker;
+                    lastTurnCount = Battle.main.log.Count;
                     ResetTargeting();
                 }
 
