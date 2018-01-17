@@ -12,7 +12,6 @@ public class FleetPlacementUI : BoardViewUI
         screenToWorldInputConversionHeight = MiscellaneousVariables.it.boardUIRenderHeight;
     }
     public Waypoint cameraWaypoint;
-    public GameObject[] defaultShipLoadout;
     public bool forceIdenticalShipTypesToGroupTogether;
     public float shipPaletteGroupPadding;
     public float shipDrawerFlatSize;
@@ -317,16 +316,10 @@ public class FleetPlacementUI : BoardViewUI
         List<ShipRectangleGroup> unfinishedGroups = new List<ShipRectangleGroup>();
         List<Ship> toAdd = new List<Ship>();
 
+        managedBoard.AddShips();
         ShipRectangleGroup currentGroup = new ShipRectangleGroup();
-        for (int i = 0; i < defaultShipLoadout.Length; i++)
+        foreach (Ship ship in managedBoard.placementInfo.allShips)
         {
-            Ship ship = Instantiate(defaultShipLoadout[i]).GetComponent<Ship>();
-            managedBoard.placementInfo.notplacedShips.Add(ship);
-            managedBoard.placementInfo.allShips.Add(ship);
-            ship.placementInfo.lastLocation = null;
-            ship.index = i;
-
-            ship.parentBoard = managedBoard;
             ship.transform.SetParent(shipDrawer.transform);
 
             if (toAdd.Count == 0)

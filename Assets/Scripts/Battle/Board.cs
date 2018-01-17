@@ -121,6 +121,24 @@ public class Board : MonoBehaviour
 
     public PlacementInfo placementInfo;
 
+    public void AddShips()
+    {
+        placementInfo.allShips = new List<Ship>();
+        placementInfo.placedShips = new List<Ship>();
+        placementInfo.notplacedShips = new List<Ship>();
+        for (int i = 0; i < MiscellaneousVariables.it.defaultShipLoadout.Length; i++)
+        {
+            Ship ship = Instantiate(MiscellaneousVariables.it.defaultShipLoadout[i]).GetComponent<Ship>();
+            placementInfo.notplacedShips.Add(ship);
+            placementInfo.allShips.Add(ship);
+            ship.placementInfo.lastLocation = null;
+            ship.index = i;
+
+            ship.parentBoard = this;
+            ship.transform.SetParent(transform);
+        }
+    }
+
     public void ReevaluateTiles()
     {
         Vector2 boardSize = new Vector2(tiles.GetLength(0), tiles.GetLength(1));

@@ -28,6 +28,25 @@ public class AIModule : ScriptableObject
 
     public void DoTurn()
     {
-        Battle.main.NextTurn();
+        if (owner.board.ships == null)
+        {
+            PlaceShips();
+        }
+        else
+        {
+            Attack();
+        }
+    }
+
+    void PlaceShips()
+    {
+        owner.board.AddShips();
+        owner.board.ReevaluateTiles();
+
+    }
+
+    void Attack()
+    {
+
     }
 }
