@@ -1,9 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class TurnNotifierUI : InputEnabledUI
 {
+    public string humanTurnText;
+    public string computerTurnText;
+    public float computerTurnNotificationTime;
+    public Text textbox;
     protected override void SetState(UIState state)
     {
         base.SetState(state);
@@ -15,6 +20,15 @@ public class TurnNotifierUI : InputEnabledUI
             case UIState.ENABLING:
                 SetInteractable(true);
                 CameraControl.GoToWaypoint(Battle.main.attacker.flagCameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime * 0.2f);
+                if (Battle.main.attacker.aiType == AIType.NONE)
+                {
+                    textbox.text = humanTurnText;
+                }
+                else
+                {
+                    Invoke("DoAITurn", computerTurnNotificationTime);
+                    textbox.text = computerTurnText;
+                }
                 break;
         }
     }
@@ -22,7 +36,7 @@ public class TurnNotifierUI : InputEnabledUI
     protected override void ProcessInput()
     {
         base.ProcessInput();
-        if (tap)
+        if (tap && Battle.main.attacker.aiType == AIType.NONE)
         {
             State = UIState.DISABLING;
             if (Battle.main.attacker.board.ships == null)
@@ -36,9 +50,10 @@ public class TurnNotifierUI : InputEnabledUI
         }
     }
 
-    protected override void Update()
+    void DoAITurn()
     {
-        base.Update();
+        Battle.main.attacker.aiModule.DoTurn();
+        State = UIState.DISABLING;
+        BattleUIMaster.EnablePrimaryBUI(BattleUIType.CINEMATIC_VIEW);
     }
-
 }

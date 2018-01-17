@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
+public enum AIType
+{
+    NONE,
+    NORMAL
+}
 public class Player : MonoBehaviour
 {
     [Serializable]
@@ -10,7 +14,8 @@ public class Player : MonoBehaviour
     {
         public int index;
         public Board.BoardData board;
-        public bool computerControlled;
+        public AIType aiType;
+        public AIModule.AIModuleData aIModuleData;
         public float[,,] flag;
         public int[,] hitTiles;
         public static implicit operator PlayerData(Player player)
@@ -18,7 +23,8 @@ public class Player : MonoBehaviour
             PlayerData result = new PlayerData();
             result.index = player.index;
             result.board = player.board;
-            result.computerControlled = player.computerControlled;
+            result.aiType = player.aiType;
+            result.aIModuleData = player.aiModule;
             result.flag = new float[player.flag.GetLength(0), player.flag.GetLength(1), 3];
             for (int x = 0; x < player.flag.GetLength(0); x++)
             {
@@ -45,13 +51,13 @@ public class Player : MonoBehaviour
     }
     public int index;
     public Board board;
-    public bool computerControlled;
+    public AIType aiType;
     public Color[,] flag;
     public List<Tile> hitTiles;
 
 
 
-
+    public AIModule aiModule;
     public Waypoint boardCameraPoint;
     public Waypoint flagCameraPoint;
     public void Initialize(PlayerData data)
@@ -61,7 +67,13 @@ public class Player : MonoBehaviour
         board.transform.SetParent(transform);
         board.Initialize(data.board);
 
-        computerControlled = data.computerControlled;
+        aiType = data.aiType;
+        if (aiType != AIType.NONE)
+        {
+            aiModule = (AIModule)ScriptableObject.CreateInstance("AIModule");
+            aiModule.owner = this;
+            aiModule.Initialize(data.aIModuleData);
+        }
 
         flag = new Color[data.flag.GetLength(0), data.flag.GetLength(1)];
         for (int x = 0; x < flag.GetLength(0); x++)
@@ -100,6 +112,11 @@ public class Player : MonoBehaviour
                 hitTiles.Add(targetBoard.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
             }
         }
+
+        if (aiType != AIType.NONE)
+        {
+            aiModule.AssignReferences(data.aIModuleData);
+        }
     }
 
     public void OnTurnStart()
@@ -122,17 +139,5 @@ public class Player : MonoBehaviour
                 board.ships[i].OnTurnEnd();
             }
         }
-    }
-
-    //PLACEMENT AI
-    public void PlaceShips()
-    {
-
-    }
-
-    //BATTLE AI
-    public void PerformTurn()
-    {
-
     }
 }
