@@ -64,7 +64,6 @@ public class FleetPlacementUI : BoardViewUI
 
                 RemoveDynamicAgents<UIAgent>("", true);
                 MakeShipDrawer();
-                managedBoard.ships = managedBoard.placementInfo.allShips.ToArray();
 
                 SetState(UIState.ENABLED);
                 break;

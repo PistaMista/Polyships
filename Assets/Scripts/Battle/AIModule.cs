@@ -40,9 +40,34 @@ public class AIModule : ScriptableObject
 
     void PlaceShips()
     {
+        float targetTorpedoAttack = UnityEngine.Random.Range(0.00f, 1.00f);
+        float targetTorpedoDefense = UnityEngine.Random.Range(0.00f, 1.00f);
+
+        float targetShipDensity = UnityEngine.Random.Range(0.00f, 1.00f);
+
         owner.board.AddShips();
         owner.board.ReevaluateTiles();
 
+
+        for (int i = 0; i < owner.board.ships.Length; i++)
+        {
+            Ship highestRatedShip = owner.board.ships[0];
+            float highestShipRating = 0;
+            foreach (Ship ship in owner.board.placementInfo.notplacedShips)
+            {
+                float shipRating = 0;
+
+                shipRating *= UnityEngine.Random.Range(0.9f, 1.1f);
+                if (shipRating > highestShipRating)
+                {
+                    highestShipRating = shipRating;
+                    highestRatedShip = ship;
+                }
+            }
+
+            highestRatedShip.Pickup();
+
+        }
     }
 
     void Attack()

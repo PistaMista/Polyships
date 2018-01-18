@@ -103,6 +103,7 @@ public class Board : MonoBehaviour
         public List<Tile> obstructedTiles; //List of tiles where nothing can be placed
         public List<Tile> validTiles; //List of tiles where the current ship can be placed
         public List<Tile> invalidTiles; //List of tiles where the current ship cannot be placed
+        public List<Tile> reactiveValidTiles; //List of selectable tiles
         public List<Tile> occupiedTiles
         {
             get
@@ -137,6 +138,8 @@ public class Board : MonoBehaviour
             ship.parentBoard = this;
             ship.transform.SetParent(transform);
         }
+
+        ships = placementInfo.allShips.ToArray();
     }
 
     public void ReevaluateTiles()
@@ -210,43 +213,13 @@ public class Board : MonoBehaviour
                 }
             }
         }
+
+        placementInfo.reactiveValidTiles = placementInfo.validTiles;
     }
 
     public bool SelectTileForPlacement(Tile tile)
     {
-        bool selectTile = false;
-        if (placementInfo.selectedShip != null && !placementInfo.selectedTiles.Contains(tile) && placementInfo.validTiles.Contains(tile))
-        {
-            if (placementInfo.selectedTiles.Count == 0)
-            {
-                selectTile = true;
-            }
-            else
-            {
-                bool connects = false;
-                bool outOfLine = false;
-
-                foreach (Tile existingTile in placementInfo.selectedTiles)
-                {
-                    float distance = Vector2.Distance(existingTile.coordinates, tile.coordinates);
-                    if ((int)distance != distance)
-                    {
-                        outOfLine = true;
-                        break;
-                    }
-
-                    if (distance == 1)
-                    {
-                        connects = true;
-                    }
-                }
-
-                if (connects && !outOfLine)
-                {
-                    selectTile = true;
-                }
-            }
-        }
+        bool selectTile = placementInfo.selectedShip != null && IsTileValidForSelection(tile);
 
         if (selectTile)
         {
@@ -271,8 +244,43 @@ public class Board : MonoBehaviour
                 placementInfo.selectedShip.Place(placementInfo.selectedTiles.ToArray());
                 placementInfo.selectedTiles = new List<Tile>();
             }
+        }
 
-            return true;
+        return selectTile;
+    }
+
+
+
+    bool IsTileValidForSelection(Tile tile)
+    {
+        if (!placementInfo.selectedTiles.Contains(tile) && placementInfo.validTiles.Contains(tile))
+        {
+            if (placementInfo.selectedTiles.Count == 0)
+            {
+                return true;
+            }
+            else
+            {
+                bool connects = false;
+                bool outOfLine = false;
+
+                foreach (Tile existingTile in placementInfo.selectedTiles)
+                {
+                    float distance = Vector2.Distance(existingTile.coordinates, tile.coordinates);
+                    if ((int)distance != distance)
+                    {
+                        outOfLine = true;
+                        break;
+                    }
+
+                    if (distance == 1)
+                    {
+                        connects = true;
+                    }
+                }
+
+                return connects && !outOfLine;
+            }
         }
 
         return false;
