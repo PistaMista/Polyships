@@ -49,25 +49,40 @@ public class AIModule : ScriptableObject
         owner.board.ReevaluateTiles();
 
 
+        // for (int i = 0; i < owner.board.ships.Length; i++)
+        // {
+        //     Ship highestRatedShip = owner.board.ships[0];
+        //     float highestShipRating = 0;
+
+        //     //DETERMINE WHICH SHIP TO SELECT NEXT
+        //     foreach (Ship ship in owner.board.placementInfo.notplacedShips)
+        //     {
+        //         float shipRating = 0;
+
+        //         shipRating *= UnityEngine.Random.Range(0.9f, 1.1f);
+        //         if (shipRating > highestShipRating)
+        //         {
+        //             highestShipRating = shipRating;
+        //             highestRatedShip = ship;
+        //         }
+        //     }
+
+        //     highestRatedShip.Pickup();
+
+        // }
+
+        //Place ships randomly
         for (int i = 0; i < owner.board.ships.Length; i++)
         {
-            Ship highestRatedShip = owner.board.ships[0];
-            float highestShipRating = 0;
-            foreach (Ship ship in owner.board.placementInfo.notplacedShips)
+            Ship ship = owner.board.ships[i];
+            owner.board.placementInfo.selectedShip = ship;
+            for (int x = 0; x < ship.maxHealth; x++)
             {
-                float shipRating = 0;
-
-                shipRating *= UnityEngine.Random.Range(0.9f, 1.1f);
-                if (shipRating > highestShipRating)
-                {
-                    highestShipRating = shipRating;
-                    highestRatedShip = ship;
-                }
+                owner.board.SelectTileForPlacement(owner.board.placementInfo.reactiveValidTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.reactiveValidTiles.Count)]);
             }
-
-            highestRatedShip.Pickup();
-
         }
+
+        Battle.main.NextTurn();
     }
 
     void Attack()
