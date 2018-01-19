@@ -232,9 +232,9 @@ public class FleetPlacementUI : BoardViewUI
             Tile candidateTile = GetTileAtInputPosition();
             if (candidateTile != null)
             {
-
-                if (managedBoard.SelectTileForPlacement(candidateTile))
+                if (managedBoard.placementInfo.reactiveValidTiles.Contains(candidateTile))
                 {
+                    managedBoard.SelectTileForPlacement(candidateTile);
                     UpdateMarkers();
                 }
             }
@@ -245,6 +245,7 @@ public class FleetPlacementUI : BoardViewUI
             if (managedBoard.placementInfo.selectedShip)
             {
                 managedBoard.placementInfo.selectedTiles = new List<Tile>();
+                managedBoard.placementInfo.reactiveValidTiles = managedBoard.placementInfo.validTiles;
                 UpdateMarkers();
             }
         }

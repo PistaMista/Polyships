@@ -223,6 +223,8 @@ public class Board : MonoBehaviour
 
         if (selectTile)
         {
+            placementInfo.reactiveValidTiles = new List<Tile>();
+
             if (placementInfo.selectedTiles.Count > 1)
             {
                 if (Vector2Int.Distance(placementInfo.selectedTiles[0].coordinates, tile.coordinates) == 1)
@@ -237,12 +239,32 @@ public class Board : MonoBehaviour
             else
             {
                 placementInfo.selectedTiles.Add(tile);
+
             }
 
             if (placementInfo.selectedTiles.Count == placementInfo.selectedShip.maxHealth)
             {
                 placementInfo.selectedShip.Place(placementInfo.selectedTiles.ToArray());
                 placementInfo.selectedTiles = new List<Tile>();
+            }
+            else
+            {
+                for (int tileEnd = 0; tileEnd < (placementInfo.selectedTiles.Count > 1 ? 2 : 1); tileEnd++)
+                {
+                    Tile end = tileEnd == 0 ? placementInfo.selectedTiles[0] : placementInfo.selectedTiles[placementInfo.selectedTiles.Count - 1];
+                    for (int i = 1; i <= 4; i++)
+                    {
+                        Vector2Int pos = end.coordinates + new Vector2Int(i == 2 ? 1 : i == 4 ? -1 : 0, i == 1 ? 1 : i == 3 ? -1 : 0);
+                        if (pos.x >= 0 && pos.x < tiles.GetLength(0) && pos.y >= 0 && pos.y < tiles.GetLength(1))
+                        {
+                            Tile consideredTile = tiles[pos.x, pos.y];
+                            if (IsTileValidForSelection(consideredTile))
+                            {
+                                placementInfo.reactiveValidTiles.Add(consideredTile);
+                            }
+                        }
+                    }
+                }
             }
         }
 
