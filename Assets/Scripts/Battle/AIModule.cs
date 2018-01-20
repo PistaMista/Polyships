@@ -30,7 +30,9 @@ public class AIModule : ScriptableObject
     {
         if (owner.board.ships == null)
         {
+            owner.board.AddShips();
             PlaceShips();
+            Battle.main.NextTurn();
         }
         else
         {
@@ -40,12 +42,15 @@ public class AIModule : ScriptableObject
 
     void PlaceShips()
     {
-        float targetTorpedoAttack = UnityEngine.Random.Range(0.00f, 1.00f);
-        float targetTorpedoDefense = UnityEngine.Random.Range(0.00f, 1.00f);
+        // float targetTorpedoAttack = UnityEngine.Random.Range(0.00f, 1.00f);
+        // float targetTorpedoDefense = UnityEngine.Random.Range(0.00f, 1.00f);
 
-        float targetShipDensity = UnityEngine.Random.Range(0.00f, 1.00f);
-
-        owner.board.AddShips();
+        // float targetShipDensity = UnityEngine.Random.Range(0.00f, 1.00f);
+        foreach (Ship ship in owner.board.placementInfo.placedShips)
+        {
+            ship.Pickup();
+            ship.Place(null);
+        }
         owner.board.ReevaluateTiles();
 
 
@@ -75,14 +80,19 @@ public class AIModule : ScriptableObject
         for (int i = 0; i < owner.board.ships.Length; i++)
         {
             Ship ship = owner.board.ships[i];
-            owner.board.placementInfo.selectedShip = ship;
+            ship.gameObject.SetActive(false);
+            ship.Pickup();
             for (int x = 0; x < ship.maxHealth; x++)
             {
-                owner.board.SelectTileForPlacement(owner.board.placementInfo.reactiveValidTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.reactiveValidTiles.Count)]);
+                owner.board.SelectTileForPlacement(owner.board.placementInfo.selectableTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.selectableTiles.Count)]);
+            }
+
+            if (owner.board.placementInfo.selectableTiles.Count == 0)
+            {
+                PlaceShips();
+                break;
             }
         }
-
-        Battle.main.NextTurn();
     }
 
     void Attack()

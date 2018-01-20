@@ -100,10 +100,11 @@ public class Board : MonoBehaviour
     public struct PlacementInfo
     {
         public List<Tile> selectedTiles; //List of tiles selected to house the currently selected ship
+        public List<Tile> selectableTiles; //List of selectable tiles
         public List<Tile> obstructedTiles; //List of tiles where nothing can be placed
         public List<Tile> validTiles; //List of tiles where the current ship can be placed
         public List<Tile> invalidTiles; //List of tiles where the current ship cannot be placed
-        public List<Tile> reactiveValidTiles; //List of selectable tiles
+
         public List<Tile> occupiedTiles
         {
             get
@@ -214,7 +215,8 @@ public class Board : MonoBehaviour
             }
         }
 
-        placementInfo.reactiveValidTiles = placementInfo.validTiles;
+        placementInfo.selectedTiles = new List<Tile>();
+        placementInfo.selectableTiles = placementInfo.validTiles;
     }
 
     public bool SelectTileForPlacement(Tile tile)
@@ -223,7 +225,7 @@ public class Board : MonoBehaviour
 
         if (selectTile)
         {
-            placementInfo.reactiveValidTiles = new List<Tile>();
+            placementInfo.selectableTiles = new List<Tile>();
 
             if (placementInfo.selectedTiles.Count > 1)
             {
@@ -260,7 +262,7 @@ public class Board : MonoBehaviour
                             Tile consideredTile = tiles[pos.x, pos.y];
                             if (IsTileValidForSelection(consideredTile))
                             {
-                                placementInfo.reactiveValidTiles.Add(consideredTile);
+                                placementInfo.selectableTiles.Add(consideredTile);
                             }
                         }
                     }

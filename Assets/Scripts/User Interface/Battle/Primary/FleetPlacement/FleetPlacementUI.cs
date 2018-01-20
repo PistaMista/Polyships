@@ -54,14 +54,6 @@ public class FleetPlacementUI : BoardViewUI
                 cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
                 CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
 
-                managedBoard.placementInfo.notplacedShips = new List<Ship>();
-                managedBoard.placementInfo.placedShips = new List<Ship>();
-                managedBoard.placementInfo.allShips = new List<Ship>();
-
-                managedBoard.placementInfo.selectedTiles = new List<Tile>();
-                managedBoard.placementInfo.validTiles = new List<Tile>();
-                managedBoard.placementInfo.invalidTiles = new List<Tile>();
-
                 RemoveDynamicAgents<UIAgent>("", true);
                 MakeShipDrawer();
 
@@ -232,7 +224,7 @@ public class FleetPlacementUI : BoardViewUI
             Tile candidateTile = GetTileAtInputPosition();
             if (candidateTile != null)
             {
-                if (managedBoard.placementInfo.reactiveValidTiles.Contains(candidateTile))
+                if (managedBoard.placementInfo.selectableTiles.Contains(candidateTile))
                 {
                     managedBoard.SelectTileForPlacement(candidateTile);
                     UpdateMarkers();
@@ -245,7 +237,7 @@ public class FleetPlacementUI : BoardViewUI
             if (managedBoard.placementInfo.selectedShip)
             {
                 managedBoard.placementInfo.selectedTiles = new List<Tile>();
-                managedBoard.placementInfo.reactiveValidTiles = managedBoard.placementInfo.validTiles;
+                managedBoard.placementInfo.selectableTiles = managedBoard.placementInfo.validTiles;
                 UpdateMarkers();
             }
         }
