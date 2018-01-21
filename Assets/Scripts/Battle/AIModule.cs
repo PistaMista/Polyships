@@ -53,6 +53,7 @@ public class AIModule : ScriptableObject
             ship.Pickup();
             ship.Place(null);
         }
+
         owner.board.ReevaluateTiles();
 
 
@@ -72,17 +73,14 @@ public class AIModule : ScriptableObject
                 float shipRating = 1;
 
                 shipRating += (targetConcealedTileCount - concealedTileCount) / ship.maxHealth / 2.0f;
+                shipRating += (targetTorpedoDefense - torpedoDefense) * ship.maxHealth / 4.0f;
                 switch (ship.type)
                 {
-                    case ShipType.BATTLESHIP:
-                        break;
-                    case ShipType.CARRIER:
-                        break;
                     case ShipType.CRUISER:
+                        shipRating += (targetConcealedTileCount - concealedTileCount) / 10.0f;
                         break;
                     case ShipType.DESTROYER:
-                        break;
-                    case ShipType.PATROLBOAT:
+                        shipRating += (targetTorpedoOffense - torpedoOffense);
                         break;
                 }
 
@@ -96,31 +94,24 @@ public class AIModule : ScriptableObject
 
             highestRatedShip.Pickup();
 
+            Tile rootPlacementTile = owner.board.placementInfo.selectableTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.selectableTiles.Count)];
+
+
+            owner.board.SelectTileForPlacement(rootPlacementTile);
+            for (int x = 0; x < highestRatedShip.maxHealth - 1; x++)
+            {
+                owner.board.SelectTileForPlacement(owner.board.placementInfo.selectableTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.selectableTiles.Count)]);
+
+            }
 
             if (owner.board.placementInfo.selectableTiles.Count == 0)
             {
                 PlaceShips();
                 break;
             }
+
+            highestRatedShip.gameObject.SetActive(false);
         }
-
-        //Place ships randomly
-        // for (int i = 0; i < owner.board.ships.Length; i++)
-        // {
-        //     Ship ship = owner.board.ships[i];
-        //     ship.gameObject.SetActive(false);
-        //     ship.Pickup();
-        //     for (int x = 0; x < ship.maxHealth; x++)
-        //     {
-        //         owner.board.SelectTileForPlacement(owner.board.placementInfo.selectableTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.selectableTiles.Count)]);
-        //     }
-
-        //     if (owner.board.placementInfo.selectableTiles.Count == 0)
-        //     {
-        //         PlaceShips();
-        //         break;
-        //     }
-        // }
     }
 
     void Attack()
