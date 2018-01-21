@@ -42,10 +42,12 @@ public class AIModule : ScriptableObject
 
     void PlaceShips()
     {
-        // float targetTorpedoAttack = UnityEngine.Random.Range(0.00f, 1.00f);
-        // float targetTorpedoDefense = UnityEngine.Random.Range(0.00f, 1.00f);
+        float targetTorpedoOffense = UnityEngine.Random.Range(0.00f, 1.00f);
+        float targetTorpedoDefense = UnityEngine.Random.Range(0.00f, 1.00f);
 
-        // float targetShipDensity = UnityEngine.Random.Range(0.00f, 1.00f);
+        float targetShipDensity = UnityEngine.Random.Range(0.00f, 1.00f);
+        int targetConcealedTileCount = UnityEngine.Random.Range(1, 11);
+
         foreach (Ship ship in owner.board.placementInfo.placedShips)
         {
             ship.Pickup();
@@ -54,38 +56,46 @@ public class AIModule : ScriptableObject
         owner.board.ReevaluateTiles();
 
 
-        // for (int i = 0; i < owner.board.ships.Length; i++)
-        // {
-        //     Ship highestRatedShip = owner.board.ships[0];
-        //     float highestShipRating = 0;
+        float torpedoOffense = 0.0f;
+        float torpedoDefense = 0.0f;
 
-        //     //DETERMINE WHICH SHIP TO SELECT NEXT
-        //     foreach (Ship ship in owner.board.placementInfo.notplacedShips)
-        //     {
-        //         float shipRating = 0;
-
-        //         shipRating *= UnityEngine.Random.Range(0.9f, 1.1f);
-        //         if (shipRating > highestShipRating)
-        //         {
-        //             highestShipRating = shipRating;
-        //             highestRatedShip = ship;
-        //         }
-        //     }
-
-        //     highestRatedShip.Pickup();
-
-        // }
-
-        //Place ships randomly
+        float shipDensity = 0.0f;
+        int concealedTileCount = 0;
         for (int i = 0; i < owner.board.ships.Length; i++)
         {
-            Ship ship = owner.board.ships[i];
-            ship.gameObject.SetActive(false);
-            ship.Pickup();
-            for (int x = 0; x < ship.maxHealth; x++)
+            Ship highestRatedShip = owner.board.ships[0];
+            float highestShipRating = 0;
+
+            //DETERMINE WHICH SHIP TO SELECT NEXT
+            foreach (Ship ship in owner.board.placementInfo.notplacedShips)
             {
-                owner.board.SelectTileForPlacement(owner.board.placementInfo.selectableTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.selectableTiles.Count)]);
+                float shipRating = 1;
+
+                shipRating += (targetConcealedTileCount - concealedTileCount) / ship.maxHealth / 2.0f;
+                switch (ship.type)
+                {
+                    case ShipType.BATTLESHIP:
+                        break;
+                    case ShipType.CARRIER:
+                        break;
+                    case ShipType.CRUISER:
+                        break;
+                    case ShipType.DESTROYER:
+                        break;
+                    case ShipType.PATROLBOAT:
+                        break;
+                }
+
+                shipRating *= UnityEngine.Random.Range(0.85f, 1.15f);
+                if (shipRating > highestShipRating)
+                {
+                    highestShipRating = shipRating;
+                    highestRatedShip = ship;
+                }
             }
+
+            highestRatedShip.Pickup();
+
 
             if (owner.board.placementInfo.selectableTiles.Count == 0)
             {
@@ -93,6 +103,24 @@ public class AIModule : ScriptableObject
                 break;
             }
         }
+
+        //Place ships randomly
+        // for (int i = 0; i < owner.board.ships.Length; i++)
+        // {
+        //     Ship ship = owner.board.ships[i];
+        //     ship.gameObject.SetActive(false);
+        //     ship.Pickup();
+        //     for (int x = 0; x < ship.maxHealth; x++)
+        //     {
+        //         owner.board.SelectTileForPlacement(owner.board.placementInfo.selectableTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.selectableTiles.Count)]);
+        //     }
+
+        //     if (owner.board.placementInfo.selectableTiles.Count == 0)
+        //     {
+        //         PlaceShips();
+        //         break;
+        //     }
+        // }
     }
 
     void Attack()
