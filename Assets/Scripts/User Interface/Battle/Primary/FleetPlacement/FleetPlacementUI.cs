@@ -237,7 +237,7 @@ public class FleetPlacementUI : BoardViewUI
             if (managedBoard.placementInfo.selectedShip)
             {
                 managedBoard.placementInfo.selectedTiles = new List<Tile>();
-                managedBoard.placementInfo.selectableTiles = managedBoard.placementInfo.validTiles;
+                managedBoard.ReevaluateTiles();
                 UpdateMarkers();
             }
         }

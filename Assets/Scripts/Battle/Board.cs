@@ -102,7 +102,7 @@ public class Board : MonoBehaviour
         public List<Tile> selectedTiles; //List of tiles selected to house the currently selected ship
         public List<Tile> selectableTiles; //List of selectable tiles
         public List<Tile> obstructedTiles; //List of tiles where nothing can be placed
-        public List<Tile> validTiles; //List of tiles where the current ship can be placed
+        public Dictionary<Tile, int> validTiles; //List of tiles where the current ship can be placed
         public List<Tile> invalidTiles; //List of tiles where the current ship cannot be placed
 
         public List<Tile> occupiedTiles
@@ -168,7 +168,7 @@ public class Board : MonoBehaviour
 
 
         placementInfo.invalidTiles = new List<Tile>();
-        placementInfo.validTiles = new List<Tile>();
+        placementInfo.validTiles = new Dictionary<Tile, int>();
 
         for (int x = 0; x < boardSize.x; x++)
         {
@@ -202,21 +202,28 @@ public class Board : MonoBehaviour
                     }
                 }
 
-                inlineValidTiles.AddRange(inlineNeighbouringValidTiles);
+                if (placementInfo.selectedShip && inlineNeighbouringValidTiles.Count >= placementInfo.selectedShip.maxHealth)
+                {
+                    inlineValidTiles.AddRange(inlineNeighbouringValidTiles);
+                }
 
                 foreach (Tile tile in inlineValidTiles)
                 {
-                    if (!placementInfo.validTiles.Contains(tile))
+                    if (!placementInfo.validTiles.ContainsKey(tile))
                     {
-                        placementInfo.validTiles.Add(tile);
+                        placementInfo.validTiles.Add(tile, axis);
                         placementInfo.invalidTiles.Remove(tile);
+                    }
+                    else
+                    {
+                        placementInfo.validTiles[tile] = -1;
                     }
                 }
             }
         }
 
         placementInfo.selectedTiles = new List<Tile>();
-        placementInfo.selectableTiles = placementInfo.validTiles;
+        placementInfo.selectableTiles = new List<Tile>(placementInfo.validTiles.Keys);
     }
 
     public bool SelectTileForPlacement(Tile tile)
@@ -277,7 +284,7 @@ public class Board : MonoBehaviour
 
     bool IsTileValidForSelection(Tile tile)
     {
-        if (!placementInfo.selectedTiles.Contains(tile) && placementInfo.validTiles.Contains(tile))
+        if (!placementInfo.selectedTiles.Contains(tile) && placementInfo.validTiles.ContainsKey(tile))
         {
             if (placementInfo.selectedTiles.Count == 0)
             {
@@ -285,6 +292,12 @@ public class Board : MonoBehaviour
             }
             else
             {
+                int directional = placementInfo.validTiles[tile];
+                if (directional > -1 && ((placementInfo.selectedTiles[0].coordinates - tile.coordinates).x != 0 ? 0 : 1) != directional)
+                {
+                    return false;
+                }
+
                 bool connects = false;
                 bool outOfLine = false;
 

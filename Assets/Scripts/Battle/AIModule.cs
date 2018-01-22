@@ -96,7 +96,10 @@ public class AIModule : ScriptableObject
 
             Tile rootPlacementTile = owner.board.placementInfo.selectableTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.selectableTiles.Count)];
 
+            //CALCULATE ROOT TILE POSITION
 
+
+            //PLACE ALL THE OTHER TILES
             owner.board.SelectTileForPlacement(rootPlacementTile);
             for (int x = 0; x < highestRatedShip.maxHealth - 1; x++)
             {
