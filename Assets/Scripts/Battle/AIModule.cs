@@ -119,6 +119,8 @@ public class AIModule : ScriptableObject
 
     void Attack()
     {
-
+        //TEST
+        Battle.main.ExecuteArtilleryAttack(new Tile[] { Battle.main.defender.board.tiles[0, 0] });
+        //TEST
     }
 }
