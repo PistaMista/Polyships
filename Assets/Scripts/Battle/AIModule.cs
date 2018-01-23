@@ -42,6 +42,7 @@ public class AIModule : ScriptableObject
 
     void PlaceShips()
     {
+        //PLACEMENT TACTIC
         float targetTorpedoOffense = UnityEngine.Random.Range(0.00f, 1.00f);
         float targetTorpedoDefense = UnityEngine.Random.Range(0.00f, 1.00f);
 
@@ -56,7 +57,7 @@ public class AIModule : ScriptableObject
 
         owner.board.ReevaluateTiles();
 
-
+        //PLACE ALL SHIPS
         float torpedoOffense = 0.0f;
         float torpedoDefense = 0.0f;
 
@@ -76,9 +77,6 @@ public class AIModule : ScriptableObject
                 shipRating += (targetTorpedoDefense - torpedoDefense) * ship.maxHealth / 4.0f;
                 switch (ship.type)
                 {
-                    case ShipType.CRUISER:
-                        shipRating += (targetConcealedTileCount - concealedTileCount) / 10.0f;
-                        break;
                     case ShipType.DESTROYER:
                         shipRating += (targetTorpedoOffense - torpedoOffense);
                         break;
@@ -93,6 +91,9 @@ public class AIModule : ScriptableObject
             }
 
             highestRatedShip.Pickup();
+
+
+
 
             Tile rootPlacementTile = owner.board.placementInfo.selectableTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.selectableTiles.Count)];
 
@@ -115,6 +116,12 @@ public class AIModule : ScriptableObject
 
             highestRatedShip.gameObject.SetActive(false);
         }
+
+        //MOVE THINGS AROUND TO ALLOW CONCEALMENT
+
+
+
+
     }
 
     void Attack()
