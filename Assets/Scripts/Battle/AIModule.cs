@@ -31,97 +31,17 @@ public class AIModule : ScriptableObject
         if (owner.board.ships == null)
         {
             owner.board.AddShips();
-            PlaceShips();
+            owner.board.AutoPlaceShips();
+            for (int i = 0; i < owner.board.ships.Length; i++)
+            {
+                owner.board.ships[i].gameObject.SetActive(false);
+            }
             Battle.main.NextTurn();
         }
         else
         {
             Attack();
         }
-    }
-
-    void PlaceShips()
-    {
-        //PLACEMENT TACTIC
-        float targetTorpedoOffense = UnityEngine.Random.Range(0.00f, 1.00f);
-        float targetTorpedoDefense = UnityEngine.Random.Range(0.00f, 1.00f);
-
-        float targetShipDensity = UnityEngine.Random.Range(0.00f, 1.00f);
-        int targetConcealedTileCount = UnityEngine.Random.Range(1, 11);
-
-        foreach (Ship ship in owner.board.placementInfo.placedShips)
-        {
-            ship.Pickup();
-            ship.Place(null);
-        }
-
-        owner.board.ReevaluateTiles();
-
-        //PLACE ALL SHIPS
-        float torpedoOffense = 0.0f;
-        float torpedoDefense = 0.0f;
-
-        float shipDensity = 0.0f;
-        int concealedTileCount = 0;
-        for (int i = 0; i < owner.board.ships.Length; i++)
-        {
-            Ship highestRatedShip = owner.board.ships[0];
-            float highestShipRating = 0;
-
-            //DETERMINE WHICH SHIP TO SELECT NEXT
-            foreach (Ship ship in owner.board.placementInfo.notplacedShips)
-            {
-                float shipRating = 1;
-
-                shipRating += (targetConcealedTileCount - concealedTileCount) / ship.maxHealth / 2.0f;
-                shipRating += (targetTorpedoDefense - torpedoDefense) * ship.maxHealth / 4.0f;
-                switch (ship.type)
-                {
-                    case ShipType.DESTROYER:
-                        shipRating += (targetTorpedoOffense - torpedoOffense);
-                        break;
-                }
-
-                shipRating *= UnityEngine.Random.Range(0.85f, 1.15f);
-                if (shipRating > highestShipRating)
-                {
-                    highestShipRating = shipRating;
-                    highestRatedShip = ship;
-                }
-            }
-
-            highestRatedShip.Pickup();
-
-
-
-
-            Tile rootPlacementTile = owner.board.placementInfo.selectableTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.selectableTiles.Count)];
-
-            //CALCULATE ROOT TILE POSITION
-
-
-            //PLACE ALL THE OTHER TILES
-            owner.board.SelectTileForPlacement(rootPlacementTile);
-            for (int x = 0; x < highestRatedShip.maxHealth - 1; x++)
-            {
-                owner.board.SelectTileForPlacement(owner.board.placementInfo.selectableTiles[UnityEngine.Random.Range(0, owner.board.placementInfo.selectableTiles.Count)]);
-
-            }
-
-            if (owner.board.placementInfo.selectableTiles.Count == 0)
-            {
-                PlaceShips();
-                break;
-            }
-
-            highestRatedShip.gameObject.SetActive(false);
-        }
-
-        //MOVE THINGS AROUND TO ALLOW CONCEALMENT
-
-
-
-
     }
 
     void Attack()

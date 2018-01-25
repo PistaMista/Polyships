@@ -5,10 +5,14 @@ using UnityEngine;
 public class FleetPlacementUI : BoardViewUI
 {
     public static FleetPlacementUI it;
+
+    void Awake()
+    {
+        it = this;
+    }
     protected override void Start()
     {
         base.Start();
-        it = this;
         screenToWorldInputConversionHeight = MiscellaneousVariables.it.boardUIRenderHeight;
     }
     public Waypoint cameraWaypoint;
@@ -57,7 +61,14 @@ public class FleetPlacementUI : BoardViewUI
                 RemoveDynamicAgents<UIAgent>("", true);
                 MakeShipDrawer();
 
+
+
                 SetState(UIState.ENABLED);
+                //TEST
+                managedBoard.AutoPlaceShips();
+                UpdateMarkers();
+                //TEST
+
                 break;
         }
     }

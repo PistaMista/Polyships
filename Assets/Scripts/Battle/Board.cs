@@ -323,5 +323,87 @@ public class Board : MonoBehaviour
         return false;
     }
 
+    public void AutoPlaceShips()
+    {
+        //PLACEMENT TACTIC
+        float targetTorpedoOffense = UnityEngine.Random.Range(0.00f, 1.00f);
+        float targetTorpedoDefense = UnityEngine.Random.Range(0.00f, 1.00f);
+
+        float targetShipDensity = UnityEngine.Random.Range(0.00f, 1.00f);
+        int targetConcealedTileCount = UnityEngine.Random.Range(1, 11);
+
+        foreach (Ship ship in placementInfo.placedShips)
+        {
+            ship.Pickup();
+            ship.Place(null);
+        }
+
+        ReevaluateTiles();
+
+        //PLACE ALL SHIPS
+        float torpedoOffense = 0.0f;
+        float torpedoDefense = 0.0f;
+
+        float shipDensity = 0.0f;
+        int concealedTileCount = 0;
+        for (int i = 0; i < ships.Length; i++)
+        {
+            Ship highestRatedShip = ships[0];
+            float highestShipRating = 0;
+
+            //DETERMINE WHICH SHIP TO SELECT NEXT
+            foreach (Ship ship in placementInfo.notplacedShips)
+            {
+                float shipRating = 1;
+
+                shipRating += (targetConcealedTileCount - concealedTileCount) / ship.maxHealth / 2.0f;
+                shipRating += (targetTorpedoDefense - torpedoDefense) * ship.maxHealth / 4.0f;
+                switch (ship.type)
+                {
+                    case ShipType.DESTROYER:
+                        shipRating += (targetTorpedoOffense - torpedoOffense);
+                        break;
+                }
+
+                shipRating *= UnityEngine.Random.Range(0.85f, 1.15f);
+                if (shipRating > highestShipRating)
+                {
+                    highestShipRating = shipRating;
+                    highestRatedShip = ship;
+                }
+            }
+
+            highestRatedShip.Pickup();
+
+
+
+
+            Tile rootPlacementTile = placementInfo.selectableTiles[UnityEngine.Random.Range(0, placementInfo.selectableTiles.Count)];
+
+            //CALCULATE ROOT TILE POSITION
+
+
+            //PLACE ALL THE OTHER TILES
+            SelectTileForPlacement(rootPlacementTile);
+            for (int x = 0; x < highestRatedShip.maxHealth - 1; x++)
+            {
+                SelectTileForPlacement(placementInfo.selectableTiles[UnityEngine.Random.Range(0, placementInfo.selectableTiles.Count)]);
+
+            }
+
+            if (placementInfo.selectableTiles.Count == 0)
+            {
+                AutoPlaceShips();
+                break;
+            }
+        }
+
+        //MOVE THINGS AROUND TO ALLOW CONCEALMENT
+
+
+
+
+    }
+
 
 }
