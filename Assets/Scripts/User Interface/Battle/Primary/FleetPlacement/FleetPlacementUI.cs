@@ -319,7 +319,7 @@ public class FleetPlacementUI : BoardViewUI
         List<ShipRectangleGroup> unfinishedGroups = new List<ShipRectangleGroup>();
         List<Ship> toAdd = new List<Ship>();
 
-        managedBoard.AddShips();
+        managedBoard.SpawnShips();
         ShipRectangleGroup currentGroup = new ShipRectangleGroup();
         foreach (Ship ship in managedBoard.placementInfo.allShips)
         {

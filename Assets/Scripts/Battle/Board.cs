@@ -123,7 +123,7 @@ public class Board : MonoBehaviour
 
     public PlacementInfo placementInfo;
 
-    public void AddShips()
+    public void SpawnShips()
     {
         placementInfo.allShips = new List<Ship>();
         placementInfo.placedShips = new List<Ship>();
@@ -323,85 +323,40 @@ public class Board : MonoBehaviour
         return false;
     }
 
-    public void AutoPlaceShips()
+    public void AutoplaceShips()
     {
-        // //PLACEMENT TACTIC
-        // float targetTorpedoOffense = UnityEngine.Random.Range(0.00f, 1.00f);
-        // float targetTorpedoDefense = UnityEngine.Random.Range(0.00f, 1.00f);
 
-        // float targetShipDensity = UnityEngine.Random.Range(0.00f, 1.00f);
-        // int targetConcealedTileCount = UnityEngine.Random.Range(1, 11);
+        //Each ship gets a heatmap of best placement spots
+        float[][,] shipLocationHeatmaps;
 
-        // foreach (Ship ship in placementInfo.placedShips)
-        // {
-        //     ship.Pickup();
-        //     ship.Place(null);
-        // }
-
-        // ReevaluateTiles();
-
-        // //PLACE ALL SHIPS
-        // float torpedoOffense = 0.0f;
-        // float torpedoDefense = 0.0f;
-
-        // float shipDensity = 0.0f;
-        // int concealedTileCount = 0;
-        // for (int i = 0; i < ships.Length; i++)
-        // {
-        //     Ship highestRatedShip = ships[0];
-        //     float highestShipRating = 0;
-
-        //     //DETERMINE WHICH SHIP TO SELECT NEXT
-        //     foreach (Ship ship in placementInfo.notplacedShips)
-        //     {
-        //         float shipRating = 1;
-
-        //         shipRating += (targetConcealedTileCount - concealedTileCount) / ship.maxHealth / 2.0f;
-        //         shipRating += (targetTorpedoDefense - torpedoDefense) * ship.maxHealth / 4.0f;
-        //         switch (ship.type)
-        //         {
-        //             case ShipType.DESTROYER:
-        //                 shipRating += (targetTorpedoOffense - torpedoOffense);
-        //                 break;
-        //         }
-
-        //         shipRating *= UnityEngine.Random.Range(0.85f, 1.15f);
-        //         if (shipRating > highestShipRating)
-        //         {
-        //             highestShipRating = shipRating;
-        //             highestRatedShip = ship;
-        //         }
-        //     }
-
-        //     highestRatedShip.Pickup();
+        //These spots are determined by individual tactical choices
 
 
+        //Ships get placed in whatever the best available spot left is
+        for (int i = 0; i < ships.Length; i++)
+        {
+            Ship ship = ships[i];
+            float[,] heatmap = shipLocationHeatmaps[i];
+            for (int x = 0; x < ship.maxHealth; x++)
+            {
+                Tile bestChoice = placementInfo.selectableTiles[0];
 
+                foreach (Tile tile in placementInfo.selectableTiles)
+                {
+                    if (heatmap[tile.coordinates.x, tile.coordinates.y] > heatmap[bestChoice.coordinates.x, bestChoice.coordinates.y])
+                    {
+                        bestChoice = tile;
+                    }
+                }
 
-        //     Tile rootPlacementTile = placementInfo.selectableTiles[UnityEngine.Random.Range(0, placementInfo.selectableTiles.Count)];
+                SelectTileForPlacement(bestChoice);
+            }
 
-        //     //CALCULATE ROOT TILE POSITION
-
-
-        //     //PLACE ALL THE OTHER TILES
-        //     SelectTileForPlacement(rootPlacementTile);
-        //     for (int x = 0; x < highestRatedShip.maxHealth - 1; x++)
-        //     {
-        //         SelectTileForPlacement(placementInfo.selectableTiles[UnityEngine.Random.Range(0, placementInfo.selectableTiles.Count)]);
-
-        //     }
-
-        //     if (placementInfo.selectableTiles.Count == 0)
-        //     {
-        //         AutoPlaceShips();
-        //         break;
-        //     }
-        // }
-
-        // //MOVE THINGS AROUND TO ALLOW CONCEALMENT
-
-
-
+            if (placementInfo.selectableTiles.Count == 0)
+            {
+                AutoplaceShips();
+            }
+        }
 
     }
 

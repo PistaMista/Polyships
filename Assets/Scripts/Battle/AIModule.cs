@@ -30,8 +30,8 @@ public class AIModule : ScriptableObject
     {
         if (owner.board.ships == null)
         {
-            owner.board.AddShips();
-            owner.board.AutoPlaceShips();
+            owner.board.SpawnShips();
+            owner.board.AutoplaceShips();
             for (int i = 0; i < owner.board.ships.Length; i++)
             {
                 owner.board.ships[i].gameObject.SetActive(false);
