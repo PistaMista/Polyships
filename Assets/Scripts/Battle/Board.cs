@@ -385,11 +385,21 @@ public class Board : MonoBehaviour
         }
 
         //Determine heatmaps by individual tactical choices
-        //RANDOM TEST
+        //1.Tactic - Dispersion
+        float dispersionValue = UnityEngine.Random.Range(0.000f, 1.000f);
         for (int i = 0; i < ships.Length; i++)
         {
-            shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], new Tile[] { tiles[UnityEngine.Random.Range(0, tiles.GetLength(0)), UnityEngine.Random.Range(0, tiles.GetLength(1))] }, 1.0f, 0.2f);
+            shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], new Tile[] { tiles[UnityEngine.Random.Range(0, tiles.GetLength(0)), UnityEngine.Random.Range(0, tiles.GetLength(1))] }, 5.0f * dispersionValue, 0.15f);
         }
+
+        //2.Tactic - Destroyer placement, protection and camouflage
+        float agressivityValue = 1.0f - (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 2);
+
+
+
+        //3.Tactic - 
+
+
 
         //Place ships in whatever the best available spot left is
         for (int i = 0; i < ships.Length; i++)
@@ -405,7 +415,7 @@ public class Board : MonoBehaviour
 
                 foreach (Tile tile in placementInfo.selectableTiles)
                 {
-                    if (heatmap[tile.coordinates.x, tile.coordinates.y] > heatmap[bestChoice.coordinates.x, bestChoice.coordinates.y])
+                    if ((heatmap[tile.coordinates.x, tile.coordinates.y] > heatmap[bestChoice.coordinates.x, bestChoice.coordinates.y]) || (heatmap[tile.coordinates.x, tile.coordinates.y] == heatmap[bestChoice.coordinates.x, bestChoice.coordinates.y] && UnityEngine.Random.Range(0, 2) == 0))
                     {
                         bestChoice = tile;
                     }
