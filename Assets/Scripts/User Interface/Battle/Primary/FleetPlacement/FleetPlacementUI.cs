@@ -65,8 +65,8 @@ public class FleetPlacementUI : BoardViewUI
 
                 SetState(UIState.ENABLED);
                 //TEST
-                //managedBoard.AutoPlaceShips();
-                //UpdateMarkers();
+                managedBoard.AutoplaceShips();
+                UpdateMarkers();
                 //TEST
 
                 break;

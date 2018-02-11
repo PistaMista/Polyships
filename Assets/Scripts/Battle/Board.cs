@@ -323,20 +323,82 @@ public class Board : MonoBehaviour
         return false;
     }
 
+    float[,] ModifyHeatmap(float[,] currentHeatmap, Tile[] heatSources, float magnitude, float wholeDropoff)
+    {
+        foreach (Tile tile in heatSources)
+        {
+            List<Vector2Int> openNodes = new List<Vector2Int>(new Vector2Int[] { tile.coordinates });
+            List<Vector2Int> processedNodes = new List<Vector2Int>();
+
+            while (openNodes.Count > 0)
+            {
+                List<Vector2Int> newlyOpenedNodes = new List<Vector2Int>();
+
+                foreach (Vector2Int node in openNodes)
+                {
+                    processedNodes.Add(node);
+                    currentHeatmap[node.x, node.y] += magnitude;
+
+                    for (int x = -1; x <= 1; x++)
+                    {
+                        for (int y = -1; y <= 1; y++)
+                        {
+                            int determinant = Math.Abs(x) + Math.Abs(y);
+                            if (determinant < 2 && determinant != 0)
+                            {
+                                Vector2Int newNode = node + new Vector2Int(x, y);
+                                if (newNode.x >= 0 && newNode.x < currentHeatmap.GetLength(0) && newNode.y >= 0 && newNode.y < currentHeatmap.GetLength(1))
+                                {
+                                    if (!processedNodes.Contains(newNode) && !newlyOpenedNodes.Contains(newNode))
+                                    {
+                                        newlyOpenedNodes.Add(newNode);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                magnitude *= 1.0f - wholeDropoff;
+                openNodes = newlyOpenedNodes;
+            }
+        }
+
+        return currentHeatmap;
+    }
+
     public void AutoplaceShips()
     {
-
-        //Each ship gets a heatmap of best placement spots
-        float[][,] shipLocationHeatmaps;
-
-        //These spots are determined by individual tactical choices
-
-
-        //Ships get placed in whatever the best available spot left is
+        //Remove any placed ships from the board
         for (int i = 0; i < ships.Length; i++)
         {
             Ship ship = ships[i];
+            ship.Pickup();
+            ship.Place(null);
+        }
+
+        //Each ship gets a heatmap of best placement spots
+        float[][,] shipLocationHeatmaps = new float[ships.Length][,];
+        for (int i = 0; i < ships.Length; i++)
+        {
+            shipLocationHeatmaps[i] = new float[tiles.GetLength(0), tiles.GetLength(1)];
+        }
+
+        //Determine heatmaps by individual tactical choices
+        //RANDOM TEST
+        for (int i = 0; i < ships.Length; i++)
+        {
+            shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], new Tile[] { tiles[UnityEngine.Random.Range(0, tiles.GetLength(0)), UnityEngine.Random.Range(0, tiles.GetLength(1))] }, 1.0f, 0.2f);
+        }
+
+        //Place ships in whatever the best available spot left is
+        for (int i = 0; i < ships.Length; i++)
+        {
+            Ship ship = ships[i];
+            ship.Pickup();
+
             float[,] heatmap = shipLocationHeatmaps[i];
+
             for (int x = 0; x < ship.maxHealth; x++)
             {
                 Tile bestChoice = placementInfo.selectableTiles[0];
@@ -357,8 +419,5 @@ public class Board : MonoBehaviour
                 AutoplaceShips();
             }
         }
-
     }
-
-
 }
