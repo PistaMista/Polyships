@@ -392,10 +392,27 @@ public class Board : MonoBehaviour
             shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], new Tile[] { tiles[UnityEngine.Random.Range(0, tiles.GetLength(0)), UnityEngine.Random.Range(0, tiles.GetLength(1))] }, 5.0f * dispersionValue, 0.15f);
         }
 
-        //2.Tactic - Destroyer placement, protection and camouflage
+        //2.Tactic - Destroyer placement
         float agressivityValue = 1.0f - (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 2);
+        float discretionValue = (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 4);
 
+        Tile[] topBar = new Tile[tiles.GetLength(0)];
+        for (int x = 0; x < topBar.Length; x++)
+        {
+            topBar[x] = tiles[x, tiles.GetLength(1) - 1];
+        }
 
+        for (int i = 0; i < ships.Length; i++)
+        {
+            if (ships[i].type == ShipType.DESTROYER)
+            {
+                shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], topBar, agressivityValue * 12.0f, 0.1f);
+            }
+            else
+            {
+                shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], topBar, -discretionValue * 9.0f, 0.7f);
+            }
+        }
 
         //3.Tactic - 
 
