@@ -325,6 +325,8 @@ public class Board : MonoBehaviour
 
     float[,] ModifyHeatmap(float[,] currentHeatmap, Tile[] heatSources, float magnitude, float wholeDropoff)
     {
+        float cycleModifier = 1.0f - wholeDropoff;
+
         foreach (Tile tile in heatSources)
         {
             List<Vector2Int> openNodes = new List<Vector2Int>(new Vector2Int[] { tile.coordinates });
@@ -359,7 +361,7 @@ public class Board : MonoBehaviour
                     }
                 }
 
-                magnitude *= 1.0f - wholeDropoff;
+                magnitude *= cycleModifier;
                 openNodes = newlyOpenedNodes;
             }
         }
