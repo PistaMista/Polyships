@@ -52,6 +52,8 @@ public class Ship : MonoBehaviour
     public int maxHealth;
     public Cruiser concealedBy;
     public ShipType type;
+    [Range(0, 5)]
+    public int concealmentAIValue;
 
     public virtual void Initialize(ShipData data)
     {

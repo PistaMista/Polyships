@@ -369,6 +369,32 @@ public class Board : MonoBehaviour
         return currentHeatmap;
     }
 
+    float[,] SumHeatmaps(float[,] heatmap1, float[,] heatmap2)
+    {
+        for (int x = 0; x < heatmap1.GetLength(0); x++)
+        {
+            for (int y = 0; y < heatmap1.GetLength(1); y++)
+            {
+                heatmap1[x, y] += heatmap2[x, y];
+            }
+        }
+
+        return heatmap1;
+    }
+
+    float[,] MagnifyHeatmap(float[,] heatmap, float magnitude)
+    {
+        for (int x = 0; x < heatmap.GetLength(0); x++)
+        {
+            for (int y = 0; y < heatmap.GetLength(1); y++)
+            {
+                heatmap[x, y] *= magnitude;
+            }
+        }
+
+        return heatmap;
+    }
+
     public void AutoplaceShips()
     {
         //Remove any placed ships from the board
@@ -391,17 +417,17 @@ public class Board : MonoBehaviour
         float dispersionValue = UnityEngine.Random.Range(0.000f, 1.000f);
         for (int i = 0; i < ships.Length; i++)
         {
-            shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], new Tile[] { tiles[UnityEngine.Random.Range(0, tiles.GetLength(0)), UnityEngine.Random.Range(0, tiles.GetLength(1))] }, 5.0f * dispersionValue, 0.15f);
+            shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], new Tile[] { tiles[UnityEngine.Random.Range(0, tiles.GetLength(0)), UnityEngine.Random.Range(0, tiles.GetLength(1))] }, 8.0f * dispersionValue, 0.15f);
         }
 
-        //2.Tactic - Destroyer placement
+        //2.Tactic - Destroyer location
         float agressivityValue = 1.0f - (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 2);
-        float discretionValue = (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 4);
+        float discretionValue = 1.0f + (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 5);
 
         Tile[] topBar = new Tile[tiles.GetLength(0)];
         for (int x = 0; x < topBar.Length; x++)
         {
-            topBar[x] = tiles[x, tiles.GetLength(1) - 1];
+            topBar[x] = tiles[x, tiles.GetLength(1) - 1 - UnityEngine.Random.Range(0, 4)];
         }
 
         for (int i = 0; i < ships.Length; i++)
@@ -416,17 +442,69 @@ public class Board : MonoBehaviour
             }
         }
 
-        //3.Tactic - 
+        //3.Tactic - Camouflage
+        float concealmentAccuracyValue = 1.0f - (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 4);
+        List<int> cruiserIDs = new List<int>();
+        for (int i = 0; i < ships.Length; i++)
+        {
+            if (ships[i].type == ShipType.CRUISER)
+            {
+                cruiserIDs.Add(i);
+            }
+        }
+
+        int[] shipsToConcealIDs = new int[cruiserIDs.Count];
+        for (int s = 0; s < shipsToConcealIDs.Length; s++)
+        {
+            int[] ranges = new int[ships.Length];
+            for (int i = 0; i < ships.Length; i++)
+            {
+                int lastRange = i > 0 ? ranges[i - 1] : 0;
+                ranges[i] = lastRange + ships[i].concealmentAIValue; ;
+            }
+
+            int chosen = UnityEngine.Random.Range(0, ranges[ranges.Length - 1] + 1);
+            for (int i = 0; i < ships.Length; i++)
+            {
+                if (chosen <= ranges[i])
+                {
+                    shipsToConcealIDs[s] = i;
+                    break;
+                }
+            }
+        }
+
+        for (int i = 0; i < shipsToConcealIDs.Length; i++)
+        {
+            int shipID = shipsToConcealIDs[i];
+            int cruiserID = cruiserIDs[i];
+            shipLocationHeatmaps[cruiserID] = SumHeatmaps(shipLocationHeatmaps[cruiserID], MagnifyHeatmap(shipLocationHeatmaps[shipID], 3.0f));
+        }
+
+
+        //Sort the ships so they get placed in the right order
+        List<int> sortedShipIDs = new List<int>();
+
+        sortedShipIDs.AddRange(shipsToConcealIDs);
+        sortedShipIDs.AddRange(cruiserIDs);
+
+        for (int i = 0; i < ships.Length; i++)
+        {
+            if (!sortedShipIDs.Contains(i))
+            {
+                sortedShipIDs.Add(i);
+            }
+        }
 
 
 
         //Place ships in whatever the best available spot left is
-        for (int i = 0; i < ships.Length; i++)
+        foreach (int shipID in sortedShipIDs)
         {
-            Ship ship = ships[i];
+            Ship ship = ships[shipID];
             ship.Pickup();
 
-            float[,] heatmap = shipLocationHeatmaps[i];
+            float[,] heatmap = shipLocationHeatmaps[shipID];
 
             for (int x = 0; x < ship.maxHealth; x++)
             {
@@ -443,9 +521,15 @@ public class Board : MonoBehaviour
                 SelectTileForPlacement(bestChoice);
             }
 
+            if (ship.type == ShipType.CRUISER)
+            {
+                ((Cruiser)ship).ConcealAlreadyPlacedShipsInConcealmentArea();
+            }
+
             if (placementInfo.selectableTiles.Count == 0)
             {
                 AutoplaceShips();
+                break;
             }
         }
     }

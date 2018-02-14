@@ -20,12 +20,45 @@ public class Cruiser : Ship
     public override void OnOtherShipPlacementOntoBoard(Ship placedShip, Tile[] location)
     {
         base.OnOtherShipPlacementOntoBoard(placedShip, location);
+        TryConcealingShip(placedShip);
+    }
+
+    public void ConcealAlreadyPlacedShipsInConcealmentArea()
+    {
+        List<Ship> foundShips = new List<Ship>();
+        foreach (Tile tile in concealmentArea)
+        {
+            if (tile.containedShip)
+            {
+                if (!foundShips.Contains(tile.containedShip))
+                {
+                    foundShips.Add(tile.containedShip);
+                }
+            }
+        }
+
+        foreach (Ship ship in foundShips)
+        {
+            if (TryConcealingShip(ship))
+            {
+                break;
+            }
+        }
+    }
+
+    bool TryConcealingShip(Ship ship)
+    {
         if (concealing == null)
         {
-            bool containsAll = true;
-            for (int i = 0; i < location.Length; i++)
+            if (ship.concealedBy != null || concealedBy == ship)
             {
-                if (!concealmentArea.Contains(location[i]))
+                return false;
+            }
+
+            bool containsAll = true;
+            for (int i = 0; i < ship.tiles.Length; i++)
+            {
+                if (!concealmentArea.Contains(ship.tiles[i]))
                 {
                     containsAll = false;
                     break;
@@ -34,10 +67,13 @@ public class Cruiser : Ship
 
             if (containsAll)
             {
-                placedShip.concealedBy = this;
-                concealing = placedShip;
+                ship.concealedBy = this;
+                concealing = ship;
+                return true;
             }
         }
+
+        return false;
     }
 
     public override void OnOtherShipPickupFromBoard(Ship pickedShip, Tile[] location)
