@@ -51,77 +51,6 @@ public class AIModule : ScriptableObject
         //TEST
     }
 
-    float[,] ModifyHeatmap(float[,] currentHeatmap, Tile[] heatSources, float magnitude, float wholeDropoff)
-    {
-        float cycleModifier = 1.0f - wholeDropoff;
-
-        foreach (Tile tile in heatSources)
-        {
-            List<Vector2Int> openNodes = new List<Vector2Int>(new Vector2Int[] { tile.coordinates });
-            List<Vector2Int> processedNodes = new List<Vector2Int>();
-
-            while (openNodes.Count > 0)
-            {
-                List<Vector2Int> newlyOpenedNodes = new List<Vector2Int>();
-
-                foreach (Vector2Int node in openNodes)
-                {
-                    processedNodes.Add(node);
-                    currentHeatmap[node.x, node.y] += magnitude;
-
-                    for (int x = -1; x <= 1; x++)
-                    {
-                        for (int y = -1; y <= 1; y++)
-                        {
-                            int determinant = Math.Abs(x) + Math.Abs(y);
-                            if (determinant < 2 && determinant != 0)
-                            {
-                                Vector2Int newNode = node + new Vector2Int(x, y);
-                                if (newNode.x >= 0 && newNode.x < currentHeatmap.GetLength(0) && newNode.y >= 0 && newNode.y < currentHeatmap.GetLength(1))
-                                {
-                                    if (!processedNodes.Contains(newNode) && !newlyOpenedNodes.Contains(newNode))
-                                    {
-                                        newlyOpenedNodes.Add(newNode);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                magnitude *= cycleModifier;
-                openNodes = newlyOpenedNodes;
-            }
-        }
-
-        return currentHeatmap;
-    }
-
-    float[,] SumHeatmaps(float[,] heatmap1, float[,] heatmap2)
-    {
-        for (int x = 0; x < heatmap1.GetLength(0); x++)
-        {
-            for (int y = 0; y < heatmap1.GetLength(1); y++)
-            {
-                heatmap1[x, y] += heatmap2[x, y];
-            }
-        }
-
-        return heatmap1;
-    }
-
-    float[,] MagnifyHeatmap(float[,] heatmap, float magnitude)
-    {
-        for (int x = 0; x < heatmap.GetLength(0); x++)
-        {
-            for (int y = 0; y < heatmap.GetLength(1); y++)
-            {
-                heatmap[x, y] *= magnitude;
-            }
-        }
-
-        return heatmap;
-    }
 
     public void PlaceShips()
     {
@@ -261,4 +190,52 @@ public class AIModule : ScriptableObject
             }
         }
     }
+
+    float[,] ModifyHeatmap(float[,] currentHeatmap, Tile[] heatSources, float magnitude, float wholeDropoff)
+    {
+        float cycleModifier = 1.0f - wholeDropoff;
+
+        foreach (Tile tile in heatSources)
+        {
+            for (int x = 0; x < currentHeatmap.GetLength(0); x++)
+            {
+                for (int y = 0; y < currentHeatmap.GetLength(1); y++)
+                {
+                    Vector2Int relative = new Vector2Int(x, y) - tile.coordinates;
+                    int distance = Mathf.Abs(relative.x) + Mathf.Abs(relative.y);
+
+                    currentHeatmap[x, y] += magnitude * Mathf.Pow(1.0f - wholeDropoff, distance);
+                }
+            }
+        }
+
+        return currentHeatmap;
+    }
+
+    float[,] SumHeatmaps(float[,] heatmap1, float[,] heatmap2)
+    {
+        for (int x = 0; x < heatmap1.GetLength(0); x++)
+        {
+            for (int y = 0; y < heatmap1.GetLength(1); y++)
+            {
+                heatmap1[x, y] += heatmap2[x, y];
+            }
+        }
+
+        return heatmap1;
+    }
+
+    float[,] MagnifyHeatmap(float[,] heatmap, float magnitude)
+    {
+        for (int x = 0; x < heatmap.GetLength(0); x++)
+        {
+            for (int y = 0; y < heatmap.GetLength(1); y++)
+            {
+                heatmap[x, y] *= magnitude;
+            }
+        }
+
+        return heatmap;
+    }
+
 }
