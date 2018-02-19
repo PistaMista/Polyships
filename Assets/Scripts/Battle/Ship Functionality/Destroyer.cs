@@ -46,9 +46,9 @@ public class Destroyer : Ship
         firingAreaBlockages = blockages.ToArray();
     }
 
-    public override void OnTurnStart()
+    public override void OnTurnEnd()
     {
-        base.OnTurnStart();
+        base.OnTurnEnd();
         if (torpedoCount < torpedoCapacity && health > 0)
         {
             torpedoReloadTimeLeft--;

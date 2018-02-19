@@ -61,8 +61,6 @@ public class FleetPlacementUI : BoardViewUI
                 RemoveDynamicAgents<UIAgent>("", true);
                 MakeShipDrawer();
 
-
-
                 SetState(UIState.ENABLED);
                 break;
         }

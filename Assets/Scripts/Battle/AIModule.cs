@@ -44,11 +44,94 @@ public class AIModule : ScriptableObject
         }
     }
 
+    struct Heatmap
+    {
+        public float[,] tiles;
+
+        public Heatmap(Vector2Int dimensions)
+        {
+            tiles = new float[dimensions.x, dimensions.y];
+        }
+
+        public static Heatmap operator *(Heatmap map, float mult)
+        {
+            for (int x = 0; x < map.tiles.GetLength(0); x++)
+            {
+                for (int y = 0; y < map.tiles.GetLength(1); y++)
+                {
+                    map.tiles[x, y] *= mult;
+                }
+            }
+
+            return map;
+        }
+
+        public static Heatmap operator +(Heatmap map1, Heatmap map2)
+        {
+            for (int x = 0; x < map1.tiles.GetLength(0); x++)
+            {
+                for (int y = 0; y < map1.tiles.GetLength(1); y++)
+                {
+                    map1.tiles[x, y] += map2.tiles[x, y];
+                }
+            }
+
+            return map1;
+        }
+
+        public void Heat(Vector2Int source, float heat, float dropoff)
+        {
+            for (int x = 0; x < tiles.GetLength(0); x++)
+            {
+                for (int y = 0; y < tiles.GetLength(1); y++)
+                {
+                    Vector2Int relative = new Vector2Int(x, y) - source;
+                    int distance = Mathf.Abs(relative.x) + Mathf.Abs(relative.y);
+
+                    tiles[x, y] += heat * Mathf.Pow(1.0f - dropoff, distance);
+                }
+            }
+        }
+
+        // public Heatmap GetAntimap(Vector2Int pivot)
+        // {
+        //     Heatmap result = new Heatmap(new Vector2Int(tiles.GetLength(0), tiles.GetLength(1)));
+        //     for (int x = 0; x < tiles.GetLength(0); x++)
+        //     {
+        //         for (int y = 0; y < tiles.GetLength(1); y++)
+        //         {
+        //             Vector2Int opposite = pivot - new Vector2Int(x, y);
+        //             if (opposite.x >= 0 && opposite.x < tiles.GetLength(0) && opposite.y >= 0 && opposite.y < tiles.GetLength(1))
+        //             {
+        //                 result.tiles[x, y] = tiles[opposite.x, opposite.y];
+        //             }
+        //         }
+        //     }
+
+        //     return result;
+        // }
+    }
+
+    float recklessness;
     void Attack()
     {
-        //TEST
-        Battle.main.ExecuteArtilleryAttack(new Tile[] { Battle.main.defender.board.tiles[0, 0] });
-        //TEST
+        Board target = Battle.main.defender.board;
+
+        //Construct a situation heatmap
+        Heatmap situation = new Heatmap(new Vector2Int(target.tiles.GetLength(0), target.tiles.GetLength(1)));
+
+        //Add heat for hit tiles
+        foreach (Tile hit in owner.hitTiles)
+        {
+            if (hit.containedShip != null && hit.containedShip.health > 0)
+            {
+                situation.Heat(hit.coordinates, 10.0f, 0.8f - recklessness);
+            }
+            else
+            {
+                situation.Heat(hit.coordinates, -4.0f, 0.8f - recklessness);
+            }
+        }
     }
 
 
@@ -63,10 +146,10 @@ public class AIModule : ScriptableObject
         }
 
         //Each ship gets a heatmap of best placement spots
-        float[][,] shipLocationHeatmaps = new float[owner.board.ships.Length][,];
+        Heatmap[] shipLocationHeatmaps = new Heatmap[owner.board.ships.Length];
         for (int i = 0; i < owner.board.ships.Length; i++)
         {
-            shipLocationHeatmaps[i] = new float[owner.board.tiles.GetLength(0), owner.board.tiles.GetLength(1)];
+            shipLocationHeatmaps[i] = new Heatmap(new Vector2Int(owner.board.tiles.GetLength(0), owner.board.tiles.GetLength(1)));
         }
 
         //Determine heatmaps by individual tactical choices
@@ -74,28 +157,20 @@ public class AIModule : ScriptableObject
         float dispersionValue = UnityEngine.Random.Range(0.000f, 1.000f);
         for (int i = 0; i < owner.board.ships.Length; i++)
         {
-            shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], new Tile[] { owner.board.tiles[UnityEngine.Random.Range(0, owner.board.tiles.GetLength(0)), UnityEngine.Random.Range(0, owner.board.tiles.GetLength(1))] }, 8.0f * dispersionValue, 0.15f);
+            shipLocationHeatmaps[i].Heat(new Vector2Int(UnityEngine.Random.Range(0, owner.board.tiles.GetLength(0)), UnityEngine.Random.Range(0, owner.board.tiles.GetLength(1))), 8.0f * dispersionValue, 0.15f);
         }
 
         //2.Tactic - Destroyer location
         float agressivityValue = 1.0f - (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 2);
         float discretionValue = 1.0f + (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 5);
 
-        Tile[] topBar = new Tile[owner.board.tiles.GetLength(0)];
-        for (int x = 0; x < topBar.Length; x++)
+        for (int x = 0; x < owner.board.tiles.GetLength(0); x++)
         {
-            topBar[x] = owner.board.tiles[x, owner.board.tiles.GetLength(1) - 1 - UnityEngine.Random.Range(0, 4)];
-        }
-
-        for (int i = 0; i < owner.board.ships.Length; i++)
-        {
-            if (owner.board.ships[i].type == ShipType.DESTROYER)
+            for (int i = 0; i < owner.board.ships.Length; i++)
             {
-                shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], topBar, agressivityValue * 12.0f, 0.1f);
-            }
-            else
-            {
-                shipLocationHeatmaps[i] = ModifyHeatmap(shipLocationHeatmaps[i], topBar, -discretionValue * 9.0f, 0.7f);
+                float heat = owner.board.ships[i].type == ShipType.DESTROYER ? agressivityValue * 12.0f : -discretionValue * 9.0f;
+                float dropoff = owner.board.ships[i].type == ShipType.DESTROYER ? 0.1f : 0.7f;
+                shipLocationHeatmaps[i].Heat(new Vector2Int(x, owner.board.tiles.GetLength(1) - 1 - UnityEngine.Random.Range(0, 4)), heat, dropoff);
             }
         }
 
@@ -135,7 +210,7 @@ public class AIModule : ScriptableObject
         {
             int shipID = shipsToConcealIDs[i];
             int cruiserID = cruiserIDs[i];
-            shipLocationHeatmaps[cruiserID] = SumHeatmaps(shipLocationHeatmaps[cruiserID], MagnifyHeatmap(shipLocationHeatmaps[shipID], 3.0f));
+            shipLocationHeatmaps[cruiserID] = shipLocationHeatmaps[cruiserID] + shipLocationHeatmaps[shipID] * 3.0f;
         }
 
 
@@ -161,7 +236,7 @@ public class AIModule : ScriptableObject
             Ship ship = owner.board.ships[shipID];
             ship.Pickup();
 
-            float[,] heatmap = shipLocationHeatmaps[shipID];
+            float[,] heatmap = shipLocationHeatmaps[shipID].tiles;
 
             for (int x = 0; x < ship.maxHealth; x++)
             {
@@ -189,53 +264,8 @@ public class AIModule : ScriptableObject
                 break;
             }
         }
+
+        //Determine the personality of this AI when attacking
+        recklessness = Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 3);
     }
-
-    float[,] ModifyHeatmap(float[,] currentHeatmap, Tile[] heatSources, float magnitude, float wholeDropoff)
-    {
-        float cycleModifier = 1.0f - wholeDropoff;
-
-        foreach (Tile tile in heatSources)
-        {
-            for (int x = 0; x < currentHeatmap.GetLength(0); x++)
-            {
-                for (int y = 0; y < currentHeatmap.GetLength(1); y++)
-                {
-                    Vector2Int relative = new Vector2Int(x, y) - tile.coordinates;
-                    int distance = Mathf.Abs(relative.x) + Mathf.Abs(relative.y);
-
-                    currentHeatmap[x, y] += magnitude * Mathf.Pow(1.0f - wholeDropoff, distance);
-                }
-            }
-        }
-
-        return currentHeatmap;
-    }
-
-    float[,] SumHeatmaps(float[,] heatmap1, float[,] heatmap2)
-    {
-        for (int x = 0; x < heatmap1.GetLength(0); x++)
-        {
-            for (int y = 0; y < heatmap1.GetLength(1); y++)
-            {
-                heatmap1[x, y] += heatmap2[x, y];
-            }
-        }
-
-        return heatmap1;
-    }
-
-    float[,] MagnifyHeatmap(float[,] heatmap, float magnitude)
-    {
-        for (int x = 0; x < heatmap.GetLength(0); x++)
-        {
-            for (int y = 0; y < heatmap.GetLength(1); y++)
-            {
-                heatmap[x, y] *= magnitude;
-            }
-        }
-
-        return heatmap;
-    }
-
 }
