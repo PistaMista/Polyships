@@ -83,16 +83,24 @@ public class AIModule : ScriptableObject
 
         public void Heat(Vector2Int source, float heat, float dropoff)
         {
-            for (int x = 0; x < tiles.GetLength(0); x++)
+            if (dropoff >= 1.0f)
             {
-                for (int y = 0; y < tiles.GetLength(1); y++)
+                tiles[source.x, source.y] += heat;
+                totalHeat += heat;
+            }
+            else
+            {
+                for (int x = 0; x < tiles.GetLength(0); x++)
                 {
-                    Vector2Int relative = new Vector2Int(x, y) - source;
-                    int distance = Mathf.Abs(relative.x) + Mathf.Abs(relative.y);
-                    float increase = heat * Mathf.Pow(1.0f - dropoff, distance);
+                    for (int y = 0; y < tiles.GetLength(1); y++)
+                    {
+                        Vector2Int relative = new Vector2Int(x, y) - source;
+                        int distance = Mathf.Abs(relative.x) + Mathf.Abs(relative.y);
+                        float increase = heat * Mathf.Pow(1.0f - dropoff, distance);
 
-                    totalHeat += increase;
-                    tiles[x, y] += increase;
+                        totalHeat += increase;
+                        tiles[x, y] += increase;
+                    }
                 }
             }
         }
@@ -138,7 +146,10 @@ public class AIModule : ScriptableObject
                     {
                         Vector2Int coord = new Vector2Int(axis == 0 ? tile : line, axis == 0 ? line : tile);
                         float tileHeat = tiles[coord.x, coord.y];
-                        result.tiles[coord.x, coord.y] = tileHeat + (maxHeat - tileHeat);
+                        float resultHeat = tileHeat + (maxHeat - tileHeat) * Mathf.Pow(tileHeat / maxHeat, maxHeat / lineHeat);
+
+                        result.totalHeat += resultHeat;
+                        result.tiles[coord.x, coord.y] = resultHeat;
                     }
                 }
             }
@@ -167,6 +178,60 @@ public class AIModule : ScriptableObject
                 situation.Heat(hit.coordinates, -4.0f, 0.8f - recklessness);
             }
         }
+
+        //Linearize the map
+        situation = situation.GetLinearizedMap();
+
+        //Cool the tiles which cannot be targeted
+        foreach (Tile tile in owner.hitTiles)
+        {
+            situation.Heat(tile.coordinates, Mathf.NegativeInfinity, 1);
+        }
+
+        //Rate the different attack possibilities
+        Vector2Int[] hottestTiles = new Vector2Int[Battle.main.attackerCapabilities.maximumArtilleryCount];
+        float[] hottestTileHeatValues = new float[hottestTiles.Length];
+        for (int i = 0; i < hottestTileHeatValues.Length; i++)
+        {
+            hottestTiles[i] = Vector2Int.down;
+            hottestTileHeatValues[i] = Mathf.NegativeInfinity;
+        }
+
+        for (int x = 0; x < situation.tiles.GetLength(0); x++)
+        {
+            for (int y = 0; y < situation.tiles.GetLength(1); y++)
+            {
+                Vector2Int examinedTile = new Vector2Int(x, y);
+                float examinedTileHeat = situation.tiles[x, y];
+
+                for (int i = 0; i <= hottestTiles.Length; i++)
+                {
+                    float rankedTileHeat = i < hottestTiles.Length ? hottestTileHeatValues[i] : Mathf.Infinity;
+
+                    if (examinedTileHeat < rankedTileHeat)
+                    {
+                        if (i > 0)
+                        {
+                            Vector2Int previousRankedTile = hottestTiles[i - 1];
+
+                            if (examinedTile != previousRankedTile)
+                            {
+                                hottestTiles[i - 1] = examinedTile;
+                                hottestTileHeatValues[i - 1] = examinedTileHeat;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        float artilleryHeat = 0;
+        for (int i = 0; i < hottestTileHeatValues.Length; i++)
+        {
+            artilleryHeat += hottestTileHeatValues[i];
+        }
+
     }
 
 
@@ -227,7 +292,7 @@ public class AIModule : ScriptableObject
             for (int i = 0; i < owner.board.ships.Length; i++)
             {
                 int lastRange = i > 0 ? ranges[i - 1] : 0;
-                ranges[i] = lastRange + owner.board.ships[i].concealmentAIValue; ;
+                ranges[i] = lastRange + owner.board.ships[i].concealmentAIValue;
             }
 
             int chosen = UnityEngine.Random.Range(0, ranges[ranges.Length - 1] + 1);
