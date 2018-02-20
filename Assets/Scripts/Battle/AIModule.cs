@@ -47,10 +47,12 @@ public class AIModule : ScriptableObject
     struct Heatmap
     {
         public float[,] tiles;
+        public float totalHeat;
 
         public Heatmap(Vector2Int dimensions)
         {
             tiles = new float[dimensions.x, dimensions.y];
+            totalHeat = 0;
         }
 
         public static Heatmap operator *(Heatmap map, float mult)
@@ -87,8 +89,10 @@ public class AIModule : ScriptableObject
                 {
                     Vector2Int relative = new Vector2Int(x, y) - source;
                     int distance = Mathf.Abs(relative.x) + Mathf.Abs(relative.y);
+                    float increase = heat * Mathf.Pow(1.0f - dropoff, distance);
 
-                    tiles[x, y] += heat * Mathf.Pow(1.0f - dropoff, distance);
+                    totalHeat += increase;
+                    tiles[x, y] += increase;
                 }
             }
         }
@@ -110,6 +114,37 @@ public class AIModule : ScriptableObject
 
         //     return result;
         // }
+
+        public Heatmap GetLinearizedMap()
+        {
+            Heatmap result = new Heatmap(new Vector2Int(tiles.GetLength(0), tiles.GetLength(1)));
+
+            for (int axis = 0; axis < 2; axis++)
+            {
+                for (int line = 0; line < (axis == 0 ? tiles.GetLength(0) : tiles.GetLength(1)); line++)
+                {
+                    float lineHeat = 0;
+                    float maxHeat = -Mathf.Infinity;
+                    for (int tile = 0; tile < (axis == 0 ? tiles.GetLength(0) : tiles.GetLength(1)); tile++)
+                    {
+                        Vector2Int coord = new Vector2Int(axis == 0 ? tile : line, axis == 0 ? line : tile);
+                        float tileHeat = tiles[coord.x, coord.y];
+
+                        lineHeat += tileHeat;
+                        maxHeat = tileHeat > maxHeat ? tileHeat : maxHeat;
+                    }
+
+                    for (int tile = 0; tile < (axis == 0 ? tiles.GetLength(0) : tiles.GetLength(1)); tile++)
+                    {
+                        Vector2Int coord = new Vector2Int(axis == 0 ? tile : line, axis == 0 ? line : tile);
+                        float tileHeat = tiles[coord.x, coord.y];
+                        result.tiles[coord.x, coord.y] = tileHeat + (maxHeat - tileHeat);
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 
     float recklessness;
