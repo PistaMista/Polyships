@@ -8,9 +8,11 @@ public class AIModule : ScriptableObject
     [Serializable]
     public struct AIModuleData
     {
+        public float recklessness;
         public static implicit operator AIModuleData(AIModule module)
         {
             AIModuleData result;
+            result.recklessness = module.recklessness;
             return result;
         }
     }
@@ -18,7 +20,7 @@ public class AIModule : ScriptableObject
 
     public virtual void Initialize(AIModuleData data)
     {
-
+        recklessness = data.recklessness;
     }
 
     public virtual void AssignReferences(AIModuleData data)
@@ -146,7 +148,7 @@ public class AIModule : ScriptableObject
                     {
                         Vector2Int coord = new Vector2Int(axis == 0 ? tile : line, axis == 0 ? line : tile);
                         float tileHeat = tiles[coord.x, coord.y];
-                        float resultHeat = tileHeat + (maxHeat - tileHeat) * Mathf.Pow(tileHeat / maxHeat, maxHeat / lineHeat);
+                        float resultHeat = tileHeat != 0 && maxHeat != 0 ? tileHeat + (maxHeat - tileHeat) * Mathf.Pow(tileHeat / maxHeat, maxHeat / lineHeat) : 0;
 
                         result.totalHeat += resultHeat;
                         result.tiles[coord.x, coord.y] = resultHeat;
@@ -171,11 +173,11 @@ public class AIModule : ScriptableObject
         {
             if (hit.containedShip != null && hit.containedShip.health > 0)
             {
-                situation.Heat(hit.coordinates, 10.0f, 0.8f - recklessness);
+                situation.Heat(hit.coordinates, 12.0f, 0.8f - recklessness);
             }
             else
             {
-                situation.Heat(hit.coordinates, -4.0f, 0.8f - recklessness);
+                situation.Heat(hit.coordinates, -2.0f, 0.8f - recklessness);
             }
         }
 
@@ -208,7 +210,7 @@ public class AIModule : ScriptableObject
                 {
                     float rankedTileHeat = i < hottestTiles.Length ? hottestTileHeatValues[i] : Mathf.Infinity;
 
-                    if (examinedTileHeat < rankedTileHeat)
+                    if (examinedTileHeat <= rankedTileHeat)
                     {
                         if (i > 0)
                         {
@@ -232,6 +234,60 @@ public class AIModule : ScriptableObject
             artilleryHeat += hottestTileHeatValues[i];
         }
 
+
+        int[] hottestLines = new int[Battle.main.attackerCapabilities.maximumTorpedoCount];
+        float[] hottestLineHeatValues = new float[hottestLines.Length];
+        for (int i = 0; i < hottestLines.Length; i++)
+        {
+            hottestLines[i] = -1;
+            hottestLineHeatValues[i] = Mathf.NegativeInfinity;
+        }
+
+        for (int examinedLine = 0; examinedLine < situation.tiles.GetLength(0); examinedLine++)
+        {
+            float examinedLineHeat = 0;
+
+            for (int y = 0; y < situation.tiles.GetLength(1); y++)
+            {
+                examinedLineHeat += situation.tiles[examinedLine, y];
+            }
+
+            for (int i = 0; i <= hottestLines.Length; i++)
+            {
+                float rankedLineHeat = i < hottestLines.Length ? hottestLineHeatValues[i] : Mathf.Infinity;
+
+                if (examinedLineHeat < rankedLineHeat)
+                {
+                    if (i > 0)
+                    {
+                        int previousRankedLine = hottestLines[i - 1];
+
+                        if (examinedLine != previousRankedLine)
+                        {
+                            hottestLines[i - 1] = examinedLine;
+                            hottestLineHeatValues[i - 1] = examinedLineHeat;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        float torpedoHeat = 0;
+        for (int i = 0; i < hottestLineHeatValues.Length; i++)
+        {
+            torpedoHeat += hottestLineHeatValues[i];
+        }
+
+        //TEST
+        Tile[] targets = new Tile[hottestTiles.Length];
+        for (int i = 0; i < hottestTiles.Length; i++)
+        {
+            Vector2Int coord = hottestTiles[i];
+            targets[i] = target.tiles[coord.x, coord.y];
+        }
+        Battle.main.ExecuteArtilleryAttack(targets);
+        //TEST
     }
 
 
