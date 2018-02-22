@@ -263,6 +263,7 @@ public class Battle : MonoBehaviour
         public int maximumTorpedoCount;
         public int maximumAircraftCount;
         public bool[] torpedoFiringArea;
+        public int torpedoFiringAreaSize;
         public int[,] airReconResults;
     }
     public AttackerCapabilities attackerCapabilities;
@@ -291,6 +292,7 @@ public class Battle : MonoBehaviour
                             if (destroyer.firingAreaBlockages[x] < 0)
                             {
                                 gathered.torpedoFiringArea[x] = true;
+                                gathered.torpedoFiringAreaSize++;
                             }
                         }
                         break;

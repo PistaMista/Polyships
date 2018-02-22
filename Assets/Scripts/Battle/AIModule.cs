@@ -9,10 +9,12 @@ public class AIModule : ScriptableObject
     public struct AIModuleData
     {
         public float recklessness;
+        public float agressivity;
         public static implicit operator AIModuleData(AIModule module)
         {
             AIModuleData result;
             result.recklessness = module.recklessness;
+            result.agressivity = module.agressivity;
             return result;
         }
     }
@@ -21,6 +23,7 @@ public class AIModule : ScriptableObject
     public virtual void Initialize(AIModuleData data)
     {
         recklessness = data.recklessness;
+        agressivity = data.agressivity;
     }
 
     public virtual void AssignReferences(AIModuleData data)
@@ -155,6 +158,9 @@ public class AIModule : ScriptableObject
     }
 
     float recklessness;
+    float agressivity;
+    float reconResultMemory; //The air recon heatmap will be multiplied by this every turn
+    float reconResultWeight; //How much will the AI use the recon results
     void Attack()
     {
         Board target = Battle.main.defender.board;
@@ -176,7 +182,7 @@ public class AIModule : ScriptableObject
         }
 
         //Linearize the map
-        situation = situation.GetBlurredMap(0.5f);
+        situation = situation.GetBlurredMap(agressivity);
 
         //Cool the tiles which cannot be targeted
         foreach (Tile tile in owner.hitTiles)
@@ -229,7 +235,7 @@ public class AIModule : ScriptableObject
         }
 
 
-        int[] hottestLines = new int[Battle.main.attackerCapabilities.maximumTorpedoCount];
+        int[] hottestLines = new int[Mathf.Min(Battle.main.attackerCapabilities.maximumTorpedoCount, Battle.main.attackerCapabilities.torpedoFiringAreaSize)];
         float[] hottestLineHeatValues = new float[hottestLines.Length];
         for (int i = 0; i < hottestLines.Length; i++)
         {
@@ -272,16 +278,25 @@ public class AIModule : ScriptableObject
         {
             torpedoHeat += hottestLineHeatValues[i];
         }
+        torpedoHeat *= (float)Battle.main.attackerCapabilities.maximumTorpedoCount / (float)Battle.main.attackerCapabilities.maximumTorpedoCount;
 
-        //TEST
-        Tile[] targets = new Tile[hottestTiles.Length];
-        for (int i = 0; i < hottestTiles.Length; i++)
+        //REDIRECT PLANES
+
+        //ATTACK
+        if (torpedoHeat > artilleryHeat)
         {
-            Vector2Int coord = hottestTiles[i];
-            targets[i] = target.tiles[coord.x, coord.y];
+            Battle.main.ExecuteTorpedoAttack(hottestLines);
         }
-        Battle.main.ExecuteArtilleryAttack(targets);
-        //TEST
+        else
+        {
+            Tile[] targets = new Tile[hottestTiles.Length];
+            for (int i = 0; i < hottestTiles.Length; i++)
+            {
+                Vector2Int coord = hottestTiles[i];
+                targets[i] = target.tiles[coord.x, coord.y];
+            }
+            Battle.main.ExecuteArtilleryAttack(targets);
+        }
     }
 
 
@@ -417,5 +432,8 @@ public class AIModule : ScriptableObject
 
         //Determine the personality of this AI when attacking
         recklessness = Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 3);
+        float roll = UnityEngine.Random.Range(0.000f, 1.000f);
+        agressivity = Mathf.Pow(roll, 0.5f + 1.5f * roll);
+
     }
 }
