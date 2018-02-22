@@ -125,33 +125,27 @@ public class AIModule : ScriptableObject
         //     return result;
         // }
 
-        public Heatmap GetLinearizedMap()
+        public Heatmap GetBlurredMap(float intensity)
         {
             Heatmap result = new Heatmap(new Vector2Int(tiles.GetLength(0), tiles.GetLength(1)));
 
             for (int axis = 0; axis < 2; axis++)
             {
-                for (int line = 0; line < (axis == 0 ? tiles.GetLength(0) : tiles.GetLength(1)); line++)
+                for (int column = 0; column < (axis == 0 ? tiles.GetLength(0) : tiles.GetLength(1)); column++)
                 {
-                    float lineHeat = 0;
-                    float maxHeat = -Mathf.Infinity;
-                    for (int tile = 0; tile < (axis == 0 ? tiles.GetLength(0) : tiles.GetLength(1)); tile++)
+                    int lineLength = axis == 0 ? tiles.GetLength(0) : tiles.GetLength(1);
+
+                    for (int direction = 0; direction < 2; direction++)
                     {
-                        Vector2Int coord = new Vector2Int(axis == 0 ? tile : line, axis == 0 ? line : tile);
-                        float tileHeat = tiles[coord.x, coord.y];
-
-                        lineHeat += tileHeat;
-                        maxHeat = tileHeat > maxHeat ? tileHeat : maxHeat;
-                    }
-
-                    for (int tile = 0; tile < (axis == 0 ? tiles.GetLength(0) : tiles.GetLength(1)); tile++)
-                    {
-                        Vector2Int coord = new Vector2Int(axis == 0 ? tile : line, axis == 0 ? line : tile);
-                        float tileHeat = tiles[coord.x, coord.y];
-                        float resultHeat = tileHeat != 0 && maxHeat != 0 ? tileHeat + (maxHeat - tileHeat) * Mathf.Pow(tileHeat / maxHeat, maxHeat / lineHeat) : 0;
-
-                        result.totalHeat += resultHeat;
-                        result.tiles[coord.x, coord.y] = resultHeat;
+                        float storedHeat = 0;
+                        for (int tile = direction == 0 ? 0 : (lineLength - 1); direction == 0 ? tile < lineLength : tile >= 0; tile += direction == 0 ? 1 : -1)
+                        {
+                            Vector2Int coord = new Vector2Int(axis == 0 ? tile : column, axis == 0 ? column : tile);
+                            storedHeat *= intensity;
+                            result.tiles[coord.x, coord.y] += storedHeat;
+                            result.totalHeat += storedHeat;
+                            storedHeat += tiles[coord.x, coord.y];
+                        }
                     }
                 }
             }
@@ -182,7 +176,7 @@ public class AIModule : ScriptableObject
         }
 
         //Linearize the map
-        situation = situation.GetLinearizedMap();
+        situation = situation.GetBlurredMap(0.5f);
 
         //Cool the tiles which cannot be targeted
         foreach (Tile tile in owner.hitTiles)

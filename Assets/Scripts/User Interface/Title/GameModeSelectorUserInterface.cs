@@ -94,7 +94,7 @@ public class GameModeSelectorUserInterface : SlidingUserInterface
         Battle.BattleData mod = GameLoaderUserInterface.newBattleData;
         if (mode != 2)
         {
-            mod.defender.aiType = mode == 1 ? AIType.NORMAL : AIType.NONE;
+            mod.defender.aiEnabled = mode == 1;
         }
         GameLoaderUserInterface.newBattleData = mod;
 

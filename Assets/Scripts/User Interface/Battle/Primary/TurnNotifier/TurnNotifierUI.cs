@@ -20,7 +20,7 @@ public class TurnNotifierUI : InputEnabledUI
             case UIState.ENABLING:
                 SetInteractable(true);
                 CameraControl.GoToWaypoint(Battle.main.attacker.flagCameraPoint, MiscellaneousVariables.it.playerCameraTransitionTime * 0.2f);
-                if (Battle.main.attacker.aiType == AIType.NONE)
+                if (!Battle.main.attacker.aiEnabled)
                 {
                     textbox.text = humanTurnText;
                 }
@@ -36,7 +36,7 @@ public class TurnNotifierUI : InputEnabledUI
     protected override void ProcessInput()
     {
         base.ProcessInput();
-        if (tap && Battle.main.attacker.aiType == AIType.NONE)
+        if (tap && !Battle.main.attacker.aiEnabled)
         {
             State = UIState.DISABLING;
             if (Battle.main.attacker.board.ships == null)

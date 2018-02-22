@@ -2,11 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-public enum AIType
-{
-    NONE,
-    NORMAL
-}
 public class Player : MonoBehaviour
 {
     [Serializable]
@@ -14,7 +9,7 @@ public class Player : MonoBehaviour
     {
         public int index;
         public Board.BoardData board;
-        public AIType aiType;
+        public bool aiEnabled;
         public AIModule.AIModuleData aIModuleData;
         public float[,,] flag;
         public int[,] hitTiles;
@@ -23,8 +18,8 @@ public class Player : MonoBehaviour
             PlayerData result = new PlayerData();
             result.index = player.index;
             result.board = player.board;
-            result.aiType = player.aiType;
-            result.aIModuleData = player.aiModule;
+            result.aiEnabled = player.aiEnabled;
+            result.aIModuleData = player.aiEnabled ? player.aiModule : new AIModule.AIModuleData();
             result.flag = new float[player.flag.GetLength(0), player.flag.GetLength(1), 3];
             for (int x = 0; x < player.flag.GetLength(0); x++)
             {
@@ -51,7 +46,7 @@ public class Player : MonoBehaviour
     }
     public int index;
     public Board board;
-    public AIType aiType;
+    public bool aiEnabled;
     public Color[,] flag;
     public List<Tile> hitTiles;
 
@@ -67,8 +62,8 @@ public class Player : MonoBehaviour
         board.transform.SetParent(transform);
         board.Initialize(data.board);
 
-        aiType = data.aiType;
-        if (aiType != AIType.NONE)
+        aiEnabled = data.aiEnabled;
+        if (aiEnabled)
         {
             aiModule = (AIModule)ScriptableObject.CreateInstance("AIModule");
             aiModule.owner = this;
@@ -113,7 +108,7 @@ public class Player : MonoBehaviour
             }
         }
 
-        if (aiType != AIType.NONE)
+        if (aiEnabled)
         {
             aiModule.AssignReferences(data.aIModuleData);
         }
