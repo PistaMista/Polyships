@@ -157,8 +157,8 @@ public class AIModule : ScriptableObject
         }
     }
 
-    float recklessness;
-    float agressivity;
+    public float recklessness;
+    public float agressivity;
     float reconResultMemory; //The air recon heatmap will be multiplied by this every turn
     float reconResultWeight; //How much will the AI use the recon results
     void Attack()
