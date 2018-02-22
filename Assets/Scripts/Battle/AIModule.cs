@@ -181,6 +181,8 @@ public class AIModule : ScriptableObject
             }
         }
 
+        //Use the air recon results to enhance chances of hitting
+
         //Linearize the map
         situation = situation.GetBlurredMap(agressivity);
 

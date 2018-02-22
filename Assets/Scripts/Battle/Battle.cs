@@ -299,9 +299,9 @@ public class Battle : MonoBehaviour
                     case ShipType.CARRIER:
                         Carrier carrier = (Carrier)ship;
                         gathered.maximumAircraftCount += carrier.aircraftCount;
-                        for (int resultID = 0; resultID < carrier.polarSearchResults.GetLength(0); resultID++)
+                        for (int resultID = 0; resultID < carrier.reconResults.GetLength(0); resultID++)
                         {
-                            airReconResults.Add(new int[] { carrier.polarSearchResults[resultID, 0], carrier.polarSearchResults[resultID, 1] });
+                            airReconResults.Add(new int[] { carrier.reconResults[resultID, 0], carrier.reconResults[resultID, 1] });
                         }
                         break;
                 }
