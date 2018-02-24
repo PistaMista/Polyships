@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+[Serializable]
 public struct Heatmap
 {
     public float[,] tiles;
     public float totalHeat;
 
-    public Heatmap(Vector2Int dimensions)
+    public Heatmap(int dimX, int dimY)
     {
-        tiles = new float[dimensions.x, dimensions.y];
+        tiles = new float[dimX, dimY];
         totalHeat = 0;
     }
 
@@ -65,7 +66,7 @@ public struct Heatmap
 
     public Heatmap GetBlurredMap(float intensity)
     {
-        Heatmap result = new Heatmap(new Vector2Int(tiles.GetLength(0), tiles.GetLength(1)));
+        Heatmap result = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
 
         for (int axis = 0; axis < 2; axis++)
         {
@@ -80,8 +81,7 @@ public struct Heatmap
                     {
                         Vector2Int coord = new Vector2Int(axis == 0 ? tile : column, axis == 0 ? column : tile);
                         storedHeat *= intensity;
-                        result.tiles[coord.x, coord.y] += storedHeat;
-                        result.totalHeat += storedHeat;
+                        result.Heat(coord, storedHeat, 1);
                         storedHeat += tiles[coord.x, coord.y];
                     }
                 }
@@ -91,34 +91,80 @@ public struct Heatmap
         return result;
     }
 
-    public Vector2Int[] GetHottestTiles(int count)
+    public Heatmap GetNormalizedMap()
     {
-        List<Vector2Int> hottestTiles = new List<Vector2Int>();
+        Heatmap result = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
 
-        float lastHottestTileHeat = Mathf.Infinity;
+        Heatmap intermediate = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
+        Vector2Int coldestTile = GetHottestTiles(1, Mathf.NegativeInfinity, true)[0];
+        float lowestHeat = tiles[coldestTile.x, coldestTile.y];
+
+        for (int x = 0; x < tiles.GetLength(0); x++)
+        {
+            for (int y = 0; y < tiles.GetLength(1); y++)
+            {
+                intermediate.Heat(new Vector2Int(x, y), tiles[x, y] - lowestHeat, 1);
+            }
+        }
+
+
+        Vector2Int hottestTile = intermediate.GetHottestTiles(1, Mathf.Infinity)[0];
+        float highestHeat = intermediate.tiles[hottestTile.x, hottestTile.y];
+
+        if (highestHeat == 0)
+        {
+            return result;
+        }
+
+        for (int x = 0; x < tiles.GetLength(0); x++)
+        {
+            for (int y = 0; y < tiles.GetLength(1); y++)
+            {
+                result.Heat(new Vector2Int(x, y), intermediate.tiles[x, y] / highestHeat, 1);
+            }
+        }
+
+        return result;
+    }
+
+    public Vector2Int[] GetHottestTiles(int count, float threshold)
+    {
+        return GetHottestTiles(count, threshold, false);
+    }
+
+    public Vector2Int[] GetHottestTiles(int count, float threshold, bool coldest)
+    {
+        List<Vector2Int> bestTiles = new List<Vector2Int>();
+
+        float lastBestTileHeat = coldest ? Mathf.NegativeInfinity : Mathf.Infinity;
         for (int i = 0; i < count; i++)
         {
-            float hottestTileHeat = Mathf.NegativeInfinity;
-            Vector2Int hottestTile = Vector2Int.right;
+            float bestTileHeat = coldest ? Mathf.Infinity : Mathf.NegativeInfinity;
+            Vector2Int bestTile = Vector2Int.right;
             for (int x = 0; x < tiles.GetLength(0); x++)
             {
                 for (int y = 0; y < tiles.GetLength(1); y++)
                 {
                     Vector2Int examinedTile = new Vector2Int(x, y);
                     float examinedTileHeat = tiles[x, y];
-                    if (!hottestTiles.Contains(examinedTile) && examinedTileHeat > hottestTileHeat && examinedTileHeat < lastHottestTileHeat)
+
+                    bool lower = coldest ? examinedTileHeat < bestTileHeat : examinedTileHeat > bestTileHeat;
+                    bool upper = coldest ? examinedTileHeat > lastBestTileHeat : examinedTileHeat < lastBestTileHeat;
+                    bool limiter = coldest ? examinedTileHeat > threshold : examinedTileHeat < threshold;
+
+                    if (!bestTiles.Contains(examinedTile) && upper && lower && limiter)
                     {
-                        hottestTileHeat = examinedTileHeat;
-                        hottestTile = examinedTile;
+                        bestTileHeat = examinedTileHeat;
+                        bestTile = examinedTile;
                     }
                 }
             }
 
-            hottestTiles.Add(hottestTile);
-            lastHottestTileHeat = hottestTileHeat;
+            bestTiles.Add(bestTile);
+            lastBestTileHeat = bestTileHeat;
         }
 
-        return hottestTiles.ToArray();
+        return bestTiles.ToArray();
     }
 }
 public class AIModule : ScriptableObject
@@ -126,13 +172,22 @@ public class AIModule : ScriptableObject
     [Serializable]
     public struct AIModuleData
     {
+        public Heatmap situation;
+        public Heatmap airReconMap;
         public float recklessness;
         public float agressivity;
+        public float reconResultWeight;
+        public float reconResultMemory;
         public static implicit operator AIModuleData(AIModule module)
         {
             AIModuleData result;
+            result.situation = module.situation;
+            result.airReconMap = module.airReconMap;
+
             result.recklessness = module.recklessness;
             result.agressivity = module.agressivity;
+            result.reconResultWeight = module.reconResultWeight;
+            result.reconResultMemory = module.reconResultMemory;
             return result;
         }
     }
@@ -140,8 +195,13 @@ public class AIModule : ScriptableObject
 
     public virtual void Initialize(AIModuleData data)
     {
+        situation = data.situation;
+        airReconMap = data.airReconMap;
+
         recklessness = data.recklessness;
         agressivity = data.agressivity;
+        reconResultMemory = data.reconResultMemory;
+        reconResultWeight = data.reconResultWeight;
     }
 
     public virtual void AssignReferences(AIModuleData data)
@@ -170,16 +230,17 @@ public class AIModule : ScriptableObject
 
 
     public Heatmap situation;
+    public Heatmap airReconMap;
     public float recklessness;
     public float agressivity;
-    float reconResultMemory; //The air recon heatmap will be multiplied by this every turn
-    float reconResultWeight; //How much will the AI use the recon results
+    public float reconResultMemory; //The air recon heatmap will be multiplied by this every turn
+    public float reconResultWeight; //How much will the AI use the recon results
     void Attack()
     {
         Board target = Battle.main.defender.board;
 
         //Construct a situation heatmap
-        situation = new Heatmap(new Vector2Int(target.tiles.GetLength(0), target.tiles.GetLength(1)));
+        situation = new Heatmap(target.tiles.GetLength(0), target.tiles.GetLength(1));
 
         //Add heat for hit tiles
         foreach (Tile hit in owner.hitTiles)
@@ -195,6 +256,28 @@ public class AIModule : ScriptableObject
         }
 
         //Use the air recon results to enhance chances of hitting
+        int[,] reconResults = Battle.main.attackerCapabilities.airReconResults;
+        for (int i = 0; i < reconResults.GetLength(0); i++)
+        {
+            int lineIndex = reconResults[i, 0];
+            int result = reconResults[i, 1];
+
+            int linePosition = (lineIndex % (Battle.main.defender.board.tiles.GetLength(0) - 1));
+            bool lineVertical = lineIndex == linePosition;
+
+            for (int x = lineVertical ? (result == 1 ? linePosition + 1 : 0) : 0; x < (lineVertical ? (result != 1 ? linePosition + 1 : situation.tiles.GetLength(0)) : situation.tiles.GetLength(0)); x++)
+            {
+                for (int y = !lineVertical ? (result == 1 ? linePosition + 1 : 0) : 0; y < (lineVertical ? (result != 1 ? linePosition + 1 : situation.tiles.GetLength(1)) : situation.tiles.GetLength(1)); y++)
+                {
+                    airReconMap.Heat(new Vector2Int(x, y), 1.0f / (0.2f + reconResultMemory), 1);
+                }
+            }
+        }
+
+        airReconMap = airReconMap.GetNormalizedMap();
+        situation += airReconMap * reconResultWeight;
+
+
 
         //Blur the map
         situation = situation.GetBlurredMap(agressivity);
@@ -206,32 +289,7 @@ public class AIModule : ScriptableObject
         }
 
         //Rate the different attack possibilities
-        // List<Vector2Int> hottestTiles = new List<Vector2Int>();
-
-        // float lastHottestTileHeat = Mathf.Infinity;
-        // for (int i = Battle.main.attackerCapabilities.maximumArtilleryCount - 1; i >= 0; i--)
-        // {
-        //     float hottestTileHeat = Mathf.NegativeInfinity;
-        //     Vector2Int hottestTile = Vector2Int.right;
-        //     for (int x = 0; x < situation.tiles.GetLength(0); x++)
-        //     {
-        //         for (int y = 0; y < situation.tiles.GetLength(1); y++)
-        //         {
-        //             Vector2Int examinedTile = new Vector2Int(x, y);
-        //             float examinedTileHeat = situation.tiles[x, y];
-        //             if (examinedTileHeat > hottestTileHeat && examinedTileHeat < lastHottestTileHeat)
-        //             {
-        //                 hottestTileHeat = examinedTileHeat;
-        //                 hottestTile = examinedTile;
-        //             }
-        //         }
-        //     }
-
-        //     hottestTiles.Add(hottestTile);
-        //     lastHottestTileHeat = hottestTileHeat;
-        // }
-
-        Vector2Int[] hottestTiles = situation.GetHottestTiles(Battle.main.attackerCapabilities.maximumArtilleryCount);
+        Vector2Int[] hottestTiles = situation.GetHottestTiles(Battle.main.attackerCapabilities.maximumArtilleryCount, Mathf.Infinity);
 
 
 
@@ -289,6 +347,7 @@ public class AIModule : ScriptableObject
 
         //REDIRECT PLANES
 
+
         //ATTACK
         if (torpedoHeat > artilleryHeat)
         {
@@ -321,7 +380,7 @@ public class AIModule : ScriptableObject
         Heatmap[] shipLocationHeatmaps = new Heatmap[owner.board.ships.Length];
         for (int i = 0; i < owner.board.ships.Length; i++)
         {
-            shipLocationHeatmaps[i] = new Heatmap(new Vector2Int(owner.board.tiles.GetLength(0), owner.board.tiles.GetLength(1)));
+            shipLocationHeatmaps[i] = new Heatmap(owner.board.tiles.GetLength(0), owner.board.tiles.GetLength(1));
         }
 
         //Determine heatmaps by individual tactical choices
@@ -437,10 +496,15 @@ public class AIModule : ScriptableObject
             }
         }
 
+        airReconMap = new Heatmap(Battle.main.defender.board.tiles.GetLength(0), Battle.main.defender.board.tiles.GetLength(1));
+
         //Determine the personality of this AI when attacking
         recklessness = Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 3);
         float roll = UnityEngine.Random.Range(0.000f, 1.000f);
         agressivity = Mathf.Pow(roll, 0.5f + 1.5f * roll);
 
+
+        reconResultWeight = 1.0f - Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 4);
+        reconResultMemory = Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 2);
     }
 }

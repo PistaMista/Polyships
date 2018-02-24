@@ -27,7 +27,7 @@ public class DamageReportUI : BoardViewUI
                 {
                     Heatmap situation = Battle.main.defender.aiModule.situation;
 
-                    List<Vector2Int> hottestTiles = new List<Vector2Int>(situation.GetHottestTiles(3));
+                    List<Vector2Int> hottestTiles = new List<Vector2Int>(situation.GetHottestTiles(40, -100.0f, true));
                     for (int x = 0; x < situation.tiles.GetLength(0); x++)
                     {
                         for (int y = 0; y < situation.tiles.GetLength(1); y++)
