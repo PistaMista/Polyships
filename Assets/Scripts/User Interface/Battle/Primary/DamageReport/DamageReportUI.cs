@@ -10,7 +10,7 @@ public class DamageReportUI : BoardViewUI
     {
         managedBoard = Battle.main.attacker.board;
         base.SetState(state);
-        SetInteractable(state == UIState.ENABLED);
+        SetInteractable((int)state >= 2);
         switch (state)
         {
             case UIState.DISABLING:
@@ -21,7 +21,37 @@ public class DamageReportUI : BoardViewUI
                 {
                     SetTileSquareRender(tile.coordinates, tile.containedShip ? hitTileMaterial : missedTileMaterial, 1);
                 }
+
+                //DEBUG - Show the heat values of each tile
+                if (Battle.main.defender.aiEnabled)
+                {
+                    Heatmap situation = Battle.main.defender.aiModule.situation;
+
+                    List<Vector2Int> hottestTiles = new List<Vector2Int>(situation.GetHottestTiles(3));
+                    for (int x = 0; x < situation.tiles.GetLength(0); x++)
+                    {
+                        for (int y = 0; y < situation.tiles.GetLength(1); y++)
+                        {
+                            Tile tile = Battle.main.attacker.board.tiles[x, y];
+                            float tileHeat = situation.tiles[x, y];
+
+                            TextMesh text = CreateDynamicAgent("tile_heat_text").GetComponent<TextMesh>();
+                            text.transform.position = tile.transform.position + Vector3.up * (0.05f + MiscellaneousVariables.it.boardUIRenderHeight);
+                            text.text = (Mathf.Floor(Mathf.Clamp(tileHeat, -99.0f, 99.0f) * 10f) / 10f).ToString();
+
+                            if (hottestTiles.Contains(new Vector2Int(x, y)))
+                            {
+                                text.color = Color.white;
+                            }
+                        }
+                    }
+                }
                 break;
+        }
+
+        if ((int)state < 2)
+        {
+            RemoveDynamicAgents<UIAgent>("Tile Heat", true);
         }
     }
 
