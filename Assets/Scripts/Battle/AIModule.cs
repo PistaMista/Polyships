@@ -6,12 +6,36 @@ using System;
 public struct Heatmap
 {
     public float[,] tiles;
-    public float totalHeat;
+    public float[] gridLines
+    {
+        get
+        {
+            float[] result = new float[tiles.GetLength(0) + tiles.GetLength(1) - 2];
+
+            return result;
+        }
+    }
+
+    public float totalHeat
+    {
+        get
+        {
+            float result = 0;
+            for (int x = 0; x < tiles.GetLength(0); x++)
+            {
+                for (int y = 0; y < tiles.GetLength(1); y++)
+                {
+                    result += tiles[x, y];
+                }
+            }
+
+            return result;
+        }
+    }
 
     public Heatmap(int dimX, int dimY)
     {
         tiles = new float[dimX, dimY];
-        totalHeat = 0;
     }
 
     public static Heatmap operator *(Heatmap map, float mult)
@@ -45,7 +69,6 @@ public struct Heatmap
         if (dropoff >= 1.0f)
         {
             tiles[source.x, source.y] += heat;
-            totalHeat += heat;
         }
         else
         {
@@ -57,7 +80,6 @@ public struct Heatmap
                     int distance = Mathf.Abs(relative.x) + Mathf.Abs(relative.y);
                     float increase = heat * Mathf.Pow(1.0f - dropoff, distance);
 
-                    totalHeat += increase;
                     tiles[x, y] += increase;
                 }
             }
