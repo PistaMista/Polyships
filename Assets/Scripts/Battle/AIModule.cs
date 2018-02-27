@@ -6,12 +6,61 @@ using System;
 public struct Heatmap
 {
     public float[,] tiles;
+    public float[] verticalLines
+    {
+        get
+        {
+            float[] result = new float[tiles.GetLength(0)];
+
+            for (int x = 0; x < result.Length; x++)
+            {
+                float sum = 0;
+                for (int y = 0; y < tiles.GetLength(1); y++)
+                {
+                    sum += tiles[x, y];
+                }
+
+                result[x] = sum;
+            }
+
+            return result;
+        }
+    }
+    public float[] horizontalLines
+    {
+        get
+        {
+            float[] result = new float[tiles.GetLength(1)];
+
+            for (int y = 0; y < result.Length; y++)
+            {
+                float sum = 0;
+                for (int x = 0; x < tiles.GetLength(0); x++)
+                {
+                    sum += tiles[x, y];
+                }
+
+                result[y] = sum;
+            }
+
+            return result;
+        }
+    }
     public float[] gridLines
     {
         get
         {
             float[] result = new float[tiles.GetLength(0) + tiles.GetLength(1) - 2];
+            float[] horizontalLines = this.horizontalLines;
+            float[] verticalLines = this.verticalLines;
 
+            for (int i = 0; i < result.Length; i++)
+            {
+                float[] inspectedArray = i < (tiles.GetLength(0) - 1) ? verticalLines : horizontalLines;
+                int index = i % (tiles.GetLength(0) - 1);
+
+                result[i] = inspectedArray[index] + inspectedArray[index + 1];
+            }
             return result;
         }
     }
@@ -118,7 +167,7 @@ public struct Heatmap
         Heatmap result = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
 
         Heatmap intermediate = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
-        Vector2Int coldestTile = GetHottestTiles(1, Mathf.NegativeInfinity, true)[0];
+        Vector2Int coldestTile = GetExtremeTiles(1, Mathf.NegativeInfinity, true)[0];
         float lowestHeat = tiles[coldestTile.x, coldestTile.y];
 
         for (int x = 0; x < tiles.GetLength(0); x++)
@@ -130,7 +179,7 @@ public struct Heatmap
         }
 
 
-        Vector2Int hottestTile = intermediate.GetHottestTiles(1, Mathf.Infinity)[0];
+        Vector2Int hottestTile = intermediate.GetExtremeTiles(1, Mathf.Infinity, false)[0];
         float highestHeat = intermediate.tiles[hottestTile.x, hottestTile.y];
 
         if (highestHeat == 0)
@@ -149,44 +198,19 @@ public struct Heatmap
         return result;
     }
 
-    public Vector2Int[] GetHottestTiles(int count, float threshold)
+    public Vector2Int[] GetExtremeTiles(int count, float threshold, bool coldest)
     {
-        return GetHottestTiles(count, threshold, false);
+        return Utilities.GetExtremeArrayElements(tiles, count, coldest, threshold);
     }
 
-    public Vector2Int[] GetHottestTiles(int count, float threshold, bool coldest)
+    public int[] GetExtremeGridLines(int count, float threshold, bool coldest)
     {
-        List<Vector2Int> bestTiles = new List<Vector2Int>();
+        return Utilities.GetExtremeArrayElements(gridLines, count, coldest, threshold);
+    }
 
-        float lastBestTileHeat = coldest ? Mathf.NegativeInfinity : Mathf.Infinity;
-        for (int i = 0; i < count; i++)
-        {
-            float bestTileHeat = coldest ? Mathf.Infinity : Mathf.NegativeInfinity;
-            Vector2Int bestTile = Vector2Int.right;
-            for (int x = 0; x < tiles.GetLength(0); x++)
-            {
-                for (int y = 0; y < tiles.GetLength(1); y++)
-                {
-                    Vector2Int examinedTile = new Vector2Int(x, y);
-                    float examinedTileHeat = tiles[x, y];
-
-                    bool lower = coldest ? examinedTileHeat < bestTileHeat : examinedTileHeat > bestTileHeat;
-                    bool upper = coldest ? examinedTileHeat > lastBestTileHeat : examinedTileHeat < lastBestTileHeat;
-                    bool limiter = coldest ? examinedTileHeat > threshold : examinedTileHeat < threshold;
-
-                    if (!bestTiles.Contains(examinedTile) && upper && lower && limiter)
-                    {
-                        bestTileHeat = examinedTileHeat;
-                        bestTile = examinedTile;
-                    }
-                }
-            }
-
-            bestTiles.Add(bestTile);
-            lastBestTileHeat = bestTileHeat;
-        }
-
-        return bestTiles.ToArray();
+    public int[] GetExtremeVerticalLines(int count, float threshold, bool coldest)
+    {
+        return Utilities.GetExtremeArrayElements(verticalLines, count, coldest, threshold);
     }
 }
 public class AIModule : ScriptableObject
@@ -296,91 +320,101 @@ public class AIModule : ScriptableObject
             }
         }
 
-        airReconMap = airReconMap.GetNormalizedMap();
-        situation += airReconMap * reconResultWeight;
-
-
-
         //Blur the map
         situation = situation.GetBlurredMap(agressivity);
+
+        //Evaluate torpedo possibility
+        int[] torpedoCandidates = situation.GetExtremeVerticalLines(Battle.main.attackerCapabilities.maximumTorpedoCount, Mathf.Infinity, false);
+        float torpedoHeat = 0;
+        float[] gridLanes = situation.verticalLines;
+        for (int i = 0; i < torpedoCandidates.Length; i++)
+        {
+            torpedoHeat += gridLanes[torpedoCandidates[i]];
+        }
+
+        torpedoHeat /= situation.tiles.GetLength(1);
+
+
+        airReconMap = airReconMap.GetNormalizedMap();
+        situation += airReconMap * reconResultWeight;
 
         //Cool the tiles which cannot be targeted
         foreach (Tile tile in owner.hitTiles)
         {
-            situation.Heat(tile.coordinates, Mathf.NegativeInfinity, 1);
+            situation.Heat(tile.coordinates, -20f, 1);
         }
 
-        //Rate the different attack possibilities
-        Vector2Int[] hottestTiles = situation.GetHottestTiles(Battle.main.attackerCapabilities.maximumArtilleryCount, Mathf.Infinity);
-
-
-
+        //Evaluate artillery possibility
+        Vector2Int[] artilleryCandidates = situation.GetExtremeTiles(Battle.main.attackerCapabilities.maximumArtilleryCount, Mathf.Infinity, false);
         float artilleryHeat = 0;
-        foreach (Vector2Int coord in hottestTiles)
+        foreach (Vector2Int coord in artilleryCandidates)
         {
             artilleryHeat += situation.tiles[coord.x, coord.y];
         }
 
 
-        int[] hottestLines = new int[Mathf.Min(Battle.main.attackerCapabilities.maximumTorpedoCount, Battle.main.attackerCapabilities.torpedoFiringAreaSize)];
-        float[] hottestLineHeatValues = new float[hottestLines.Length];
-        for (int i = 0; i < hottestLines.Length; i++)
+        //REDIRECT PLANES
+        float[] gridLines = situation.gridLines;
+        float worstLine = gridLines[Utilities.GetExtremeArrayElements(gridLines, 1, true, Mathf.NegativeInfinity)[0]];
+        for (int i = 0; i < gridLines.Length; i++)
         {
-            hottestLines[i] = -1;
-            hottestLineHeatValues[i] = Mathf.NegativeInfinity;
+            gridLines[i] -= worstLine;
         }
 
-        for (int examinedLine = 0; examinedLine < situation.tiles.GetLength(0); examinedLine++)
+        float[] targetProbabilities = new float[gridLines.Length];
+        float probabilityConstructorSum = 0;
+        for (int i = 0; i < gridLines.Length; i++)
         {
-            float examinedLineHeat = 0;
+            float value = gridLines[i];
+            probabilityConstructorSum += value;
 
-            for (int y = 0; y < situation.tiles.GetLength(1); y++)
+            targetProbabilities[i] = probabilityConstructorSum;
+        }
+
+        int[] planeTargets = new int[Battle.main.attackerCapabilities.maximumAircraftCount];
+        for (int i = 0; i < planeTargets.Length; i++)
+        {
+            float roll = UnityEngine.Random.Range(0.00f, targetProbabilities[targetProbabilities.Length - 1]);
+            int selectedLine = -1;
+
+            for (int x = 0; x < targetProbabilities.Length; x++)
             {
-                examinedLineHeat += situation.tiles[examinedLine, y];
-            }
-
-            for (int i = 0; i <= hottestLines.Length; i++)
-            {
-                float rankedLineHeat = i < hottestLines.Length ? hottestLineHeatValues[i] : Mathf.Infinity;
-
-                if (examinedLineHeat < rankedLineHeat)
+                if (roll < targetProbabilities[x])
                 {
-                    if (i > 0)
+                    if (selectedLine == -1)
                     {
-                        int previousRankedLine = hottestLines[i - 1];
-
-                        if (examinedLine != previousRankedLine)
-                        {
-                            hottestLines[i - 1] = examinedLine;
-                            hottestLineHeatValues[i - 1] = examinedLineHeat;
-                        }
+                        selectedLine = x;
                     }
-                    break;
+
+                    targetProbabilities[x] -= gridLines[selectedLine];
                 }
             }
+
+            planeTargets[i] = selectedLine;
         }
 
-        float torpedoHeat = 0;
-        for (int i = 0; i < hottestLineHeatValues.Length; i++)
+        List<int> toAssign = new List<int>(planeTargets);
+        foreach (Ship ship in owner.board.ships)
         {
-            torpedoHeat += hottestLineHeatValues[i];
+            if (ship.type == ShipType.CARRIER)
+            {
+                Carrier carrier = (Carrier)ship;
+                carrier.reconTargets = toAssign.GetRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count)).ToArray();
+                toAssign.RemoveRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count));
+            }
         }
-        torpedoHeat *= (float)Battle.main.attackerCapabilities.maximumTorpedoCount / (float)Battle.main.attackerCapabilities.maximumTorpedoCount;
-
-        //REDIRECT PLANES
-
 
         //ATTACK
         if (torpedoHeat > artilleryHeat)
         {
-            Battle.main.ExecuteTorpedoAttack(hottestLines);
+            Battle.main.ExecuteTorpedoAttack(torpedoCandidates);
         }
         else
         {
-            Tile[] targets = new Tile[hottestTiles.Length];
-            for (int i = 0; i < hottestTiles.Length; i++)
+            Tile[] targets = new Tile[artilleryCandidates.Length];
+            for (int i = 0; i < artilleryCandidates.Length; i++)
             {
-                Vector2Int coord = hottestTiles[i];
+                Vector2Int coord = artilleryCandidates[i];
                 targets[i] = target.tiles[coord.x, coord.y];
             }
             Battle.main.ExecuteArtilleryAttack(targets);
