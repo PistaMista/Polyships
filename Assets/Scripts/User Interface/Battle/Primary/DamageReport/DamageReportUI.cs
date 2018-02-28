@@ -23,11 +23,11 @@ public class DamageReportUI : BoardViewUI
                 }
 
                 //DEBUG - Show the heat values of each tile
-                if (Battle.main.defender.aiEnabled)
+                if (Battle.main.defender.aiEnabled && MiscellaneousVariables.it.showAISituationHeat)
                 {
                     Heatmap situation = Battle.main.defender.aiModule.situation;
 
-                    List<Vector2Int> hottestTiles = new List<Vector2Int>(situation.GetExtremeTiles(40, -100.0f, true));
+                    List<Vector2Int> hottestTiles = new List<Vector2Int>(situation.GetExtremeTiles(3, Mathf.Infinity, false));
                     for (int x = 0; x < situation.tiles.GetLength(0); x++)
                     {
                         for (int y = 0; y < situation.tiles.GetLength(1); y++)

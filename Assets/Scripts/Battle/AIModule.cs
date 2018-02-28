@@ -323,18 +323,6 @@ public class AIModule : ScriptableObject
         //Blur the map
         situation = situation.GetBlurredMap(agressivity);
 
-        //Evaluate torpedo possibility
-        int[] torpedoCandidates = situation.GetExtremeVerticalLines(Battle.main.attackerCapabilities.maximumTorpedoCount, Mathf.Infinity, false);
-        float torpedoHeat = 0;
-        float[] gridLanes = situation.verticalLines;
-        for (int i = 0; i < torpedoCandidates.Length; i++)
-        {
-            torpedoHeat += gridLanes[torpedoCandidates[i]];
-        }
-
-        torpedoHeat /= situation.tiles.GetLength(1);
-
-
         airReconMap = airReconMap.GetNormalizedMap();
         situation += airReconMap * reconResultWeight;
 
@@ -343,6 +331,30 @@ public class AIModule : ScriptableObject
         {
             situation.Heat(tile.coordinates, -20f, 1);
         }
+
+        //Normalize the map
+        situation = situation.GetNormalizedMap();
+
+
+        //Evaluate torpedo possibility
+        float[] verticalLines = situation.verticalLines;
+        for (int i = 0; i < verticalLines.Length; i++)
+        {
+            if (!Battle.main.attackerCapabilities.torpedoFiringArea[i])
+            {
+                verticalLines[i] = Mathf.NegativeInfinity;
+            }
+        }
+
+        int[] torpedoCandidates = Utilities.GetExtremeArrayElements(verticalLines, Battle.main.attackerCapabilities.maximumTorpedoCount, false, Mathf.Infinity);
+        float torpedoHeat = 0;
+        float[] gridLanes = situation.verticalLines;
+        for (int i = 0; i < torpedoCandidates.Length; i++)
+        {
+            torpedoHeat += gridLanes[torpedoCandidates[i]];
+        }
+
+        torpedoHeat /= Battle.main.attackerCapabilities.maximumArtilleryCount;
 
         //Evaluate artillery possibility
         Vector2Int[] artilleryCandidates = situation.GetExtremeTiles(Battle.main.attackerCapabilities.maximumArtilleryCount, Mathf.Infinity, false);
@@ -366,7 +378,7 @@ public class AIModule : ScriptableObject
         for (int i = 0; i < gridLines.Length; i++)
         {
             float value = gridLines[i];
-            probabilityConstructorSum += value;
+            probabilityConstructorSum += value + 1.00f;
 
             targetProbabilities[i] = probabilityConstructorSum;
         }
