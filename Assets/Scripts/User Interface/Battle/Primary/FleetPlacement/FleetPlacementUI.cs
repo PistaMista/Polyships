@@ -5,14 +5,17 @@ using UnityEngine;
 public class FleetPlacementUI : BoardViewUI
 {
     public static FleetPlacementUI it;
+
+    void Awake()
+    {
+        it = this;
+    }
     protected override void Start()
     {
         base.Start();
-        it = this;
         screenToWorldInputConversionHeight = MiscellaneousVariables.it.boardUIRenderHeight;
     }
     public Waypoint cameraWaypoint;
-    public GameObject[] defaultShipLoadout;
     public bool forceIdenticalShipTypesToGroupTogether;
     public float shipPaletteGroupPadding;
     public float shipDrawerFlatSize;
@@ -55,17 +58,8 @@ public class FleetPlacementUI : BoardViewUI
                 cameraWaypoint.transform.rotation = Battle.main.attacker.boardCameraPoint.transform.rotation;
                 CameraControl.GoToWaypoint(cameraWaypoint, MiscellaneousVariables.it.playerCameraTransitionTime);
 
-                managedBoard.placementInfo.notplacedShips = new List<Ship>();
-                managedBoard.placementInfo.placedShips = new List<Ship>();
-                managedBoard.placementInfo.allShips = new List<Ship>();
-
-                managedBoard.placementInfo.selectedTiles = new List<Tile>();
-                managedBoard.placementInfo.validTiles = new List<Tile>();
-                managedBoard.placementInfo.invalidTiles = new List<Tile>();
-
                 RemoveDynamicAgents<UIAgent>("", true);
                 MakeShipDrawer();
-                managedBoard.ships = managedBoard.placementInfo.allShips.ToArray();
 
                 SetState(UIState.ENABLED);
                 break;
@@ -234,9 +228,9 @@ public class FleetPlacementUI : BoardViewUI
             Tile candidateTile = GetTileAtInputPosition();
             if (candidateTile != null)
             {
-
-                if (managedBoard.SelectTileForPlacement(candidateTile))
+                if (managedBoard.placementInfo.selectableTiles.Contains(candidateTile))
                 {
+                    managedBoard.SelectTileForPlacement(candidateTile);
                     UpdateMarkers();
                 }
             }
@@ -247,6 +241,7 @@ public class FleetPlacementUI : BoardViewUI
             if (managedBoard.placementInfo.selectedShip)
             {
                 managedBoard.placementInfo.selectedTiles = new List<Tile>();
+                managedBoard.ReevaluateTiles();
                 UpdateMarkers();
             }
         }
@@ -317,16 +312,10 @@ public class FleetPlacementUI : BoardViewUI
         List<ShipRectangleGroup> unfinishedGroups = new List<ShipRectangleGroup>();
         List<Ship> toAdd = new List<Ship>();
 
+        managedBoard.SpawnShips();
         ShipRectangleGroup currentGroup = new ShipRectangleGroup();
-        for (int i = 0; i < defaultShipLoadout.Length; i++)
+        foreach (Ship ship in managedBoard.placementInfo.allShips)
         {
-            Ship ship = Instantiate(defaultShipLoadout[i]).GetComponent<Ship>();
-            managedBoard.placementInfo.notplacedShips.Add(ship);
-            managedBoard.placementInfo.allShips.Add(ship);
-            ship.placementInfo.lastLocation = null;
-            ship.index = i;
-
-            ship.parentBoard = managedBoard;
             ship.transform.SetParent(shipDrawer.transform);
 
             if (toAdd.Count == 0)

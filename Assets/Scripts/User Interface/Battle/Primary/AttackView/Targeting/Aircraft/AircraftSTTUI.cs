@@ -38,7 +38,7 @@ public class AircraftSTTUI : SecondaryTTUI
             if (ship.type == ShipType.CARRIER)
             {
                 Carrier carrier = (Carrier)ship;
-                carrier.polarSearchTargets = toAssign.GetRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count)).ToArray();
+                carrier.reconTargets = toAssign.GetRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count)).ToArray();
                 toAssign.RemoveRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count));
             }
         }

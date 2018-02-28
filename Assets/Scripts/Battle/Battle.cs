@@ -263,6 +263,7 @@ public class Battle : MonoBehaviour
         public int maximumTorpedoCount;
         public int maximumAircraftCount;
         public bool[] torpedoFiringArea;
+        public int torpedoFiringAreaSize;
         public int[,] airReconResults;
     }
     public AttackerCapabilities attackerCapabilities;
@@ -291,15 +292,16 @@ public class Battle : MonoBehaviour
                             if (destroyer.firingAreaBlockages[x] < 0)
                             {
                                 gathered.torpedoFiringArea[x] = true;
+                                gathered.torpedoFiringAreaSize++;
                             }
                         }
                         break;
                     case ShipType.CARRIER:
                         Carrier carrier = (Carrier)ship;
                         gathered.maximumAircraftCount += carrier.aircraftCount;
-                        for (int resultID = 0; resultID < carrier.polarSearchResults.GetLength(0); resultID++)
+                        for (int resultID = 0; resultID < carrier.reconResults.GetLength(0); resultID++)
                         {
-                            airReconResults.Add(new int[] { carrier.polarSearchResults[resultID, 0], carrier.polarSearchResults[resultID, 1] });
+                            airReconResults.Add(new int[] { carrier.reconResults[resultID, 0], carrier.reconResults[resultID, 1] });
                         }
                         break;
                 }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
 public class Player : MonoBehaviour
 {
     [Serializable]
@@ -10,7 +9,8 @@ public class Player : MonoBehaviour
     {
         public int index;
         public Board.BoardData board;
-        public bool computerControlled;
+        public bool aiEnabled;
+        public AIModule.AIModuleData aIModuleData;
         public float[,,] flag;
         public int[,] hitTiles;
         public static implicit operator PlayerData(Player player)
@@ -18,7 +18,8 @@ public class Player : MonoBehaviour
             PlayerData result = new PlayerData();
             result.index = player.index;
             result.board = player.board;
-            result.computerControlled = player.computerControlled;
+            result.aiEnabled = player.aiEnabled;
+            result.aIModuleData = player.aiEnabled ? player.aiModule : new AIModule.AIModuleData();
             result.flag = new float[player.flag.GetLength(0), player.flag.GetLength(1), 3];
             for (int x = 0; x < player.flag.GetLength(0); x++)
             {
@@ -45,13 +46,13 @@ public class Player : MonoBehaviour
     }
     public int index;
     public Board board;
-    public bool computerControlled;
+    public bool aiEnabled;
     public Color[,] flag;
     public List<Tile> hitTiles;
 
 
 
-
+    public AIModule aiModule;
     public Waypoint boardCameraPoint;
     public Waypoint flagCameraPoint;
     public void Initialize(PlayerData data)
@@ -61,7 +62,13 @@ public class Player : MonoBehaviour
         board.transform.SetParent(transform);
         board.Initialize(data.board);
 
-        computerControlled = data.computerControlled;
+        aiEnabled = data.aiEnabled;
+        if (aiEnabled)
+        {
+            aiModule = (AIModule)ScriptableObject.CreateInstance("AIModule");
+            aiModule.owner = this;
+            aiModule.Initialize(data.aIModuleData);
+        }
 
         flag = new Color[data.flag.GetLength(0), data.flag.GetLength(1)];
         for (int x = 0; x < flag.GetLength(0); x++)
@@ -99,6 +106,11 @@ public class Player : MonoBehaviour
             {
                 hitTiles.Add(targetBoard.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
             }
+        }
+
+        if (aiEnabled)
+        {
+            aiModule.AssignReferences(data.aIModuleData);
         }
     }
 

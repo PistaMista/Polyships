@@ -52,6 +52,8 @@ public class Ship : MonoBehaviour
     public int maxHealth;
     public Cruiser concealedBy;
     public ShipType type;
+    [Range(0, 5)]
+    public int concealmentAIValue;
 
     public virtual void Initialize(ShipData data)
     {
@@ -179,11 +181,14 @@ public class Ship : MonoBehaviour
             tiles = location;
         }
 
-        placementInfo.waypoints = new List<Vector3>();
+        if (parentBoard.owner.aiModule == null)
+        {
+            placementInfo.waypoints = new List<Vector3>();
 
-        Vector3 targetPosition = location != null ? placementInfo.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : FleetPlacementUI.it.shipDrawer.transform.TransformPoint(placementInfo.localDrawerPosition);
-        placementInfo.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, targetPosition.z));
-        placementInfo.waypoints.Add(targetPosition);
+            Vector3 targetPosition = location != null ? placementInfo.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : FleetPlacementUI.it.shipDrawer.transform.TransformPoint(placementInfo.localDrawerPosition);
+            placementInfo.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, targetPosition.z));
+            placementInfo.waypoints.Add(targetPosition);
+        }
 
         parentBoard.ReevaluateTiles();
 
@@ -230,8 +235,11 @@ public class Ship : MonoBehaviour
 
         parentBoard.ReevaluateTiles();
 
-        placementInfo.waypoints = new List<Vector3>();
-        placementInfo.waypoints.Add(new Vector3(transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, transform.position.z));
+        if (parentBoard.owner.aiModule == null)
+        {
+            placementInfo.waypoints = new List<Vector3>();
+            placementInfo.waypoints.Add(new Vector3(transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, transform.position.z));
+        }
     }
 
     public virtual void OnOtherShipPickupFromBoard(Ship pickedShip, Tile[] location)

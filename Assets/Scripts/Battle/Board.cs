@@ -100,9 +100,11 @@ public class Board : MonoBehaviour
     public struct PlacementInfo
     {
         public List<Tile> selectedTiles; //List of tiles selected to house the currently selected ship
+        public List<Tile> selectableTiles; //List of selectable tiles
         public List<Tile> obstructedTiles; //List of tiles where nothing can be placed
-        public List<Tile> validTiles; //List of tiles where the current ship can be placed
+        public Dictionary<Tile, int> validTiles; //List of tiles where the current ship can be placed
         public List<Tile> invalidTiles; //List of tiles where the current ship cannot be placed
+
         public List<Tile> occupiedTiles
         {
             get
@@ -120,6 +122,26 @@ public class Board : MonoBehaviour
     }
 
     public PlacementInfo placementInfo;
+
+    public void SpawnShips()
+    {
+        placementInfo.allShips = new List<Ship>();
+        placementInfo.placedShips = new List<Ship>();
+        placementInfo.notplacedShips = new List<Ship>();
+        for (int i = 0; i < MiscellaneousVariables.it.defaultShipLoadout.Length; i++)
+        {
+            Ship ship = Instantiate(MiscellaneousVariables.it.defaultShipLoadout[i]).GetComponent<Ship>();
+            placementInfo.notplacedShips.Add(ship);
+            placementInfo.allShips.Add(ship);
+            ship.placementInfo.lastLocation = null;
+            ship.index = i;
+
+            ship.parentBoard = this;
+            ship.transform.SetParent(transform);
+        }
+
+        ships = placementInfo.allShips.ToArray();
+    }
 
     public void ReevaluateTiles()
     {
@@ -146,7 +168,7 @@ public class Board : MonoBehaviour
 
 
         placementInfo.invalidTiles = new List<Tile>();
-        placementInfo.validTiles = new List<Tile>();
+        placementInfo.validTiles = new Dictionary<Tile, int>();
 
         for (int x = 0; x < boardSize.x; x++)
         {
@@ -180,31 +202,102 @@ public class Board : MonoBehaviour
                     }
                 }
 
-                inlineValidTiles.AddRange(inlineNeighbouringValidTiles);
+                if (placementInfo.selectedShip && inlineNeighbouringValidTiles.Count >= placementInfo.selectedShip.maxHealth)
+                {
+                    inlineValidTiles.AddRange(inlineNeighbouringValidTiles);
+                }
 
                 foreach (Tile tile in inlineValidTiles)
                 {
-                    if (!placementInfo.validTiles.Contains(tile))
+                    if (!placementInfo.validTiles.ContainsKey(tile))
                     {
-                        placementInfo.validTiles.Add(tile);
+                        placementInfo.validTiles.Add(tile, axis);
                         placementInfo.invalidTiles.Remove(tile);
+                    }
+                    else
+                    {
+                        placementInfo.validTiles[tile] = -1;
                     }
                 }
             }
         }
+
+        placementInfo.selectedTiles = new List<Tile>();
+        placementInfo.selectableTiles = new List<Tile>(placementInfo.validTiles.Keys);
     }
 
     public bool SelectTileForPlacement(Tile tile)
     {
-        bool selectTile = false;
-        if (placementInfo.selectedShip != null && !placementInfo.selectedTiles.Contains(tile) && placementInfo.validTiles.Contains(tile))
+        bool selectTile = placementInfo.selectedShip != null && IsTileValidForSelection(tile);
+
+        if (selectTile)
         {
-            if (placementInfo.selectedTiles.Count == 0)
+            placementInfo.selectableTiles = new List<Tile>();
+
+            if (placementInfo.selectedTiles.Count > 1)
             {
-                selectTile = true;
+                if (Vector2Int.Distance(placementInfo.selectedTiles[0].coordinates, tile.coordinates) == 1)
+                {
+                    placementInfo.selectedTiles.Insert(0, tile);
+                }
+                else
+                {
+                    placementInfo.selectedTiles.Add(tile);
+                }
             }
             else
             {
+                placementInfo.selectedTiles.Add(tile);
+
+            }
+
+            if (placementInfo.selectedTiles.Count == placementInfo.selectedShip.maxHealth)
+            {
+                placementInfo.selectedShip.Place(placementInfo.selectedTiles.ToArray());
+                placementInfo.selectedTiles = new List<Tile>();
+            }
+            else
+            {
+                for (int tileEnd = 0; tileEnd < (placementInfo.selectedTiles.Count > 1 ? 2 : 1); tileEnd++)
+                {
+                    Tile end = tileEnd == 0 ? placementInfo.selectedTiles[0] : placementInfo.selectedTiles[placementInfo.selectedTiles.Count - 1];
+                    for (int i = 1; i <= 4; i++)
+                    {
+                        Vector2Int pos = end.coordinates + new Vector2Int(i == 2 ? 1 : i == 4 ? -1 : 0, i == 1 ? 1 : i == 3 ? -1 : 0);
+                        if (pos.x >= 0 && pos.x < tiles.GetLength(0) && pos.y >= 0 && pos.y < tiles.GetLength(1))
+                        {
+                            Tile consideredTile = tiles[pos.x, pos.y];
+                            if (IsTileValidForSelection(consideredTile))
+                            {
+                                placementInfo.selectableTiles.Add(consideredTile);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return selectTile;
+    }
+
+
+
+    bool IsTileValidForSelection(Tile tile)
+    {
+        if (!placementInfo.selectedTiles.Contains(tile) && placementInfo.validTiles.ContainsKey(tile))
+        {
+            if (placementInfo.selectedTiles.Count == 0)
+            {
+                return true;
+            }
+            else
+            {
+                int directional = placementInfo.validTiles[tile];
+                if (directional > -1 && ((placementInfo.selectedTiles[0].coordinates - tile.coordinates).x != 0 ? 0 : 1) != directional)
+                {
+                    return false;
+                }
+
                 bool connects = false;
                 bool outOfLine = false;
 
@@ -223,42 +316,10 @@ public class Board : MonoBehaviour
                     }
                 }
 
-                if (connects && !outOfLine)
-                {
-                    selectTile = true;
-                }
+                return connects && !outOfLine;
             }
-        }
-
-        if (selectTile)
-        {
-            if (placementInfo.selectedTiles.Count > 1)
-            {
-                if (Vector2Int.Distance(placementInfo.selectedTiles[0].coordinates, tile.coordinates) == 1)
-                {
-                    placementInfo.selectedTiles.Insert(0, tile);
-                }
-                else
-                {
-                    placementInfo.selectedTiles.Add(tile);
-                }
-            }
-            else
-            {
-                placementInfo.selectedTiles.Add(tile);
-            }
-
-            if (placementInfo.selectedTiles.Count == placementInfo.selectedShip.maxHealth)
-            {
-                placementInfo.selectedShip.Place(placementInfo.selectedTiles.ToArray());
-                placementInfo.selectedTiles = new List<Tile>();
-            }
-
-            return true;
         }
 
         return false;
     }
-
-
 }
