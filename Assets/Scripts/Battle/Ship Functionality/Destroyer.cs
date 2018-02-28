@@ -63,6 +63,7 @@ public class Destroyer : Ship
     public override void Place(Tile[] location)
     {
         base.Place(location);
+        torpedoReloadTimeLeft = torpedoReloadTime;
         CalculateFiringArea();
     }
 

@@ -291,9 +291,12 @@ public class AIModule : ScriptableObject
         //Add heat for hit tiles
         foreach (Tile hit in owner.hitTiles)
         {
-            if (hit.containedShip != null && hit.containedShip.health > 0)
+            if (hit.containedShip != null)
             {
-                situation.Heat(hit.coordinates, 12.0f, 1.0f - recklessness);
+                if (hit.containedShip.health > 0)
+                {
+                    situation.Heat(hit.coordinates, 12.0f, 1.0f - recklessness);
+                }
             }
             else
             {
@@ -567,9 +570,9 @@ public class AIModule : ScriptableObject
         airReconMap = new Heatmap(Battle.main.defender.board.tiles.GetLength(0), Battle.main.defender.board.tiles.GetLength(1));
 
         //Determine the personality of this AI when attacking
-        recklessness = Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 3);
+        recklessness = 0.7f * Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 3);
         float roll = UnityEngine.Random.Range(0.000f, 1.000f);
-        agressivity = Mathf.Pow(roll, 0.5f + 1.5f * roll);
+        agressivity = 0.9f * Mathf.Pow(roll, 0.7f - 0.5f * roll);
 
 
         reconResultWeight = 1.0f - Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 4);
