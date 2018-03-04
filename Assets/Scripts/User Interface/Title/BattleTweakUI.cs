@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BattleTweakUI : SlidingUserInterface
+public class BattleTweakUI : InputEnabledUI
 {
     public ExclusiveTogglingButtonGroup tutorialButtonGroup;
     public ExclusiveTogglingButtonGroup boardSizeButtonGroup;

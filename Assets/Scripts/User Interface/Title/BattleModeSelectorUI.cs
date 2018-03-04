@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class BattleModeSelectorUI : SlidingUserInterface
+public class BattleModeSelectorUI : InputEnabledUI
 {
     public static int selectedMode;
     //public Button[] modeSelectionButtons;

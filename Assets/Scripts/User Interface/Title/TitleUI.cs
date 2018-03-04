@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TitleUI : SlidingUserInterface
+public class TitleUI : InputEnabledUI
 {
 
 }
