@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameModeSelectorUserInterface : SlidingUserInterface
+public class BattleModeSelectorUI : SlidingUserInterface
 {
     public static int selectedMode;
     //public Button[] modeSelectionButtons;
@@ -40,7 +40,7 @@ public class GameModeSelectorUserInterface : SlidingUserInterface
                 // }
                 toggleGroup.ResetColors(selectedMode);
 
-                if (GameLoaderUserInterface.saveSlotData.log == null)
+                if (BattleLoaderUI.saveSlotData.log == null)
                 {
                     battleCreatorParent.anchoredPosition = Vector2.down * 120;
                     battleResumerParent.gameObject.SetActive(false);
@@ -91,12 +91,12 @@ public class GameModeSelectorUserInterface : SlidingUserInterface
         // }
         SlidingUserInterface_Master.lockedDirections = new bool[2];
 
-        Battle.BattleData mod = GameLoaderUserInterface.newBattleData;
+        Battle.BattleData mod = BattleLoaderUI.newBattleData;
         if (mode != 2)
         {
             mod.defender.aiEnabled = mode == 1;
         }
-        GameLoaderUserInterface.newBattleData = mod;
+        BattleLoaderUI.newBattleData = mod;
 
         for (int i = 0; i < toSkip.Length; i++)
         {

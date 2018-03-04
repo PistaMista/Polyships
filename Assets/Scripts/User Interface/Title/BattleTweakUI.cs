@@ -2,22 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BattleSetUpScreenUserInterface : SlidingUserInterface
+public class BattleTweakUI : SlidingUserInterface
 {
     public ExclusiveTogglingButtonGroup tutorialButtonGroup;
     public ExclusiveTogglingButtonGroup boardSizeButtonGroup;
     protected override void SetState(UIState state)
     {
         base.SetState(state);
-        if (GameLoaderUserInterface.newBattleData.attacker.board.tiles == null && state == UIState.ENABLING)
+        if (BattleLoaderUI.newBattleData.attacker.board.tiles == null && state == UIState.ENABLING)
         {
             SetBoardSize(1);
-            SetTutorialMode(GameLoaderUserInterface.neverPlayed ? 1 : 0);
+            SetTutorialMode(BattleLoaderUI.neverPlayed ? 1 : 0);
         }
     }
     public void SetTutorialMode(int enabled)
     {
-        GameLoaderUserInterface.newBattleData.tutorialStage = enabled;
+        BattleLoaderUI.newBattleData.tutorialStage = enabled;
         tutorialButtonGroup.ResetColors(enabled);
     }
 
@@ -39,7 +39,7 @@ public class BattleSetUpScreenUserInterface : SlidingUserInterface
             }
         }
 
-        GameLoaderUserInterface.newBattleData.attacker.board = boardData;
+        BattleLoaderUI.newBattleData.attacker.board = boardData;
 
         boardData = new Board.BoardData();
         boardData.tiles = new Tile.TileData[actualDimensions, actualDimensions];
@@ -52,7 +52,7 @@ public class BattleSetUpScreenUserInterface : SlidingUserInterface
             }
         }
 
-        GameLoaderUserInterface.newBattleData.defender.board = boardData;
+        BattleLoaderUI.newBattleData.defender.board = boardData;
     }
 
 

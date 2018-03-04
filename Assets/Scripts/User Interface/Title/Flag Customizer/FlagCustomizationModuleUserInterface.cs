@@ -34,7 +34,7 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUI
             InitializeWidget();
         }
 
-        float[,,] flagData = secondPlayer ? GameLoaderUserInterface.newBattleData.defender.flag : GameLoaderUserInterface.newBattleData.attacker.flag;
+        float[,,] flagData = secondPlayer ? BattleLoaderUI.newBattleData.defender.flag : BattleLoaderUI.newBattleData.attacker.flag;
         for (int x = 0; x < flagData.GetLength(0); x++)
         {
             for (int y = 0; y < flagData.GetLength(1); y++)
@@ -46,7 +46,7 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUI
 
     void InitializeWidget()
     {
-        float[,,] flagData = secondPlayer ? GameLoaderUserInterface.newBattleData.defender.flag : GameLoaderUserInterface.newBattleData.attacker.flag;
+        float[,,] flagData = secondPlayer ? BattleLoaderUI.newBattleData.defender.flag : BattleLoaderUI.newBattleData.attacker.flag;
         pixels = new Image[flagData.GetLength(0), flagData.GetLength(1)];
 
         Vector2 reservedSpace = new Vector2(BasicUI.referenceResolution.x / 2.0f, BasicUI.referenceResolution.y / 2.5f);
@@ -112,17 +112,17 @@ public class FlagCustomizationModuleUserInterface : InputEnabledUI
                     int x = Mathf.FloorToInt(intersection.x * pixels.GetLength(0));
                     int y = Mathf.FloorToInt(intersection.y * pixels.GetLength(1));
 
-                    float[,,] flagData = secondPlayer ? GameLoaderUserInterface.newBattleData.defender.flag : GameLoaderUserInterface.newBattleData.attacker.flag;
+                    float[,,] flagData = secondPlayer ? BattleLoaderUI.newBattleData.defender.flag : BattleLoaderUI.newBattleData.attacker.flag;
                     flagData[x, y, 0] = colorSelectors[selectedColorID].Color.r;
                     flagData[x, y, 1] = colorSelectors[selectedColorID].Color.g;
                     flagData[x, y, 2] = colorSelectors[selectedColorID].Color.b;
                     if (secondPlayer)
                     {
-                        GameLoaderUserInterface.newBattleData.defender.flag = flagData;
+                        BattleLoaderUI.newBattleData.defender.flag = flagData;
                     }
                     else
                     {
-                        GameLoaderUserInterface.newBattleData.attacker.flag = flagData;
+                        BattleLoaderUI.newBattleData.attacker.flag = flagData;
                     }
 
                     RefreshFlag();

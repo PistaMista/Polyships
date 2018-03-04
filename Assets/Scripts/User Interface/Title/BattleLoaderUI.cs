@@ -6,7 +6,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
 
-public class GameLoaderUserInterface : SlidingUserInterface
+public class BattleLoaderUI : SlidingUserInterface
 {
     public int selectedSlotID;
     public static Battle.BattleData saveSlotData;
@@ -74,7 +74,7 @@ public class GameLoaderUserInterface : SlidingUserInterface
             saveSlotData = saveSlotContents[slot];
             SlidingUserInterface_Master.lockedDirections = new bool[2];
 
-            GameModeSelectorUserInterface.selectedMode = -1;
+            BattleModeSelectorUI.selectedMode = -1;
 
             newBattleData = new Battle.BattleData();
             newBattleData.saveSlot = slot;

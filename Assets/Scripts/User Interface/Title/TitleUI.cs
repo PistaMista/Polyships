@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LogoScreenUserInterface : SlidingUserInterface
+public class TitleUI : SlidingUserInterface
 {
 
 }

@@ -15,14 +15,14 @@ public class FlagCustomizerUserInterface : SlidingUserInterface
         switch (state)
         {
             case UIState.ENABLING:
-                if (GameLoaderUserInterface.newBattleData.attacker.flag == null)
+                if (BattleLoaderUI.newBattleData.attacker.flag == null)
                 {
-                    GameLoaderUserInterface.newBattleData.attacker.flag = new float[(int)flagResolution.x, (int)flagResolution.y, 3];
-                    GameLoaderUserInterface.newBattleData.defender.flag = new float[(int)flagResolution.x, (int)flagResolution.y, 3];
+                    BattleLoaderUI.newBattleData.attacker.flag = new float[(int)flagResolution.x, (int)flagResolution.y, 3];
+                    BattleLoaderUI.newBattleData.defender.flag = new float[(int)flagResolution.x, (int)flagResolution.y, 3];
                 }
 
                 flagCustomizationModules[0].State = UIState.ENABLED;
-                if (GameModeSelectorUserInterface.selectedMode == 0)
+                if (BattleModeSelectorUI.selectedMode == 0)
                 {
                     width = 2;
                     flagCustomizationModules[1].State = UIState.ENABLED;
