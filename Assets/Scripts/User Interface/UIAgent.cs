@@ -6,6 +6,7 @@ public class UIAgent : MonoBehaviour
 {
     public UIState state;
     public bool parentStateIndependent = false;
+    public UIAgent[] remoteUIAgents = new UIAgent[0]; //These will be informed when the state of this ui changes, but will not be waited for when disabling/enabling this UI.
     public UIAgent[] staticUIAgents = new UIAgent[0];
     public List<UIAgent> dynamicUIAgents = new List<UIAgent>();
     public GameObject[] dynamicUIAgentPaletteObjects;
@@ -117,7 +118,16 @@ public class UIAgent : MonoBehaviour
         if (!changeStateCausedByUpdate)
         {
             allAgents.ForEach(x => { if (x.State != state && !x.parentStateIndependent) { x.State = state; } });
+            for (int i = 0; i < remoteUIAgents.Length; i++)
+            {
+                UIAgent x = remoteUIAgents[i];
+                if (x.State != state)
+                {
+                    x.State = state;
+                }
+            }
         }
+
         gameObject.SetActive(state != UIState.DISABLED);
     }
 }
