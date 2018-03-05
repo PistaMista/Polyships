@@ -6,56 +6,38 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
 
-public class BattleLoaderUI : InputEnabledUI
+public class BattleLoaderUI : TitleSlaveUI
 {
-    public Text[] saveSlotLabels;
     Battle.BattleData[] saveSlotContents;
     public UIAgent battleCreatorUI;
-
 
     protected override void SetState(UIState state)
     {
         base.SetState(state);
-        // switch (state)
-        // {
-        //     case UIState.ENABLING:
-        //         if (selectedSlotID < 0)
-        //         {
-        //             SlidingUserInterface_Master.lockedDirections[1] = true;
-        //         }
-        //         break;
-        //     case UIState.DISABLING:
-        //         SlidingUserInterface_Master.lockedDirections = new bool[2];
-        //         break;
-        // }
-
+        SetInteractable((int)state >= 2);
     }
 
-    // public override void OnMasterEnable()
-    // {
-    //     base.OnMasterEnable();
-    //     selectedSlotID = -1;
-    //     saveSlotContents = new Battle.BattleData[toggleGroup.buttons.Length];
+    public override void OnTitleSetState(UIState state)
+    {
+        if ((int)state >= 2)
+        {
+            saveSlotContents = new Battle.BattleData[3];
+            for (int i = 0; i < saveSlotContents.Length; i++)
+            {
+                try
+                {
+                    FileStream stream = new FileStream(Path.Combine(Application.persistentDataPath, i.ToString()), FileMode.Open);
+                    BinaryFormatter formatter = new BinaryFormatter();
 
-    //     neverPlayed = true;
-    //     for (int i = 0; i < saveSlotContents.Length; i++)
-    //     {
-    //         try
-    //         {
-    //             FileStream stream = new FileStream(Path.Combine(Application.persistentDataPath, i.ToString()), FileMode.Open);
-    //             BinaryFormatter formatter = new BinaryFormatter();
-
-    //             saveSlotContents[i] = (Battle.BattleData)formatter.Deserialize(stream);
-    //             saveSlotLabels[i].text = "SAVED BATTLE - " + saveSlotContents[i].log.Length + " TURNS PLAYED";
-    //             neverPlayed = false;
-    //         }
-    //         catch
-    //         {
-    //             saveSlotContents[i] = new Battle.BattleData();
-    //             saveSlotLabels[i].text = "EMPTY SLOT";
-    //         }
-    //     }
-    // }
+                    saveSlotContents[i] = (Battle.BattleData)formatter.Deserialize(stream);
+                }
+                catch
+                {
+                    saveSlotContents[i] = new Battle.BattleData();
+                }
+            }
+        }
+    }
 
     public void SelectSlot(int slot)
     {

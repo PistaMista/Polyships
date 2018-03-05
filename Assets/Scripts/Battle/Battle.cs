@@ -234,7 +234,7 @@ public class Battle : MonoBehaviour
     {
         SaveToDisk();
         BattleUIMaster.ForceResetAllBUIs();
-        MiscellaneousVariables.it.titleInterfaceMaster.State = UIState.ENABLED;
+        MiscellaneousVariables.it.titleUI.State = UIState.ENABLED;
         Destroy(this.gameObject);
     }
 
@@ -514,7 +514,7 @@ public class Battle : MonoBehaviour
         return battle;
     }
 
-    public static BattleData GetBlankBattleData(int boardSideLength, bool aiOpponent, bool tutorialEnabled)
+    public static BattleData GetBlankBattleData(int boardSideLength, bool aiOpponent, bool tutorialEnabled, int saveSlot)
     {
         BattleData data = new BattleData();
 
@@ -548,6 +548,7 @@ public class Battle : MonoBehaviour
         data.defender.aiEnabled = aiOpponent;
 
         data.tutorialStage = tutorialEnabled ? 1 : 0;
+        data.saveSlot = saveSlot;
 
         return data;
     }
