@@ -42,7 +42,7 @@ public class BattleLoaderUI : TitleSlaveUI
     public void SelectSlot(int slot)
     {
         Battle.BattleData saveSlotData = saveSlotContents[slot];
-        State = UIState.DISABLING;
+        State = UIState.DISABLED;
 
         if (saveSlotData.log != null)
         {
