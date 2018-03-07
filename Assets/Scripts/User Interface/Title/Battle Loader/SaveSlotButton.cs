@@ -17,6 +17,7 @@ public class SaveSlotButton : MonoBehaviour
     {
         clearButton.gameObject.SetActive(boundTo.CheckSlot(managedSlot));
     }
+
     void UnprimeClearer()
     {
         clearerPrimed = false;

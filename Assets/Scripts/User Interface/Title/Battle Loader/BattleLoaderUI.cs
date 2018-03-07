@@ -29,7 +29,10 @@ public class BattleLoaderUI : TitleSlaveUI
                     FileStream stream = new FileStream(Path.Combine(Application.persistentDataPath, i.ToString()), FileMode.Open);
                     BinaryFormatter formatter = new BinaryFormatter();
 
-                    saveSlotContents[i] = (Battle.BattleData)formatter.Deserialize(stream);
+                    Debug.Log(stream.Length);
+                    object deserialized = formatter.Deserialize(stream);
+                    stream.Close();
+                    saveSlotContents[i] = (Battle.BattleData)deserialized;
                 }
                 catch
                 {
