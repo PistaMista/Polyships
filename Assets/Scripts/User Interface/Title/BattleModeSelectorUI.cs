@@ -10,4 +10,10 @@ public class BattleModeSelectorUI : TitleSlaveUI
         base.SetState(state);
         SetInteractable((int)state >= 2);
     }
+
+    public void SelectMode(bool ai)
+    {
+        Next();
+        BattleTweakerUI.aiOpponent = ai;
+    }
 }

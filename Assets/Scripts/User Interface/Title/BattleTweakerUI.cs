@@ -9,10 +9,10 @@ public class BattleTweakerUI : TitleSlaveUI
         base.SetState(state);
         SetInteractable((int)state >= 2);
     }
-    public bool aiOpponent;
-    public bool tutorial;
-    public int boardSize;
-    public int saveSlot;
+    public static bool aiOpponent;
+    public static bool tutorial;
+    public static int boardSize;
+    public static int saveSlot;
     public void LaunchBattle()
     {
         Battle.main = Battle.CreateBattle(Battle.GetBlankBattleData(MiscellaneousVariables.it.boardSizes[boardSize], aiOpponent, tutorial, saveSlot));

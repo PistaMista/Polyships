@@ -8,8 +8,7 @@ using System;
 
 public class BattleLoaderUI : TitleSlaveUI
 {
-    Battle.BattleData[] saveSlotContents;
-    public UIAgent battleCreatorUI;
+    public Battle.BattleData[] saveSlotContents;
 
     protected override void SetState(UIState state)
     {
@@ -52,7 +51,8 @@ public class BattleLoaderUI : TitleSlaveUI
         }
         else
         {
-            battleCreatorUI.State = UIState.ENABLING;
+            BattleTweakerUI.saveSlot = slot;
+            Next();
         }
     }
 
