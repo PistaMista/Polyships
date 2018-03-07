@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class TitleUI : InputEnabledUI
 {
-    void Start()
+    protected override void Start()
     {
         State = state;
     }
