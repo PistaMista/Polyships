@@ -41,16 +41,32 @@ public class BattleLoaderUI : TitleSlaveUI
 
     public void SelectSlot(int slot)
     {
-        Battle.BattleData saveSlotData = saveSlotContents[slot];
         State = UIState.DISABLED;
 
-        if (saveSlotData.log != null)
+        if (CheckSlot(slot))
         {
-            Battle.main = Battle.CreateBattle(saveSlotData);
+            Battle.main = Battle.CreateBattle(saveSlotContents[slot]);
         }
         else
         {
             battleCreatorUI.State = UIState.ENABLING;
         }
+    }
+
+    public bool CheckSlot(int slot)
+    {
+        return saveSlotContents[slot].log != null;
+    }
+
+    public void ClearSlot(int slot)
+    {
+        saveSlotContents[slot] = new Battle.BattleData();
+
+        BinaryFormatter formatter = new BinaryFormatter();
+        FileStream stream = new FileStream(Path.Combine(Application.persistentDataPath, slot.ToString()), FileMode.Create);
+
+        formatter.Serialize(stream, 0);
+
+        stream.Close();
     }
 }

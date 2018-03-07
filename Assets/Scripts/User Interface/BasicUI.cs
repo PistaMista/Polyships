@@ -14,7 +14,6 @@ public class BasicUI : UIAgent
 {
     public RectTransform rect;
     public bool enableOnStart;
-    public static Vector2 referenceResolution;
 
     protected virtual void Start()
     {
