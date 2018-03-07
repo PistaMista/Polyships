@@ -11,7 +11,7 @@ public class SaveSlotButton : MonoBehaviour
     public Image clearButtonPrimedImage;
     public GameObject pixelPrefab;
     GameObject pixelParent;
-    public int pixelSide;
+    public float pixelSide;
     public Text label;
     public string emptyMessage;
     public string usedMessage;
@@ -28,6 +28,7 @@ public class SaveSlotButton : MonoBehaviour
             pixelParent.transform.SetParent(transform);
             pixelParent.transform.localPosition = Vector3.zero;
             pixelParent.transform.localScale = Vector3.one;
+            pixelParent.transform.SetAsFirstSibling();
 
             Battle.BattleData data = boundTo.saveSlotContents[managedSlot];
             for (int player = 0; player < 2; player++)
@@ -42,7 +43,7 @@ public class SaveSlotButton : MonoBehaviour
                         Color color = new Color(flag[x, y, 0], flag[x, y, 1], flag[x, y, 2]);
                         GameObject pixel = Instantiate(pixelPrefab);
                         pixel.transform.SetParent(pixelParent.transform);
-                        pixel.transform.localPosition = beginningPos + new Vector2Int(x, y) * pixelSide;
+                        pixel.transform.localPosition = beginningPos + new Vector2(x, y) * pixelSide;
                         pixel.transform.localScale = Vector3.one;
 
                         pixel.GetComponent<RawImage>().color = color;
