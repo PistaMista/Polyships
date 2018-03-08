@@ -7,7 +7,8 @@ public class FlagEditingAreaUIAgent : InputEnabledUI
 {
     public GameObject pixelParent;
     public int currentPlayer = 0;
-    public RectTransform scalingTransform;
+    public Vector2 referenceResolution;
+    public RectTransform window;
 
     protected override void SetState(UIState state)
     {
@@ -51,8 +52,10 @@ public class FlagEditingAreaUIAgent : InputEnabledUI
         //Vector2 scaledInputPosition = ;
         if (tap)
         {
-            Vector2 unscaledPosition = currentInputPosition.screen - (Vector2)rect.position;
-            Vector2 scaledPosition = Vector2.Scale(unscaledPosition, scalingTransform.localScale);
+            Vector2 scalingVector = new Vector2(referenceResolution.x / window.rect.width, referenceResolution.y / window.rect.height);
+            Vector2 scaledInput = Vector2.Scale(currentInputPosition.screen, scalingVector);
+            Vector2 scaledPos = Vector2.Scale(rect.position, scalingVector);
+            Vector2 scaledPosition = scaledInput - scaledPos;
             Debug.Log(scaledPosition);
         }
     }
