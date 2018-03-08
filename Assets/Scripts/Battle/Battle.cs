@@ -514,7 +514,7 @@ public class Battle : MonoBehaviour
         return battle;
     }
 
-    public static BattleData GetBlankBattleData(int boardSideLength, bool aiOpponent, bool tutorialEnabled, int saveSlot)
+    public static BattleData GetBlankBattleData(int boardSideLength, bool aiOpponent, bool tutorialEnabled, int saveSlot, float[][,,] flags)
     {
         BattleData data = new BattleData();
 
@@ -532,6 +532,7 @@ public class Battle : MonoBehaviour
         }
 
         data.attacker.board = boardData;
+        data.attacker.flag = flags[0];
 
         boardData = new Board.BoardData();
         boardData.tiles = new Tile.TileData[boardSideLength, boardSideLength];
@@ -545,6 +546,7 @@ public class Battle : MonoBehaviour
         }
 
         data.defender.board = boardData;
+        data.defender.flag = flags[1];
         data.defender.aiEnabled = aiOpponent;
 
         data.tutorialStage = tutorialEnabled ? 1 : 0;
