@@ -19,7 +19,6 @@ public class BattleTweakerUI : TitleSlaveUI
         Battle.main = Battle.CreateBattle(Battle.GetBlankBattleData(MiscellaneousVariables.it.boardSizes[boardSize], aiOpponent, tutorial, saveSlot, flags));
     }
 
-
     public override void OnTitleSetState(UIState state)
     {
         base.OnTitleSetState(state);
