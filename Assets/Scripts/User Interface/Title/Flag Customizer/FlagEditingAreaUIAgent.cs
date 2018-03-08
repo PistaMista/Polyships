@@ -7,6 +7,7 @@ public class FlagEditingAreaUIAgent : InputEnabledUI
 {
     public GameObject pixelParent;
     public int currentPlayer = 0;
+    public RectTransform scalingTransform;
 
     protected override void SetState(UIState state)
     {
@@ -47,6 +48,12 @@ public class FlagEditingAreaUIAgent : InputEnabledUI
     protected override void ProcessInput()
     {
         base.ProcessInput();
-        Debug.Log(currentInputPosition.screen - (Vector2)rect.position);
+        //Vector2 scaledInputPosition = ;
+        if (tap)
+        {
+            Vector2 unscaledPosition = currentInputPosition.screen - (Vector2)rect.position;
+            Vector2 scaledPosition = Vector2.Scale(unscaledPosition, scalingTransform.localScale);
+            Debug.Log(scaledPosition);
+        }
     }
 }
