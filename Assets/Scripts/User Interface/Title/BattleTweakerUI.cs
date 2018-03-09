@@ -9,6 +9,7 @@ public class BattleTweakerUI : TitleSlaveUI
         base.SetState(state);
         SetInteractable((int)state >= 2);
     }
+
     public static bool aiOpponent;
     public static bool tutorial;
     public static int boardSize;
@@ -17,6 +18,7 @@ public class BattleTweakerUI : TitleSlaveUI
     public void LaunchBattle()
     {
         Battle.main = Battle.CreateBattle(Battle.GetBlankBattleData(MiscellaneousVariables.it.boardSizes[boardSize], aiOpponent, tutorial, saveSlot, flags));
+        State = UIState.DISABLED;
     }
 
     public override void OnTitleSetState(UIState state)

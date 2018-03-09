@@ -25,9 +25,8 @@ public class SaveSlotButton : MonoBehaviour
         {
             Destroy(pixelParent);
             pixelParent = new GameObject("Pixel Parent");
-            pixelParent.transform.SetParent(transform);
-            pixelParent.transform.localPosition = Vector3.zero;
-            pixelParent.transform.localScale = Vector3.one;
+            pixelParent.transform.SetParent(transform, false);
+            pixelParent.transform.SetAsLastSibling();
 
             Battle.BattleData data = boundTo.saveSlotContents[managedSlot];
             for (int player = 0; player < 2; player++)
@@ -41,9 +40,8 @@ public class SaveSlotButton : MonoBehaviour
                     {
                         Color color = new Color(flag[x, y, 0], flag[x, y, 1], flag[x, y, 2]);
                         GameObject pixel = Instantiate(pixelPrefab);
-                        pixel.transform.SetParent(pixelParent.transform);
+                        pixel.transform.SetParent(pixelParent.transform, false);
                         pixel.transform.localPosition = beginningPos + new Vector2(x, y) * pixelSide;
-                        pixel.transform.localScale = Vector3.one;
 
                         pixel.GetComponent<RawImage>().color = color;
                     }
