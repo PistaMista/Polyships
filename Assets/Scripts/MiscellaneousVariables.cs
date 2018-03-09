@@ -19,6 +19,7 @@ public class MiscellaneousVariables : MonoBehaviour
     public int maximumTorpedoAttacksPerTurn;
     public TitleUI titleUI;
     public bool showAISituationHeat;
+    public Vector2 referenceUIResolution;
     public static MiscellaneousVariables it;
 
     void Start()
