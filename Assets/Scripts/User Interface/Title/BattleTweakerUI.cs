@@ -1,25 +1,29 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BattleTweakerUI : TitleSlaveUI
 {
     protected override void SetState(UIState state)
     {
         base.SetState(state);
+        tutorialToggle.isOn = BattleLoaderUI.allSlotsEmpty;
         SetInteractable((int)state >= 2);
     }
 
     public static bool aiOpponent;
-    public static bool tutorial;
-    public static int boardSize;
+    public Toggle tutorialToggle;
+    public Slider boardSizeSlider;
     public static int saveSlot;
     public static float[][,,] flags;
     public void LaunchBattle()
     {
-        Battle.main = Battle.CreateBattle(Battle.GetBlankBattleData(MiscellaneousVariables.it.boardSizes[boardSize], aiOpponent, tutorial, saveSlot, flags));
+        Battle.main = Battle.CreateBattle(Battle.GetBlankBattleData((int)boardSizeSlider.value, aiOpponent, tutorialToggle.isOn, saveSlot, flags));
         State = UIState.DISABLED;
     }
+
+
 
     public override void OnTitleSetState(UIState state)
     {

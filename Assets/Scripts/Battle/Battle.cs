@@ -545,6 +545,7 @@ public class Battle : MonoBehaviour
             }
         }
 
+        data.defender.index = 1;
         data.defender.board = boardData;
         data.defender.flag = flags[1];
         data.defender.aiEnabled = aiOpponent;

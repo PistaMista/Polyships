@@ -9,6 +9,7 @@ using System;
 public class BattleLoaderUI : TitleSlaveUI
 {
     public Battle.BattleData[] saveSlotContents;
+    public static bool allSlotsEmpty;
 
     protected override void SetState(UIState state)
     {
@@ -21,6 +22,7 @@ public class BattleLoaderUI : TitleSlaveUI
         if ((int)state >= 2)
         {
             saveSlotContents = new Battle.BattleData[3];
+            allSlotsEmpty = true;
             for (int i = 0; i < saveSlotContents.Length; i++)
             {
                 try
@@ -32,6 +34,7 @@ public class BattleLoaderUI : TitleSlaveUI
                     object deserialized = formatter.Deserialize(stream);
                     stream.Close();
                     saveSlotContents[i] = (Battle.BattleData)deserialized;
+                    allSlotsEmpty = false;
                 }
                 catch
                 {
