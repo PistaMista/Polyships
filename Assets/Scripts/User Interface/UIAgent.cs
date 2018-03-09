@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class UIAgent : MonoBehaviour
 {
@@ -129,5 +130,10 @@ public class UIAgent : MonoBehaviour
         }
 
         gameObject.SetActive(state != UIState.DISABLED);
+    }
+
+    public void SetState(int state)
+    {
+        SetState((UIState)state);
     }
 }

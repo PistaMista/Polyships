@@ -234,7 +234,7 @@ public class Battle : MonoBehaviour
     {
         SaveToDisk();
         BattleUIMaster.ForceResetAllBUIs();
-        MiscellaneousVariables.it.titleInterfaceMaster.State = UIState.ENABLED;
+        MiscellaneousVariables.it.titleUI.State = UIState.ENABLED;
         Destroy(this.gameObject);
     }
 
@@ -504,5 +504,55 @@ public class Battle : MonoBehaviour
         }
 
         NextTurn();
+    }
+
+    public static Battle CreateBattle(BattleData data)
+    {
+        Battle battle = new GameObject("Battle").AddComponent<Battle>();
+        battle.Initialize(data);
+        battle.AssignReferences(data);
+        return battle;
+    }
+
+    public static BattleData GetBlankBattleData(int boardSideLength, bool aiOpponent, bool tutorialEnabled, int saveSlot, float[][,,] flags)
+    {
+        BattleData data = new BattleData();
+
+        Board.BoardData boardData = new Board.BoardData();
+        boardData.ownedByAttacker = true;
+        boardData.tiles = new Tile.TileData[boardSideLength, boardSideLength];
+        for (int x = 0; x < boardSideLength; x++)
+        {
+            for (int y = 0; y < boardSideLength; y++)
+            {
+                boardData.tiles[x, y].coordinates = new int[] { x, y };
+                boardData.tiles[x, y].containedShip = -1;
+                boardData.tiles[x, y].ownedByAttacker = true;
+            }
+        }
+
+        data.attacker.board = boardData;
+        data.attacker.flag = flags[0];
+
+        boardData = new Board.BoardData();
+        boardData.tiles = new Tile.TileData[boardSideLength, boardSideLength];
+        for (int x = 0; x < boardSideLength; x++)
+        {
+            for (int y = 0; y < boardSideLength; y++)
+            {
+                boardData.tiles[x, y].coordinates = new int[] { x, y };
+                boardData.tiles[x, y].containedShip = -1;
+            }
+        }
+
+        data.defender.index = 1;
+        data.defender.board = boardData;
+        data.defender.flag = flags[1];
+        data.defender.aiEnabled = aiOpponent;
+
+        data.tutorialStage = tutorialEnabled ? 1 : 0;
+        data.saveSlot = saveSlot;
+
+        return data;
     }
 }
