@@ -328,9 +328,14 @@ public class Battle : MonoBehaviour
         attackerCapabilities = gathered;
     }
 
-    //Inserts an effect into the queue based on its priority
-    public void AddEffect(Effect effect)
+    //Inserts an effect into the queue based on its priority if it doesnt conflict with any other effect present
+    public bool AddEffect(Effect effect)
     {
+        if (!EffectAllowed(effect))
+        {
+            return false;
+        }
+
         int insertionIndex = 0;
         foreach (Effect measure in effects)
         {
@@ -354,6 +359,33 @@ public class Battle : MonoBehaviour
         }
 
         effect.transform.SetParent(transform);
+        return true;
+    }
+
+    public bool EffectAllowed(Effect effect)
+    {
+        foreach (Effect conflictCandidate in effects)
+        {
+            if (conflictCandidate.ConflictsWith(effect))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public bool EffectTypeAllowed(Type type)
+    {
+        foreach (Effect conflictCandidate in effects)
+        {
+            if (conflictCandidate.ConflictsWithType(type))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     //Removes an effect from the queue

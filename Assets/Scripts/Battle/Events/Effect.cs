@@ -1,10 +1,12 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Effect : MonoBehaviour
 {
     public int playerAbilityIndex; //The token ID used by the player to do this effect - < 0 means none
+    public Effect[] conflictingEffects;
     public int duration; //The amount of turns this effect lasts
     public int priority; //The priority this effect takes over others
 
@@ -20,6 +22,24 @@ public class Effect : MonoBehaviour
         {
             Battle.main.RemoveEffect(this);
         }
+    }
+
+    public virtual bool ConflictsWith(Effect effect)
+    {
+        return ConflictsWithType(effect.GetType());
+    }
+
+    public bool ConflictsWithType(Type type)
+    {
+        for (int i = 0; i < conflictingEffects.Length; i++)
+        {
+            if (conflictingEffects[i].GetType() == type)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public virtual void OnOtherEffectAdd(Effect addedEffect)
