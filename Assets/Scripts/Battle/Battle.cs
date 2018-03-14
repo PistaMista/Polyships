@@ -146,6 +146,7 @@ public class Battle : MonoBehaviour
     public Player attacker;
     public Player defender;
     public List<TurnInfo> log;
+    public List<Effect> effects; //Effects change the battle parameters - at the start/end of each turn or when another effect is added/removed. Effects are applied in the order of this list.
     public int saveSlot;
     public int tutorialStage;
     public void SaveToDisk()
@@ -241,6 +242,10 @@ public class Battle : MonoBehaviour
     public void NextTurn()
     {
         attacker.OnTurnEnd();
+        foreach (Effect effect in effects)
+        {
+            effect.OnTurnEnd();
+        }
 
         Player lastAttacker = attacker;
         attacker = defender;
@@ -253,6 +258,10 @@ public class Battle : MonoBehaviour
         }
 
         attacker.OnTurnStart();
+        foreach (Effect effect in effects)
+        {
+            effect.OnTurnStart();
+        }
 
         SaveToDisk();
     }
@@ -319,192 +328,232 @@ public class Battle : MonoBehaviour
         attackerCapabilities = gathered;
     }
 
-    public void ExecuteArtilleryAttack(Tile[] targets)
+    //Inserts an effect into the queue based on its priority
+    public void AddEffect(Effect effect)
     {
-        //Check if the number of targets is correct
-        if (targets.Length > attackerCapabilities.maximumArtilleryCount || targets.Length == 0)
+        int insertionIndex = 0;
+        foreach (Effect measure in effects)
         {
-            Debug.LogWarning("ARTILLERY ATTACK has a possibly invalid number of targets: " + targets.Length + "/" + attackerCapabilities.maximumArtilleryCount);
-        }
-
-        //Determine the final hits to ships and other tiles
-        List<Tile> actualHits = new List<Tile>();
-        Dictionary<Ship, List<int>> shipHits = new Dictionary<Ship, List<int>>();
-        for (int targetIndex = 0; targetIndex < targets.Length; targetIndex++)
-        {
-            Tile target = targets[targetIndex];
-
-            //If there is a concealed ship in this tile displace the shot
-            if (target.containedShip != null)
+            if (measure.priority >= effect.priority)
             {
-                if (target.containedShip.concealedBy)
-                {
-                    for (int x = (target.coordinates.x == 0 ? 0 : -1); x <= ((target.coordinates.x == defender.board.tiles.GetLength(0) - 1) ? 0 : 1); x++)
-                    {
-                        for (int y = (target.coordinates.y == 0 ? 0 : -1); y <= ((target.coordinates.y == defender.board.tiles.GetLength(1) - 1) ? 0 : 1); y++)
-                        {
-                            if (!(y == 0 && x == 0))
-                            {
-                                Tile candidate = defender.board.tiles[x + (int)target.coordinates.x, y + (int)target.coordinates.y];
-                                if (!attacker.hitTiles.Contains(candidate) && !actualHits.Contains(candidate) && candidate.containedShip == null)
-                                {
-                                    target = candidate;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+                insertionIndex++;
             }
-
-            if (!attacker.hitTiles.Contains(target))
+            else
             {
-                actualHits.Add(target);
-                if (target.containedShip)
-                {
-                    if (!shipHits.ContainsKey(target.containedShip))
-                    {
-                        shipHits.Add(target.containedShip, new List<int>());
-                    }
-
-                    for (int i = 0; i < target.containedShip.tiles.Length; i++)
-                    {
-                        if (target.containedShip.tiles[i] == target)
-                        {
-                            shipHits[target.containedShip].Add(i);
-                            break;
-                        }
-                    }
-                }
+                break;
             }
         }
 
-        //Apply the hits
-        log[0].artilleryImpacts.AddRange(actualHits);
-        log[0].damagedTiles.AddRange(actualHits);
-
-        actualHits.ForEach(x => x.hit = true);
-
-        foreach (KeyValuePair<Ship, List<int>> shipHitInfo in shipHits)
+        effects.Insert(insertionIndex, effect);
+        foreach (Effect affected in effects)
         {
-            log[0].damagedShips.Add(shipHitInfo.Key);
-            shipHitInfo.Key.Damage(shipHitInfo.Value.ToArray());
-            if (shipHitInfo.Key.health <= 0)
+            if (affected != effect)
             {
-                log[0].destroyedShips.Add(shipHitInfo.Key);
+                affected.OnOtherEffectAdd(effect);
             }
         }
 
-        attacker.hitTiles.AddRange(actualHits);
-
-        NextTurn();
+        effect.transform.SetParent(transform);
     }
 
-    public void ExecuteTorpedoAttack(int[] targets)
+    //Removes an effect from the queue
+    public void RemoveEffect(Effect effect)
     {
-        //Determine the final hits to ships and other tiles
-        List<Tile> impacts = new List<Tile>();
-        List<Tile> hits = new List<Tile>();
-        Dictionary<Ship, List<int>> shipDamage = new Dictionary<Ship, List<int>>();
-
-        for (int targetIndex = 0; targetIndex < targets.Length; targetIndex++)
+        effects.Remove(effect);
+        foreach (Effect affected in effects)
         {
-            int target = targets[targetIndex];
-            List<Tile> singularHits = new List<Tile>();
-            Tile impact = null;
-
-            for (int y = defender.board.tiles.GetLength(1) - 1; y >= 0; y--)
-            {
-                Tile candidate = defender.board.tiles[target, y];
-                if (candidate.containedShip && candidate.containedShip.health > 0)
-                {
-                    impact = candidate;
-                    break;
-                }
-                else
-                {
-                    singularHits.Add(candidate);
-                }
-            }
-
-            if (impact)
-            {
-                if (impact.containedShip.health < impact.containedShip.maxHealth)
-                {
-                    singularHits.AddRange(impact.containedShip.tiles);
-                }
-                else
-                {
-                    singularHits.Add(impact);
-                }
-
-                impacts.Add(impact);
-            }
-
-            foreach (Tile hit in singularHits)
-            {
-                if (!attacker.hitTiles.Contains(hit) && !hits.Contains(hit))
-                {
-                    hits.Add(hit);
-                    if (hit.containedShip)
-                    {
-                        if (!shipDamage.ContainsKey(hit.containedShip))
-                        {
-                            shipDamage.Add(hit.containedShip, new List<int>());
-                        }
-
-                        for (int i = 0; i < hit.containedShip.tiles.Length; i++)
-                        {
-                            if (hit.containedShip.tiles[i] == hit)
-                            {
-                                shipDamage[hit.containedShip].Add(i);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+            affected.OnOtherEffectRemove(effect);
         }
 
-        //Apply the hits
-        log[0].torpedoImpacts.AddRange(impacts);
-        log[0].damagedTiles.AddRange(hits);
-
-        hits.ForEach(x => x.hit = true);
-
-        foreach (KeyValuePair<Ship, List<int>> shipHitInfo in shipDamage)
-        {
-            log[0].damagedShips.Add(shipHitInfo.Key);
-            shipHitInfo.Key.Damage(shipHitInfo.Value.ToArray());
-            if (shipHitInfo.Key.health <= 0)
-            {
-                log[0].destroyedShips.Add(shipHitInfo.Key);
-            }
-        }
-
-        attacker.hitTiles.AddRange(hits);
-
-        //Take away the consumed torpedoes from the destroyers
-        int ammoCost = targets.Length;
-        for (int i = 0; i < attacker.board.ships.Length; i++)
-        {
-            Ship ship = attacker.board.ships[i];
-            if (ship.health > 0 && ship.type == ShipType.DESTROYER)
-            {
-                Destroyer destroyer = (Destroyer)ship;
-                int initialTorpedoCount = destroyer.torpedoCount;
-                destroyer.torpedoCount -= Mathf.Clamp(ammoCost, 0, destroyer.torpedoCount);
-
-                ammoCost -= initialTorpedoCount - destroyer.torpedoCount;
-                if (ammoCost == 0)
-                {
-                    break;
-                }
-            }
-        }
-
-        NextTurn();
+        Destroy(effect.gameObject);
     }
+
+    // public void ExecuteArtilleryAttack(Tile[] targets)
+    // {
+    //     //Check if the number of targets is correct
+    //     if (targets.Length > attackerCapabilities.maximumArtilleryCount || targets.Length == 0)
+    //     {
+    //         Debug.LogWarning("ARTILLERY ATTACK has a possibly invalid number of targets: " + targets.Length + "/" + attackerCapabilities.maximumArtilleryCount);
+    //     }
+
+    //     //Determine the final hits to ships and other tiles
+    //     List<Tile> actualHits = new List<Tile>();
+    //     Dictionary<Ship, List<int>> shipHits = new Dictionary<Ship, List<int>>();
+    //     for (int targetIndex = 0; targetIndex < targets.Length; targetIndex++)
+    //     {
+    //         Tile target = targets[targetIndex];
+
+    //         //If there is a concealed ship in this tile displace the shot
+    //         if (target.containedShip != null)
+    //         {
+    //             if (target.containedShip.concealedBy)
+    //             {
+    //                 for (int x = (target.coordinates.x == 0 ? 0 : -1); x <= ((target.coordinates.x == defender.board.tiles.GetLength(0) - 1) ? 0 : 1); x++)
+    //                 {
+    //                     for (int y = (target.coordinates.y == 0 ? 0 : -1); y <= ((target.coordinates.y == defender.board.tiles.GetLength(1) - 1) ? 0 : 1); y++)
+    //                     {
+    //                         if (!(y == 0 && x == 0))
+    //                         {
+    //                             Tile candidate = defender.board.tiles[x + (int)target.coordinates.x, y + (int)target.coordinates.y];
+    //                             if (!attacker.hitTiles.Contains(candidate) && !actualHits.Contains(candidate) && candidate.containedShip == null)
+    //                             {
+    //                                 target = candidate;
+    //                                 break;
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //         if (!attacker.hitTiles.Contains(target))
+    //         {
+    //             actualHits.Add(target);
+    //             if (target.containedShip)
+    //             {
+    //                 if (!shipHits.ContainsKey(target.containedShip))
+    //                 {
+    //                     shipHits.Add(target.containedShip, new List<int>());
+    //                 }
+
+    //                 for (int i = 0; i < target.containedShip.tiles.Length; i++)
+    //                 {
+    //                     if (target.containedShip.tiles[i] == target)
+    //                     {
+    //                         shipHits[target.containedShip].Add(i);
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     //Apply the hits
+    //     log[0].artilleryImpacts.AddRange(actualHits);
+    //     log[0].damagedTiles.AddRange(actualHits);
+
+    //     actualHits.ForEach(x => x.hit = true);
+
+    //     foreach (KeyValuePair<Ship, List<int>> shipHitInfo in shipHits)
+    //     {
+    //         log[0].damagedShips.Add(shipHitInfo.Key);
+    //         shipHitInfo.Key.Damage(shipHitInfo.Value.ToArray());
+    //         if (shipHitInfo.Key.health <= 0)
+    //         {
+    //             log[0].destroyedShips.Add(shipHitInfo.Key);
+    //         }
+    //     }
+
+    //     attacker.hitTiles.AddRange(actualHits);
+
+    //     NextTurn();
+    // }
+
+    // public void ExecuteTorpedoAttack(int[] targets)
+    // {
+    //     //Determine the final hits to ships and other tiles
+    //     List<Tile> impacts = new List<Tile>();
+    //     List<Tile> hits = new List<Tile>();
+    //     Dictionary<Ship, List<int>> shipDamage = new Dictionary<Ship, List<int>>();
+
+    //     for (int targetIndex = 0; targetIndex < targets.Length; targetIndex++)
+    //     {
+    //         int target = targets[targetIndex];
+    //         List<Tile> singularHits = new List<Tile>();
+    //         Tile impact = null;
+
+    //         for (int y = defender.board.tiles.GetLength(1) - 1; y >= 0; y--)
+    //         {
+    //             Tile candidate = defender.board.tiles[target, y];
+    //             if (candidate.containedShip && candidate.containedShip.health > 0)
+    //             {
+    //                 impact = candidate;
+    //                 break;
+    //             }
+    //             else
+    //             {
+    //                 singularHits.Add(candidate);
+    //             }
+    //         }
+
+    //         if (impact)
+    //         {
+    //             if (impact.containedShip.health < impact.containedShip.maxHealth)
+    //             {
+    //                 singularHits.AddRange(impact.containedShip.tiles);
+    //             }
+    //             else
+    //             {
+    //                 singularHits.Add(impact);
+    //             }
+
+    //             impacts.Add(impact);
+    //         }
+
+    //         foreach (Tile hit in singularHits)
+    //         {
+    //             if (!attacker.hitTiles.Contains(hit) && !hits.Contains(hit))
+    //             {
+    //                 hits.Add(hit);
+    //                 if (hit.containedShip)
+    //                 {
+    //                     if (!shipDamage.ContainsKey(hit.containedShip))
+    //                     {
+    //                         shipDamage.Add(hit.containedShip, new List<int>());
+    //                     }
+
+    //                     for (int i = 0; i < hit.containedShip.tiles.Length; i++)
+    //                     {
+    //                         if (hit.containedShip.tiles[i] == hit)
+    //                         {
+    //                             shipDamage[hit.containedShip].Add(i);
+    //                             break;
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     //Apply the hits
+    //     log[0].torpedoImpacts.AddRange(impacts);
+    //     log[0].damagedTiles.AddRange(hits);
+
+    //     hits.ForEach(x => x.hit = true);
+
+    //     foreach (KeyValuePair<Ship, List<int>> shipHitInfo in shipDamage)
+    //     {
+    //         log[0].damagedShips.Add(shipHitInfo.Key);
+    //         shipHitInfo.Key.Damage(shipHitInfo.Value.ToArray());
+    //         if (shipHitInfo.Key.health <= 0)
+    //         {
+    //             log[0].destroyedShips.Add(shipHitInfo.Key);
+    //         }
+    //     }
+
+    //     attacker.hitTiles.AddRange(hits);
+
+    //     //Take away the consumed torpedoes from the destroyers
+    //     int ammoCost = targets.Length;
+    //     for (int i = 0; i < attacker.board.ships.Length; i++)
+    //     {
+    //         Ship ship = attacker.board.ships[i];
+    //         if (ship.health > 0 && ship.type == ShipType.DESTROYER)
+    //         {
+    //             Destroyer destroyer = (Destroyer)ship;
+    //             int initialTorpedoCount = destroyer.torpedoCount;
+    //             destroyer.torpedoCount -= Mathf.Clamp(ammoCost, 0, destroyer.torpedoCount);
+
+    //             ammoCost -= initialTorpedoCount - destroyer.torpedoCount;
+    //             if (ammoCost == 0)
+    //             {
+    //                 break;
+    //             }
+    //         }
+    //     }
+
+    //     NextTurn();
+    // }
 
     public static Battle CreateBattle(BattleData data)
     {
