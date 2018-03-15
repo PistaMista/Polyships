@@ -146,7 +146,7 @@ public class Battle : MonoBehaviour
     public Player attacker;
     public Player defender;
     public List<TurnInfo> log;
-    public List<Effect> effects; //Effects change the battle parameters - at the start/end of each turn or when another effect is added/removed. Effects are applied in the order of this list.
+    public List<Effect> effects = new List<Effect>(); //Effects change the battle parameters - at the start/end of each turn or when another effect is added/removed. Effects are applied in the order of this list.
     public int saveSlot;
     public int tutorialStage;
     public void SaveToDisk()
