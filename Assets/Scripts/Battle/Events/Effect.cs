@@ -67,15 +67,27 @@ public class Effect : MonoBehaviour
 
     }
 
-    public static Effect SummonEffect<T>()
+    public static Effect CreateEffect<T>()
+    {
+        Effect result = null;
+        Effect candidate = RetrieveEffectPrefab<T>();
+        if (candidate.GetAdditionalAllowed() > 0)
+        {
+            result = Instantiate(candidate.gameObject).GetComponent<Effect>();
+        }
+
+        return result;
+    }
+
+    public static Effect RetrieveEffectPrefab<T>()
     {
         Effect result = null;
         for (int i = 0; i < MiscellaneousVariables.it.effectPrefabs.Length; i++)
         {
             Effect candidate = MiscellaneousVariables.it.effectPrefabs[i].GetComponent<Effect>();
-            if (candidate is T && candidate.GetAdditionalAllowed() > 0)
+            if (candidate is T)
             {
-                result = Instantiate(candidate.gameObject).GetComponent<Effect>();
+                result = candidate;
                 break;
             }
         }
