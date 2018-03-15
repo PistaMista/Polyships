@@ -15,11 +15,8 @@ public class ArtilleryAttack_Effect : Effect
         {
             target.containedShip.Damage(1);
         }
-    }
 
-    public override void OnOtherEffectAdd(Effect addedEffect)
-    {
-
+        base.OnTurnEnd();
     }
 
     public override int GetAdditionalAllowed()

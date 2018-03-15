@@ -73,7 +73,7 @@ public class Effect : MonoBehaviour
         for (int i = 0; i < MiscellaneousVariables.it.effectPrefabs.Length; i++)
         {
             Effect candidate = MiscellaneousVariables.it.effectPrefabs[i].GetComponent<Effect>();
-            if (candidate is T && candidate.CheckUsageConditions())
+            if (candidate is T && candidate.GetAdditionalAllowed() > 0)
             {
                 result = Instantiate(candidate.gameObject).GetComponent<Effect>();
                 break;

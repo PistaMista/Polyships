@@ -84,6 +84,6 @@ public class TorpedoPTTUI : PrimaryTTUI
             targets[i] = (int)placedTokens[i].value;
         }
 
-        Battle.main.ExecuteTorpedoAttack(targets);
+        //Battle.main.ExecuteTorpedoAttack(targets);
     }
 }

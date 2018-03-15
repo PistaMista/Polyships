@@ -422,7 +422,7 @@ public class AIModule : ScriptableObject
         //ATTACK
         if (torpedoHeat > artilleryHeat)
         {
-            Battle.main.ExecuteTorpedoAttack(torpedoCandidates);
+            //Battle.main.ExecuteTorpedoAttack(torpedoCandidates);
         }
         else
         {
@@ -432,7 +432,7 @@ public class AIModule : ScriptableObject
                 Vector2Int coord = artilleryCandidates[i];
                 targets[i] = target.tiles[coord.x, coord.y];
             }
-            Battle.main.ExecuteArtilleryAttack(targets);
+            //Battle.main.ExecuteArtilleryAttack(targets);
         }
     }
 

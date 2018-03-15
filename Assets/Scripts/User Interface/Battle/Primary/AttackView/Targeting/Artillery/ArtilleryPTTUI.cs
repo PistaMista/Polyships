@@ -45,6 +45,6 @@ public class ArtilleryPTTUI : PrimaryTTUI
             targets[i] = (Tile)placedTokens[i].value;
         }
 
-        Battle.main.ExecuteArtilleryAttack(targets);
+        //Battle.main.ExecuteArtilleryAttack(targets);
     }
 }
