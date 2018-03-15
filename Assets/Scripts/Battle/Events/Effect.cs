@@ -24,12 +24,27 @@ public class Effect : MonoBehaviour
         }
     }
 
-    public virtual bool ConflictsWith(Effect effect)
+    //Checks how many of these effects can be added to the battle effect queue
+    public virtual int GetAdditionalAllowed()
+    {
+        foreach (Effect potentialConflictor in Battle.main.effects)
+        {
+            if (ConflictsWith(potentialConflictor))
+            {
+                return 0;
+            }
+        }
+
+        return 8;
+    }
+
+    //Checks if the effect conflicts with another
+    protected virtual bool ConflictsWith(Effect effect)
     {
         return ConflictsWithType(effect.GetType());
     }
 
-    public bool ConflictsWithType(Type type)
+    protected bool ConflictsWithType(Type type)
     {
         for (int i = 0; i < conflictingEffects.Length; i++)
         {
@@ -58,7 +73,7 @@ public class Effect : MonoBehaviour
         for (int i = 0; i < MiscellaneousVariables.it.effectPrefabs.Length; i++)
         {
             Effect candidate = MiscellaneousVariables.it.effectPrefabs[i].GetComponent<Effect>();
-            if (candidate is T)
+            if (candidate is T && candidate.CheckUsageConditions())
             {
                 result = Instantiate(candidate.gameObject).GetComponent<Effect>();
                 break;

@@ -113,9 +113,9 @@ public class Ship : MonoBehaviour
         parentBoard.intactShipCount--;
     }
 
-    public virtual void Damage(int[] hitTilesIndexes)
+    public virtual void Damage(int damageTaken)
     {
-        health -= hitTilesIndexes.Length;
+        health -= damageTaken;
 
         if (concealedBy)
         {

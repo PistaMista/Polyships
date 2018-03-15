@@ -331,7 +331,7 @@ public class Battle : MonoBehaviour
     //Inserts an effect into the queue based on its priority if it doesnt conflict with any other effect present
     public bool AddEffect(Effect effect)
     {
-        if (!EffectAllowed(effect))
+        if (effect.GetAdditionalAllowed() <= 0)
         {
             return false;
         }
@@ -362,31 +362,31 @@ public class Battle : MonoBehaviour
         return true;
     }
 
-    public bool EffectAllowed(Effect effect)
-    {
-        foreach (Effect conflictCandidate in effects)
-        {
-            if (conflictCandidate.ConflictsWith(effect))
-            {
-                return false;
-            }
-        }
+    // public bool EffectAllowed(Effect effect)
+    // {
+    //     foreach (Effect conflictCandidate in effects)
+    //     {
+    //         if (conflictCandidate.ConflictsWith(effect))
+    //         {
+    //             return false;
+    //         }
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
-    public bool EffectTypeAllowed(Type type)
-    {
-        foreach (Effect conflictCandidate in effects)
-        {
-            if (conflictCandidate.ConflictsWithType(type))
-            {
-                return false;
-            }
-        }
+    // public bool EffectTypeAllowed(Type type)
+    // {
+    //     foreach (Effect conflictCandidate in effects)
+    //     {
+    //         if (conflictCandidate.ConflictsWithType(type))
+    //         {
+    //             return false;
+    //         }
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
     //Removes an effect from the queue
     public void RemoveEffect(Effect effect)
