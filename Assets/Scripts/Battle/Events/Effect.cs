@@ -20,7 +20,7 @@ public class Effect : MonoBehaviour
         duration--;
         if (duration == 0)
         {
-            Battle.main.RemoveEffect(this);
+            expiredEffects.Add(this);
         }
     }
 
@@ -78,6 +78,70 @@ public class Effect : MonoBehaviour
                 result = Instantiate(candidate.gameObject).GetComponent<Effect>();
                 break;
             }
+        }
+
+        return result;
+    }
+
+    public static bool AddToQueue(Effect effect)
+    {
+        if (effect.GetAdditionalAllowed() <= 0)
+        {
+            return false;
+        }
+
+        int insertionIndex = 0;
+        foreach (Effect measure in Battle.main.effects)
+        {
+            if (measure.priority >= effect.priority)
+            {
+                insertionIndex++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        Battle.main.effects.Insert(insertionIndex, effect);
+        foreach (Effect affected in Battle.main.effects)
+        {
+            if (affected != effect)
+            {
+                affected.OnOtherEffectAdd(effect);
+            }
+        }
+
+        effect.transform.SetParent(Battle.main.transform);
+        return true;
+    }
+
+    public static void RemoveFromQueue(Effect effect)
+    {
+        Battle.main.effects.Remove(effect);
+        foreach (Effect affected in Battle.main.effects)
+        {
+            affected.OnOtherEffectRemove(effect);
+        }
+
+        Destroy(effect.gameObject);
+    }
+
+    static List<Effect> expiredEffects = new List<Effect>();
+    public static void RemoveExpiredEffectsFromQueue()
+    {
+        foreach (Effect effect in expiredEffects)
+        {
+            RemoveFromQueue(effect);
+        }
+    }
+
+    public static int GetAmountInQueue<T>()
+    {
+        int result = 0;
+        foreach (Effect effect in Battle.main.effects)
+        {
+            if (effect is T) result++;
         }
 
         return result;

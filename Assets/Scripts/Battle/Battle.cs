@@ -247,6 +247,8 @@ public class Battle : MonoBehaviour
             effect.OnTurnEnd();
         }
 
+        Effect.RemoveExpiredEffectsFromQueue();
+
         Player lastAttacker = attacker;
         attacker = defender;
         defender = lastAttacker;
@@ -329,38 +331,38 @@ public class Battle : MonoBehaviour
     }
 
     //Inserts an effect into the queue based on its priority if it doesnt conflict with any other effect present
-    public bool AddEffect(Effect effect)
-    {
-        if (effect.GetAdditionalAllowed() <= 0)
-        {
-            return false;
-        }
+    // public bool AddEffect(Effect effect)
+    // {
+    //     if (effect.GetAdditionalAllowed() <= 0)
+    //     {
+    //         return false;
+    //     }
 
-        int insertionIndex = 0;
-        foreach (Effect measure in effects)
-        {
-            if (measure.priority >= effect.priority)
-            {
-                insertionIndex++;
-            }
-            else
-            {
-                break;
-            }
-        }
+    //     int insertionIndex = 0;
+    //     foreach (Effect measure in effects)
+    //     {
+    //         if (measure.priority >= effect.priority)
+    //         {
+    //             insertionIndex++;
+    //         }
+    //         else
+    //         {
+    //             break;
+    //         }
+    //     }
 
-        effects.Insert(insertionIndex, effect);
-        foreach (Effect affected in effects)
-        {
-            if (affected != effect)
-            {
-                affected.OnOtherEffectAdd(effect);
-            }
-        }
+    //     effects.Insert(insertionIndex, effect);
+    //     foreach (Effect affected in effects)
+    //     {
+    //         if (affected != effect)
+    //         {
+    //             affected.OnOtherEffectAdd(effect);
+    //         }
+    //     }
 
-        effect.transform.SetParent(transform);
-        return true;
-    }
+    //     effect.transform.SetParent(transform);
+    //     return true;
+    // }
 
     // public bool EffectAllowed(Effect effect)
     // {
@@ -389,16 +391,16 @@ public class Battle : MonoBehaviour
     // }
 
     //Removes an effect from the queue
-    public void RemoveEffect(Effect effect)
-    {
-        effects.Remove(effect);
-        foreach (Effect affected in effects)
-        {
-            affected.OnOtherEffectRemove(effect);
-        }
+    // public void RemoveEffect(Effect effect)
+    // {
+    //     effects.Remove(effect);
+    //     foreach (Effect affected in effects)
+    //     {
+    //         affected.OnOtherEffectRemove(effect);
+    //     }
 
-        Destroy(effect.gameObject);
-    }
+    //     Destroy(effect.gameObject);
+    // }
 
     // public void ExecuteArtilleryAttack(Tile[] targets)
     // {

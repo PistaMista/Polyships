@@ -21,7 +21,7 @@ public class ArtilleryAttack_Effect : Effect
 
     public override int GetAdditionalAllowed()
     {
-        return Mathf.Clamp(Battle.main.attackerCapabilities.maximumArtilleryCount, 0, base.GetAdditionalAllowed()) * (Battle.main.attacker.hitTiles.Contains(target) ? 0 : 1);
+        return Mathf.Clamp(Battle.main.attackerCapabilities.maximumArtilleryCount - Effect.GetAmountInQueue<ArtilleryAttack_Effect>(), 0, base.GetAdditionalAllowed()) * (Battle.main.attacker.hitTiles.Contains(target) ? 0 : 1);
     }
 
     protected override bool ConflictsWith(Effect effect)

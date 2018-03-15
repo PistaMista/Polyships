@@ -67,7 +67,7 @@ public class TorpedoAttack_Effect : Effect
 
     public override int GetAdditionalAllowed()
     {
-        return Mathf.Clamp(Battle.main.attackerCapabilities.maximumTorpedoCount, 0, Mathf.Min(base.GetAdditionalAllowed(), MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn)) * (target < 0 || Battle.main.attackerCapabilities.torpedoFiringArea[target] ? 1 : 0);
+        return Mathf.Clamp(Battle.main.attackerCapabilities.maximumTorpedoCount - Effect.GetAmountInQueue<TorpedoAttack_Effect>(), 0, Mathf.Min(base.GetAdditionalAllowed(), MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn)) * (target < 0 || Battle.main.attackerCapabilities.torpedoFiringArea[target] ? 1 : 0);
     }
 
     protected override bool ConflictsWith(Effect effect)

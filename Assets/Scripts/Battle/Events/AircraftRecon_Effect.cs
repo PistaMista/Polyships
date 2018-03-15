@@ -35,7 +35,7 @@ public class AircraftRecon_Effect : Effect
     }
     public override int GetAdditionalAllowed()
     {
-        return Mathf.Clamp(Battle.main.attackerCapabilities.maximumAircraftCount, 0, base.GetAdditionalAllowed());
+        return Mathf.Clamp(Battle.main.attackerCapabilities.maximumAircraftCount - Effect.GetAmountInQueue<AircraftRecon_Effect>(), 0, base.GetAdditionalAllowed());
     }
 
     protected override bool ConflictsWith(Effect effect)
