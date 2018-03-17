@@ -4,16 +4,5 @@ using UnityEngine;
 
 public class BattleUIAgent : UIAgent
 {
-
-    // Use this for initialization
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
+    public BattleMainframeUI owner;
 }
