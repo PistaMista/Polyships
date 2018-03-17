@@ -7,19 +7,18 @@ public class UIAgent : MonoBehaviour
 {
     public UIState state;
     public bool parentStateIndependent = false;
-    public UIAgent[] remoteUIAgents = new UIAgent[0]; //These will be informed when the state of this ui changes, but will not be waited for when disabling/enabling this UI.
-    public UIAgent[] staticUIAgents = new UIAgent[0];
-    public List<UIAgent> dynamicUIAgents = new List<UIAgent>();
-    public GameObject[] dynamicUIAgentPaletteObjects;
-    public string[] dynamicUIAgentPaletteNames;
-    public Transform childAgentDefaultParent;
+    public UIAgent[] remoteAgents = new UIAgent[0]; //These will be informed when the state of this ui changes, but will not be waited for when disabling/enabling this UI.
+    public UIAgent[] staticAgents = new UIAgent[0];
+    public List<UIAgent> dynamicAgents = new List<UIAgent>();
+    public GameObject[] dynamicAgentPrefabs;
+    public Transform dynamicAgentParent;
     public List<UIAgent> allAgents
     {
         get
         {
             List<UIAgent> result = new List<UIAgent>();
-            result.AddRange(staticUIAgents);
-            result.AddRange(dynamicUIAgents);
+            result.AddRange(staticAgents);
+            result.AddRange(dynamicAgents);
             return result;
         }
     }
@@ -37,7 +36,7 @@ public class UIAgent : MonoBehaviour
     protected UIAgent[] RemoveDynamicAgents<T>(string nameFilter, bool instant)
     {
         List<UIAgent> removedAgents = new List<UIAgent>();
-        foreach (UIAgent agent in dynamicUIAgents)
+        foreach (UIAgent agent in dynamicAgents)
         {
             bool typeMatch = agent is T;
             bool nameMatch = agent.name.Contains(nameFilter);
@@ -56,7 +55,7 @@ public class UIAgent : MonoBehaviour
             }
         }
 
-        removedAgents.ForEach(x => dynamicUIAgents.Remove(x));
+        removedAgents.ForEach(x => dynamicAgents.Remove(x));
         return removedAgents.ToArray();
     }
 
@@ -71,28 +70,39 @@ public class UIAgent : MonoBehaviour
             agent.State = UIState.DISABLING;
         }
 
-        dynamicUIAgents.Remove(agent);
+        dynamicAgents.Remove(agent);
     }
 
-    protected UIAgent CreateDynamicAgent(string name)
+    protected UIAgent CreateDynamicAgent<T>(string nameFilter)
     {
-        UIAgent agent = null;
-        for (int i = 0; i < dynamicUIAgentPaletteNames.Length; i++)
-        {
-            if (name == dynamicUIAgentPaletteNames[i])
-            {
-                agent = Instantiate(dynamicUIAgentPaletteObjects[i]).GetComponent<UIAgent>();
-                if (childAgentDefaultParent != null)
-                {
-                    agent.transform.SetParent(childAgentDefaultParent);
-                    agent.State = State;
-                }
+        UIAgent result = null;
+        UIAgent candidate = RetrieveDynamicAgentPrefab<T>(nameFilter);
 
-                dynamicUIAgents.Add(agent);
+        if (candidate != null)
+        {
+            result = Instantiate(candidate.gameObject).GetComponent<UIAgent>();
+        }
+
+        return result;
+    }
+
+    protected UIAgent RetrieveDynamicAgentPrefab<T>(string nameFilter)
+    {
+        UIAgent prefab = null;
+        for (int i = 0; i < dynamicAgentPrefabs.Length; i++)
+        {
+            UIAgent candidate = dynamicAgentPrefabs[i].GetComponent<UIAgent>();
+            bool typeMatch = candidate is T;
+            bool nameMatch = candidate.name.Contains(nameFilter);
+
+            if (typeMatch && nameMatch)
+            {
+                prefab = candidate;
                 break;
             }
         }
-        return agent;
+
+        return prefab;
     }
 
     bool changeStateCausedByUpdate;
@@ -119,9 +129,9 @@ public class UIAgent : MonoBehaviour
         if (!changeStateCausedByUpdate)
         {
             allAgents.ForEach(x => { if (x.State != state && !x.parentStateIndependent) { x.State = state; } });
-            for (int i = 0; i < remoteUIAgents.Length; i++)
+            for (int i = 0; i < remoteAgents.Length; i++)
             {
-                UIAgent x = remoteUIAgents[i];
+                UIAgent x = remoteAgents[i];
                 if (x.State != state)
                 {
                     x.State = state;
