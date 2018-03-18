@@ -43,7 +43,7 @@ public class InputEnabledUI : BasicUI
     protected static bool pressed;
     [Range(0.0f, 1.0f)]
     public float dragRegisterDistanceInScreenHeightPercentage;
-    public float screenToWorldInputConversionHeight;
+    public float defaultConversionDistance;
     public bool interactable;
     protected override void Update()
     {
@@ -64,15 +64,21 @@ public class InputEnabledUI : BasicUI
             }
         }
 
-        // initialInputPosition.world = ConvertToWorldInputPosition(initialInputPosition.screen);
-        // currentInputPosition.world = ConvertToWorldInputPosition(currentInputPosition.screen);
-        // lastFrameInputPosition.world = ConvertToWorldInputPosition(lastFrameInputPosition.screen);
-        // dragVelocity.world = ConvertToWorldInputPosition(dragVelocity.screen);
+        float conversionDistance = CalculateConversionDistance();
+        initialInputPosition.world = ConvertToWorldInputPosition(initialInputPosition.screen, conversionDistance);
+        currentInputPosition.world = ConvertToWorldInputPosition(currentInputPosition.screen, conversionDistance);
+        lastFrameInputPosition.world = ConvertToWorldInputPosition(lastFrameInputPosition.screen, conversionDistance);
+        dragVelocity.world = ConvertToWorldInputPosition(dragVelocity.screen, conversionDistance);
     }
 
-    protected Vector3 ConvertToWorldInputPosition(Vector2 screenPosition)
+    protected Vector3 ConvertToWorldInputPosition(Vector2 screenPosition, float conversionDistance)
     {
-        return Camera.main.ScreenToWorldPoint((Vector3)screenPosition + Vector3.forward * (Camera.main.transform.position.y - screenToWorldInputConversionHeight));
+        return Camera.main.ScreenToWorldPoint((Vector3)screenPosition + Vector3.forward * conversionDistance);
+    }
+
+    protected virtual float CalculateConversionDistance()
+    {
+        return defaultConversionDistance;
     }
 
     public void SetInteractable(bool enabled)

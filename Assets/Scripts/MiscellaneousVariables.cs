@@ -17,7 +17,7 @@ public class MiscellaneousVariables : MonoBehaviour
     public Vector2Int flagResolution;
     public int maximumTorpedoAttacksPerTurn;
     public TitleUI titleUI;
-    public BattleUIAgent[] generalBattleAgents;
+    public List<BattleUIAgent> generalBattleAgents;
     public static MiscellaneousVariables it;
 
     void Start()
