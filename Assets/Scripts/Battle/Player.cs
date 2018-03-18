@@ -49,6 +49,7 @@ public class Player : MonoBehaviour
     public bool aiEnabled;
     public Color[,] flag;
     public List<Tile> hitTiles;
+    public BattleUIAgent[] uiAgents;
 
 
 

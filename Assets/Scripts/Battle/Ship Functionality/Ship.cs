@@ -185,9 +185,9 @@ public class Ship : MonoBehaviour
         {
             placementInfo.waypoints = new List<Vector3>();
 
-            Vector3 targetPosition = location != null ? placementInfo.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : FleetPlacementUI.it.shipDrawer.transform.TransformPoint(placementInfo.localDrawerPosition);
-            placementInfo.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, targetPosition.z));
-            placementInfo.waypoints.Add(targetPosition);
+            // Vector3 targetPosition = location != null ? placementInfo.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : FleetPlacementUI.it.shipDrawer.transform.TransformPoint(placementInfo.localDrawerPosition);
+            // placementInfo.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, targetPosition.z));
+            //placementInfo.waypoints.Add(targetPosition);
         }
 
         parentBoard.ReevaluateTiles();
@@ -238,7 +238,7 @@ public class Ship : MonoBehaviour
         if (parentBoard.owner.aiModule == null)
         {
             placementInfo.waypoints = new List<Vector3>();
-            placementInfo.waypoints.Add(new Vector3(transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, transform.position.z));
+            //placementInfo.waypoints.Add(new Vector3(transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, transform.position.z));
         }
     }
 
