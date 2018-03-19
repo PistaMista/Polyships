@@ -5,8 +5,10 @@ using System.Linq;
 
 public class UIAgent : MonoBehaviour
 {
+
     public UIState state;
     public bool parentStateIndependent = false;
+    [Header("Linked Agents")]
     public UIAgent[] remoteAgents = new UIAgent[0]; //These will be informed when the state of this ui changes, but will not be waited for when disabling/enabling this UI.
     public UIAgent[] staticAgents = new UIAgent[0];
     public List<UIAgent> dynamicAgents = new List<UIAgent>();

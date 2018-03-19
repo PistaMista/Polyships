@@ -41,6 +41,7 @@ public class InputEnabledUI : BasicUI
     protected static bool tap;
     protected static bool dragging;
     protected static bool pressed;
+    [Header("Input Configuration")]
     [Range(0.0f, 1.0f)]
     public float dragRegisterDistanceInScreenHeightPercentage;
     public float defaultConversionDistance;
