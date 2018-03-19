@@ -9,6 +9,7 @@ public class BattleUIAgent : InputEnabledUI
 
     delegate void BattleAgentDehooker();
     BattleAgentDehooker dehooker;
+    protected Vector3 relativeWorldInputPosition;
 
     protected override void SetState(UIState state)
     {
@@ -22,6 +23,12 @@ public class BattleUIAgent : InputEnabledUI
         {
             GatherRequiredAgents();
         }
+    }
+
+    protected override void ProcessInput()
+    {
+        base.ProcessInput();
+        relativeWorldInputPosition = transform.InverseTransformPoint(currentInputPosition.world);
     }
 
     protected virtual void GatherRequiredAgents()
@@ -39,12 +46,19 @@ public class BattleUIAgent : InputEnabledUI
 
         int cycles = creationMode ? limit : Mathf.Min(examinedArray.Length, limit);
         List<BattleUIAgent> matches = new List<BattleUIAgent>();
+
+        UIAgent candidate = creationMode ? RetrieveDynamicAgentPrefab<T>(nameFilter) : examinedArray[0];
+        bool typeMatch = candidate is T && candidate is BattleUIAgent;
+        bool nameMatch = candidate.name.Contains(nameFilter);
+
         for (int i = 0; i < cycles; i++)
         {
-            UIAgent candidate = creationMode ? RetrieveDynamicAgentPrefab<T>(nameFilter) : examinedArray[i];
-
-            bool typeMatch = candidate is T && candidate is BattleUIAgent;
-            bool nameMatch = candidate.name.Contains(nameFilter);
+            if (!creationMode)
+            {
+                candidate = examinedArray[i];
+                typeMatch = candidate is T && candidate is BattleUIAgent;
+                nameMatch = candidate.name.Contains(nameFilter);
+            }
 
             if (typeMatch && nameMatch)
             {
@@ -52,7 +66,9 @@ public class BattleUIAgent : InputEnabledUI
                 if (creationMode) confirmedCandidate = Instantiate(confirmedCandidate).GetComponent<BattleUIAgent>();
 
                 confirmedCandidate.hookedTo = this;
-                dehooker += () => { confirmedCandidate.hookedTo = null; };
+                confirmedCandidate.SetInteractable(true);
+
+                dehooker += () => { confirmedCandidate.hookedTo = null; confirmedCandidate.SetInteractable(false); };
                 if (creationMode) dehooker += () => { Destroy(confirmedCandidate.gameObject, 10.0f); };
                 matches.Add(confirmedCandidate);
             }
