@@ -56,8 +56,6 @@ public class Player : MonoBehaviour
 
 
     public AIModule aiModule;
-    public Waypoint boardCameraPoint;
-    public Waypoint flagCameraPoint;
     public void Initialize(PlayerData data)
     {
         index = data.index;
@@ -83,16 +81,6 @@ public class Player : MonoBehaviour
         }
 
         //hitTiles - REF
-
-        boardCameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
-        boardCameraPoint.transform.SetParent(transform);
-        boardCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(new Vector2(board.tiles.GetLength(0) + 3, board.tiles.GetLength(1) + 3)) * MiscellaneousVariables.it.boardCameraHeightModifier + MiscellaneousVariables.it.boardUIRenderHeight);
-        boardCameraPoint.transform.LookAt(transform);
-
-        flagCameraPoint = new GameObject("Flag Camera Point").AddComponent<Waypoint>();
-        flagCameraPoint.transform.SetParent(transform);
-        flagCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(MiscellaneousVariables.it.flagVoxelScale * new Vector2(flag.GetLength(0) + 3, flag.GetLength(1) + 3)) + MiscellaneousVariables.it.flagRenderHeight);
-        flagCameraPoint.transform.LookAt(transform);
     }
 
 

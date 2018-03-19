@@ -7,6 +7,7 @@ namespace BattleUIAgents.Base
 {
     public class BattleUIAgent : InputEnabledUI
     {
+        [Header("Battle Agent Configuration")]
         public Player player;
         public BattleUIAgent hookedTo;
 
@@ -14,17 +15,31 @@ namespace BattleUIAgents.Base
         BattleAgentDehooker dehooker;
         protected Vector3 relativeWorldInputPosition;
 
-        protected override void SetState(UIState state)
+        // protected override void SetState(UIState state)
+        // {
+        //     base.SetState(state);
+        //     if ((int)state < 2 && dehooker != null)
+        //     {
+        //         dehooker();
+        //         dehooker = null;
+        //     }
+        //     else if (dehooker == null)
+        //     {
+        //         GatherRequiredAgents();
+        //     }
+        // }
+
+        void OnEnable()
         {
-            base.SetState(state);
-            if ((int)state < 2 && dehooker != null)
+            GatherRequiredAgents();
+        }
+
+        void OnDisable()
+        {
+            if (dehooker != null)
             {
                 dehooker();
                 dehooker = null;
-            }
-            else if (dehooker == null)
-            {
-                GatherRequiredAgents();
             }
         }
 
@@ -69,15 +84,26 @@ namespace BattleUIAgents.Base
                     if (creationMode) confirmedCandidate = Instantiate(confirmedCandidate).GetComponent<BattleUIAgent>();
 
                     confirmedCandidate.hookedTo = this;
-                    confirmedCandidate.SetInteractable(true);
+                    confirmedCandidate.OnHook();
 
-                    dehooker += () => { confirmedCandidate.hookedTo = null; confirmedCandidate.SetInteractable(false); };
+                    dehooker += () => { confirmedCandidate.hookedTo = null; confirmedCandidate.OnUnhook(); };
                     if (creationMode) dehooker += () => { Destroy(confirmedCandidate.gameObject, 10.0f); };
                     matches.Add(confirmedCandidate);
                 }
             }
 
             return matches.ToArray();
+        }
+
+        public virtual void OnHook()
+        {
+            SetInteractable(true);
+            GatherRequiredAgents();
+        }
+
+        public virtual void OnUnhook()
+        {
+            SetInteractable(false);
         }
     }
 }

@@ -1,14 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using BattleUIAgents.Base;
 
-namespace BattleUIAgents.Agents
+namespace BattleUIAgents.Base
 {
-    public class Flag : BattleUIAgent
+    public class Gridline : WorldBattleUIAgent
     {
-
 
     }
 }
-
