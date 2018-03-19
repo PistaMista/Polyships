@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using BattleUIAgents.Base;
+
 public class Player : MonoBehaviour
 {
     [Serializable]

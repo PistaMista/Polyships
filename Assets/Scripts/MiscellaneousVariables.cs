@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using BattleUIAgents.Base;
 
 public class MiscellaneousVariables : MonoBehaviour
 {
@@ -16,7 +17,7 @@ public class MiscellaneousVariables : MonoBehaviour
     public float flagRenderHeight;
     public Vector2Int flagResolution;
     public int maximumTorpedoAttacksPerTurn;
-    public TitleUI titleUI;
+    public TitleUI.Title titleUI;
     public List<BattleUIAgent> generalBattleAgents;
     public static MiscellaneousVariables it;
 
