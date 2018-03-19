@@ -28,39 +28,33 @@ public class BattleUIAgent : InputEnabledUI
     {
 
     }
-    protected BattleUIAgent HookToThis<T>(string nameFilter)
+
+    protected BattleUIAgent[] HookToThis<T>(string nameFilter, Player owner, bool creationMode)
     {
-        return HookToThis<T>(nameFilter, null);
+        return HookToThis<T>(nameFilter, owner, creationMode, creationMode ? 1200 : int.MaxValue);
     }
-    protected BattleUIAgent HookToThis<T>(string nameFilter, Player owner)
-    {
-        return HookAllToThis<T>(nameFilter, owner, 1)[0];
-    }
-    protected BattleUIAgent[] HookAllToThis<T>(string nameFilter)
-    {
-        return HookAllToThis<T>(nameFilter, int.MaxValue);
-    }
-    protected BattleUIAgent[] HookAllToThis<T>(string nameFilter, int limit)
-    {
-        return HookAllToThis<T>(nameFilter, null, limit);
-    }
-    protected BattleUIAgent[] HookAllToThis<T>(string nameFilter, Player owner, int limit)
+    protected BattleUIAgent[] HookToThis<T>(string nameFilter, Player owner, bool creationMode, int limit)
     {
         BattleUIAgent[] examinedArray = owner == null ? MiscellaneousVariables.it.generalBattleAgents.ToArray() : owner.uiAgents;
 
+        int cycles = creationMode ? limit : Mathf.Min(examinedArray.Length, limit);
         List<BattleUIAgent> matches = new List<BattleUIAgent>();
-        for (int i = 0; i < examinedArray.Length && matches.Count < limit; i++)
+        for (int i = 0; i < cycles; i++)
         {
-            BattleUIAgent examined = examinedArray[i];
+            UIAgent candidate = creationMode ? RetrieveDynamicAgentPrefab<T>(nameFilter) : examinedArray[i];
 
-            bool typeMatch = examined is T;
-            bool nameMatch = examined.name.Contains(nameFilter);
+            bool typeMatch = candidate is T && candidate is BattleUIAgent;
+            bool nameMatch = candidate.name.Contains(nameFilter);
 
             if (typeMatch && nameMatch)
             {
-                examined.hookedTo = this;
-                dehooker += () => { examined.hookedTo = null; };
-                matches.Add(examined);
+                BattleUIAgent confirmedCandidate = (BattleUIAgent)candidate;
+                if (creationMode) confirmedCandidate = Instantiate(confirmedCandidate).GetComponent<BattleUIAgent>();
+
+                confirmedCandidate.hookedTo = this;
+                dehooker += () => { confirmedCandidate.hookedTo = null; };
+                if (creationMode) dehooker += () => { Destroy(confirmedCandidate.gameObject, 10.0f); };
+                matches.Add(confirmedCandidate);
             }
         }
 
