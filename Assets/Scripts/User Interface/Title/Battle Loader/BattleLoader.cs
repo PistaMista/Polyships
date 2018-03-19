@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
+using Gameplay;
 
 namespace TitleUI
 {

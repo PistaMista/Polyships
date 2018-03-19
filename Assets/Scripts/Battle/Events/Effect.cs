@@ -3,159 +3,162 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Effect : MonoBehaviour
+namespace Gameplay
 {
-    public int playerAbilityIndex; //The token ID used by the player to do this effect - < 0 means none
-    public Effect[] conflictingEffects;
-    public int duration; //The amount of turns this effect lasts
-    public int priority; //The priority this effect takes over others
-
-    public virtual void OnTurnStart()
+    public class Effect : MonoBehaviour
     {
+        public int playerAbilityIndex; //The token ID used by the player to do this effect - < 0 means none
+        public Effect[] conflictingEffects;
+        public int duration; //The amount of turns this effect lasts
+        public int priority; //The priority this effect takes over others
 
-    }
-
-    public virtual void OnTurnEnd()
-    {
-        duration--;
-        if (duration == 0)
+        public virtual void OnTurnStart()
         {
-            expiredEffects.Add(this);
+
         }
-    }
 
-    //Checks how many of these effects can be added to the battle effect queue
-    public virtual int GetAdditionalAllowed()
-    {
-        foreach (Effect potentialConflictor in Battle.main.effects)
+        public virtual void OnTurnEnd()
         {
-            if (ConflictsWith(potentialConflictor))
+            duration--;
+            if (duration == 0)
             {
-                return 0;
+                expiredEffects.Add(this);
             }
         }
 
-        return 8;
-    }
-
-    //Checks if the effect conflicts with another
-    protected virtual bool ConflictsWith(Effect effect)
-    {
-        return ConflictsWithType(effect.GetType());
-    }
-
-    protected bool ConflictsWithType(Type type)
-    {
-        for (int i = 0; i < conflictingEffects.Length; i++)
+        //Checks how many of these effects can be added to the battle effect queue
+        public virtual int GetAdditionalAllowed()
         {
-            if (conflictingEffects[i].GetType() == type)
+            foreach (Effect potentialConflictor in Battle.main.effects)
             {
-                return true;
+                if (ConflictsWith(potentialConflictor))
+                {
+                    return 0;
+                }
             }
+
+            return 8;
         }
 
-        return false;
-    }
-
-    public virtual void OnOtherEffectAdd(Effect addedEffect)
-    {
-
-    }
-
-    public virtual void OnOtherEffectRemove(Effect removedEffect)
-    {
-
-    }
-
-    public static Effect CreateEffect<T>()
-    {
-        Effect result = null;
-        Effect candidate = RetrieveEffectPrefab<T>();
-        if (candidate.GetAdditionalAllowed() > 0)
+        //Checks if the effect conflicts with another
+        protected virtual bool ConflictsWith(Effect effect)
         {
-            result = Instantiate(candidate.gameObject).GetComponent<Effect>();
+            return ConflictsWithType(effect.GetType());
         }
 
-        return result;
-    }
-
-    public static Effect RetrieveEffectPrefab<T>()
-    {
-        Effect result = null;
-        for (int i = 0; i < MiscellaneousVariables.it.effectPrefabs.Length; i++)
+        protected bool ConflictsWithType(Type type)
         {
-            Effect candidate = MiscellaneousVariables.it.effectPrefabs[i].GetComponent<Effect>();
-            if (candidate is T)
+            for (int i = 0; i < conflictingEffects.Length; i++)
             {
-                result = candidate;
-                break;
+                if (conflictingEffects[i].GetType() == type)
+                {
+                    return true;
+                }
             }
-        }
 
-        return result;
-    }
-
-    public static bool AddToQueue(Effect effect)
-    {
-        if (effect.GetAdditionalAllowed() <= 0)
-        {
             return false;
         }
 
-        int insertionIndex = 0;
-        foreach (Effect measure in Battle.main.effects)
+        public virtual void OnOtherEffectAdd(Effect addedEffect)
         {
-            if (measure.priority >= effect.priority)
+
+        }
+
+        public virtual void OnOtherEffectRemove(Effect removedEffect)
+        {
+
+        }
+
+        public static Effect CreateEffect<T>()
+        {
+            Effect result = null;
+            Effect candidate = RetrieveEffectPrefab<T>();
+            if (candidate.GetAdditionalAllowed() > 0)
             {
-                insertionIndex++;
+                result = Instantiate(candidate.gameObject).GetComponent<Effect>();
             }
-            else
+
+            return result;
+        }
+
+        public static Effect RetrieveEffectPrefab<T>()
+        {
+            Effect result = null;
+            for (int i = 0; i < MiscellaneousVariables.it.effectPrefabs.Length; i++)
             {
-                break;
+                Effect candidate = MiscellaneousVariables.it.effectPrefabs[i].GetComponent<Effect>();
+                if (candidate is T)
+                {
+                    result = candidate;
+                    break;
+                }
             }
+
+            return result;
         }
 
-        Battle.main.effects.Insert(insertionIndex, effect);
-        foreach (Effect affected in Battle.main.effects)
+        public static bool AddToQueue(Effect effect)
         {
-            if (affected != effect)
+            if (effect.GetAdditionalAllowed() <= 0)
             {
-                affected.OnOtherEffectAdd(effect);
+                return false;
+            }
+
+            int insertionIndex = 0;
+            foreach (Effect measure in Battle.main.effects)
+            {
+                if (measure.priority >= effect.priority)
+                {
+                    insertionIndex++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            Battle.main.effects.Insert(insertionIndex, effect);
+            foreach (Effect affected in Battle.main.effects)
+            {
+                if (affected != effect)
+                {
+                    affected.OnOtherEffectAdd(effect);
+                }
+            }
+
+            effect.transform.SetParent(Battle.main.transform);
+            return true;
+        }
+
+        public static void RemoveFromQueue(Effect effect)
+        {
+            Battle.main.effects.Remove(effect);
+            foreach (Effect affected in Battle.main.effects)
+            {
+                affected.OnOtherEffectRemove(effect);
+            }
+
+            Destroy(effect.gameObject);
+        }
+
+        static List<Effect> expiredEffects = new List<Effect>();
+        public static void RemoveExpiredEffectsFromQueue()
+        {
+            foreach (Effect effect in expiredEffects)
+            {
+                RemoveFromQueue(effect);
             }
         }
 
-        effect.transform.SetParent(Battle.main.transform);
-        return true;
-    }
-
-    public static void RemoveFromQueue(Effect effect)
-    {
-        Battle.main.effects.Remove(effect);
-        foreach (Effect affected in Battle.main.effects)
+        public static int GetAmountInQueue<T>()
         {
-            affected.OnOtherEffectRemove(effect);
+            int result = 0;
+            foreach (Effect effect in Battle.main.effects)
+            {
+                if (effect is T) result++;
+            }
+
+            return result;
         }
-
-        Destroy(effect.gameObject);
-    }
-
-    static List<Effect> expiredEffects = new List<Effect>();
-    public static void RemoveExpiredEffectsFromQueue()
-    {
-        foreach (Effect effect in expiredEffects)
-        {
-            RemoveFromQueue(effect);
-        }
-    }
-
-    public static int GetAmountInQueue<T>()
-    {
-        int result = 0;
-        foreach (Effect effect in Battle.main.effects)
-        {
-            if (effect is T) result++;
-        }
-
-        return result;
     }
 }

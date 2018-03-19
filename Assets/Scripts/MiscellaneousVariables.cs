@@ -6,6 +6,7 @@ using BattleUIAgents.Base;
 public class MiscellaneousVariables : MonoBehaviour
 {
     public int[] boardSizes;
+    public GameObject playerPrefab;
     public GameObject[] shipPrefabs;
     public GameObject[] effectPrefabs;
     public GameObject[] defaultShipLoadout;

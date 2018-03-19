@@ -2,17 +2,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Battleship : Ship
+namespace Gameplay.Ships
 {
-    public int artilleryBonus;
-    public override int[] GetMetadata()
+    public class Battleship : Ship
     {
-        return new int[] { artilleryBonus };
-    }
+        public int artilleryBonus;
+        public override int[] GetMetadata()
+        {
+            return new int[] { artilleryBonus };
+        }
 
-    public override void Initialize(ShipData data)
-    {
-        base.Initialize(data);
-        artilleryBonus = data.metadata[0];
+        public override void Initialize(ShipData data)
+        {
+            base.Initialize(data);
+            artilleryBonus = data.metadata[0];
+        }
     }
 }

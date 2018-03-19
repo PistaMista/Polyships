@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using BattleUIAgents.Base;
+using Gameplay;
 
 namespace BattleUIAgents.Agents
 {

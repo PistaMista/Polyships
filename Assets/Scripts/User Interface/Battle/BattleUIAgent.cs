@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using BattleUIAgents;
+using Gameplay;
 
 namespace BattleUIAgents.Base
 {
@@ -14,20 +15,6 @@ namespace BattleUIAgents.Base
         delegate void BattleAgentDehooker();
         BattleAgentDehooker dehooker;
         protected Vector3 relativeWorldInputPosition;
-
-        // protected override void SetState(UIState state)
-        // {
-        //     base.SetState(state);
-        //     if ((int)state < 2 && dehooker != null)
-        //     {
-        //         dehooker();
-        //         dehooker = null;
-        //     }
-        //     else if (dehooker == null)
-        //     {
-        //         GatherRequiredAgents();
-        //     }
-        // }
 
         void OnEnable()
         {
