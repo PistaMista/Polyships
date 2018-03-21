@@ -8,7 +8,6 @@ namespace BattleUIAgents.Agents
 {
     public class Shipbox : WorldBattleUIAgent
     {
-        public List<Ship> containedShips;
         public Mesh plate;
         public float plateSize;
         public Material plateMaterial;
@@ -28,9 +27,10 @@ namespace BattleUIAgents.Agents
             }
         }
 
-        protected override void WipeStoredValues()
+        public bool IsPressed()
         {
-            containedShips = new List<Ship>();
+            Vector3 localInputPosition = transform.InverseTransformPoint(currentInputPosition.world);
+            return Mathf.Abs(localInputPosition.x) < plateSize / 2.0f && Mathf.Abs(localInputPosition.z) < plateSize / 2.0f;
         }
 
 
@@ -79,7 +79,6 @@ namespace BattleUIAgents.Agents
                 groups[i].verticalCorners = CalculateCorners(groups[i].rect, true);
             }
 
-            containedShips = ships;
             ArrangeShipGroupsOnSquarePlane();
             MoldPlate();
         }

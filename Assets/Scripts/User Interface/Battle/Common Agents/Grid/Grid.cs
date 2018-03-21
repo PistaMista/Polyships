@@ -12,7 +12,13 @@ namespace BattleUIAgents.Agents
         public Material[] tileGraphicMaterials;
         public enum TileGraphicMaterial
         {
-            NONE
+            NONE,
+            SHIP_INTACT,
+            SHIP_DAMAGED,
+            SHIP_CONCEALED,
+            TILE_RESTRICTED,
+            TILE_CONCEALMENT_AREA,
+            TILE_SELECTED_FOR_PLACEMENT
         }
         protected override void GatherRequiredAgents()
         {
