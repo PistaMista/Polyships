@@ -8,6 +8,12 @@ namespace BattleUIAgents.Agents
 {
     public class Grid : BattleUIAgent
     {
+        Base.Tile[,] tiles;
+        public Material[] tileGraphicMaterials;
+        public enum TileGraphicMaterial
+        {
+            NONE
+        }
         protected override void GatherRequiredAgents()
         {
             base.GatherRequiredAgents();
@@ -35,11 +41,50 @@ namespace BattleUIAgents.Agents
                 positionedLine.unhookedPosition = positionedLine.hookedPosition - Vector3.up * positionedLine.hookedPosition.y * 1.25f;
                 positionedLine.transform.position = positionedLine.unhookedPosition;
             }
+
+            tiles = new Base.Tile[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
         }
 
-        protected override void ProcessInput()
+        public void SetTileGraphic(Vector2Int tileCoordinates, TileGraphicMaterial material, Color color)
         {
-            base.ProcessInput();
+            Base.Tile tile = tiles[tileCoordinates.x, tileCoordinates.y];
+            if (material == TileGraphicMaterial.NONE)
+            {
+                if (tile != null)
+                {
+                    DehookFromThis(tile);
+                    tiles[tileCoordinates.x, tileCoordinates.y] = null;
+                }
+            }
+            else
+            {
+                Material actualMaterial = tileGraphicMaterials[(int)material - 1];
+
+
+                if (tile == null)
+                {
+                    tile = ((Base.Tile[])HookToThis<Base.Tile>("", player, true, 1))[0];
+
+                    tiles[tileCoordinates.x, tileCoordinates.y] = tile;
+                }
+
+                tile.SetMaterialAndColor(actualMaterial, color);
+            }
+        }
+
+        public Gameplay.Tile GetTileAtCurrentInputPosition()
+        {
+            Vector3 startingPosition = player.board.tiles[0, 0].transform.position - new Vector3(1, 0, 1) * 0.5f;
+            Vector3 calculatedPosition = currentInputPosition.world - startingPosition;
+            calculatedPosition.x = Mathf.FloorToInt(calculatedPosition.x);
+            calculatedPosition.z = Mathf.FloorToInt(calculatedPosition.z);
+
+            if (calculatedPosition.x >= 0 && calculatedPosition.x < player.board.tiles.GetLength(0) && calculatedPosition.z >= 0 && calculatedPosition.z < player.board.tiles.GetLength(1))
+            {
+                return player.board.tiles[(int)calculatedPosition.x, (int)calculatedPosition.z];
+            }
+
+            return null;
         }
     }
 }
