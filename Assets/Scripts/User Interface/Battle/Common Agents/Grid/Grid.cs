@@ -50,11 +50,7 @@ namespace BattleUIAgents.Agents
             Base.Tile tile = tiles[tileCoordinates.x, tileCoordinates.y];
             if (material == TileGraphicMaterial.NONE)
             {
-                if (tile != null)
-                {
-                    DehookFromThis(tile);
-                    tiles[tileCoordinates.x, tileCoordinates.y] = null;
-                }
+                if (tile != null) tile.Unhook();
             }
             else
             {
@@ -64,6 +60,12 @@ namespace BattleUIAgents.Agents
                 if (tile == null)
                 {
                     tile = ((Base.Tile[])HookToThis<Base.Tile>("", player, true, 1))[0];
+                    tile.ServiceDehooker += () => { tiles[tileCoordinates.x, tileCoordinates.y] = null; };
+
+                    tile.hookedPosition = player.board.tiles[tileCoordinates.x, tileCoordinates.y].transform.position;
+
+                    tile.unhookedPosition = tile.hookedPosition;
+                    tile.unhookedPosition.y = -10f;
 
                     tiles[tileCoordinates.x, tileCoordinates.y] = tile;
                 }

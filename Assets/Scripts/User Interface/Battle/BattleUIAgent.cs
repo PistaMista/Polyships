@@ -10,13 +10,14 @@ namespace BattleUIAgents.Base
     {
         [Header("Battle Agent Configuration")]
         public Player player;
-        public BattleUIAgent hookedTo;
-        public BattleAgentDehooker dehooker;
-        public List<BattleUIAgent> hookedAgents;
+        public bool hooked
+        {
+            get { return ServiceDehooker != null; }
+        }
+        public BattleAgentServiceDehooker ServiceDehooker;
 
         protected delegate bool BattleAgentFilterPredicate<T>(BattleUIAgent agent);
-        public delegate void BattleAgentDehooker();
-        Dictionary<BattleUIAgent, BattleAgentDehooker> dehookers = new Dictionary<BattleUIAgent, BattleAgentDehooker>();
+        public delegate void BattleAgentServiceDehooker();
         protected Vector3 relativeWorldInputPosition;
 
         void OnEnable()
@@ -26,12 +27,7 @@ namespace BattleUIAgents.Base
 
         void OnDisable()
         {
-            foreach (KeyValuePair<BattleUIAgent, BattleAgentDehooker> item in dehookers)
-            {
-                item.Value();
-            }
-
-            dehookers = new Dictionary<BattleUIAgent, BattleAgentDehooker>();
+            Unhook();
         }
 
         protected override void ProcessInput()
@@ -44,11 +40,8 @@ namespace BattleUIAgents.Base
         {
 
         }
+
         protected BattleUIAgent[] HookToThis<T>(string nameFilter, Player owner, bool creationMode, int limit)
-        {
-            return HookToThis<T>(nameFilter, owner, creationMode, limit, () => { });
-        }
-        protected BattleUIAgent[] HookToThis<T>(string nameFilter, Player owner, bool creationMode, int limit, BattleAgentDehooker dehookingExtension)
         {
             BattleUIAgent[] examinedArray = owner == null ? MiscellaneousVariables.it.generalBattleAgents.ToArray() : owner.uiAgents;
 
@@ -73,54 +66,53 @@ namespace BattleUIAgents.Base
                     BattleUIAgent confirmedCandidate = (BattleUIAgent)candidate;
                     if (creationMode) confirmedCandidate = Instantiate(confirmedCandidate).GetComponent<BattleUIAgent>();
 
-                    confirmedCandidate.hookedTo = this;
-                    confirmedCandidate.OnHook();
 
-                    BattleAgentDehooker dehooker = () => { confirmedCandidate.hookedTo = null; confirmedCandidate.OnUnhook(); };
-                    if (creationMode) dehooker += () => { Destroy(confirmedCandidate.gameObject, 10.0f); };
+                    confirmedCandidate.SetInteractable(true);
+                    confirmedCandidate.GatherRequiredAgents();
 
-                    dehooker += dehookingExtension;
-
-                    dehookers.Add(confirmedCandidate, dehooker);
+                    if (creationMode) confirmedCandidate.ServiceDehooker += () => { Destroy(confirmedCandidate.gameObject, 10.0f); };
 
                     matches.Add(confirmedCandidate);
+                    ServiceDehooker += confirmedCandidate.Unhook;
                 }
             }
 
             return matches.ToArray();
         }
 
-        protected void DehookFromThis(BattleUIAgent agent)
-        {
-            BattleAgentDehooker dehooker = dehookers[agent];
-            if (dehooker != null) dehooker();
-        }
+        // protected void DehookFromThis(BattleUIAgent agent)
+        // {
+        //     BattleAgentDehooker dehooker = dehookers[agent];
+        //     if (dehooker != null) dehooker();
+        // }
 
-        protected void DehookFromThis<T>(BattleAgentFilterPredicate<T> condition, int limit)
-        {
-            List<BattleUIAgent> dehookedAgents = new List<BattleUIAgent>();
-            foreach (KeyValuePair<BattleUIAgent, BattleAgentDehooker> item in dehookers)
-            {
-                if (dehookedAgents.Count >= limit) break;
-                if (condition(item.Key))
-                {
-                    item.Value();
-                    dehookedAgents.Add(item.Key);
-                }
-            }
+        // protected void DehookFromThis<T>(BattleAgentFilterPredicate<T> condition, int limit)
+        // {
+        //     List<BattleUIAgent> dehookedAgents = new List<BattleUIAgent>();
+        //     foreach (KeyValuePair<BattleUIAgent, BattleAgentDehooker> item in dehookers)
+        //     {
+        //         if (dehookedAgents.Count >= limit) break;
+        //         if (condition(item.Key))
+        //         {
+        //             item.Value();
+        //             dehookedAgents.Add(item.Key);
+        //         }
+        //     }
 
-            dehookedAgents.ForEach((x) => { dehookers.Remove(x); });
-        }
-
-        public virtual void OnHook()
+        //     dehookedAgents.ForEach((x) => { dehookers.Remove(x); });
+        // }
+        public void Unhook()
         {
-            SetInteractable(true);
-            GatherRequiredAgents();
-        }
+            if (ServiceDehooker != null) ServiceDehooker();
+            ServiceDehooker = null;
+            WipeStoredValues();
 
-        public virtual void OnUnhook()
-        {
             SetInteractable(false);
+        }
+
+        protected virtual void WipeStoredValues()
+        {
+
         }
     }
 }

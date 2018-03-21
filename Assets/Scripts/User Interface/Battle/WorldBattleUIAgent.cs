@@ -16,12 +16,12 @@ namespace BattleUIAgents.Base
         protected override void Update()
         {
             base.Update();
-            transform.position = Vector3.SmoothDamp(transform.position, hookedTo == null ? unhookedPosition : hookedPosition, ref currentVelocity, movementTime, movementMaxSpeed);
+            transform.position = Vector3.SmoothDamp(transform.position, hooked ? hookedPosition : unhookedPosition, ref currentVelocity, movementTime, movementMaxSpeed);
 
             bool aboveMaxInteractableVelocity = currentVelocity.magnitude > maximumInteractableVelocity;
             if (belowMaxInteractableVelocity == aboveMaxInteractableVelocity)
             {
-                SetInteractable(!aboveMaxInteractableVelocity && hookedTo != null);
+                SetInteractable(!aboveMaxInteractableVelocity && hooked);
                 belowMaxInteractableVelocity = !aboveMaxInteractableVelocity;
             }
         }
