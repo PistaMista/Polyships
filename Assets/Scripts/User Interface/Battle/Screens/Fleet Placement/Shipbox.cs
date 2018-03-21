@@ -28,6 +28,11 @@ namespace BattleUIAgents.Agents
             }
         }
 
+        protected override void WipeStoredValues()
+        {
+            containedShips = new List<Ship>();
+        }
+
 
 
         ShipRectangleGroup[] groups;
