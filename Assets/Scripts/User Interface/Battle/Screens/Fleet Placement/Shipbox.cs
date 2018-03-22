@@ -8,7 +8,7 @@ namespace BattleUIAgents.Agents
 {
     public class Shipbox : WorldBattleUIAgent
     {
-        public Mesh plate;
+        public MeshFilter plate;
         public float plateSize;
         public Material plateMaterial;
         public bool forceIdenticalShipTypesToGroupTogether;
@@ -683,7 +683,7 @@ namespace BattleUIAgents.Agents
             drawerFlatpanelMesh.vertices = finalVertices.ToArray();
             drawerFlatpanelMesh.triangles = finalTriangles.ToArray();
             drawerFlatpanelMesh.RecalculateNormals();
-            plate = drawerFlatpanelMesh;
+            plate.mesh = drawerFlatpanelMesh;
         }
 
         float TriangleSign(Vector3 p1, Vector3 p2, Vector3 p3)

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -26,7 +27,7 @@ namespace BattleUIAgents.Agents
         {
             base.GatherRequiredAgents();
             Board managedBoard = player.board;
-            Gridline[] gridLines = (Gridline[])HookToThis<Gridline>("", player, managedBoard.tiles.GetLength(0) + managedBoard.tiles.GetLength(1) - 2, true);
+            Gridline[] gridLines = Array.ConvertAll(HookToThis<Gridline>("", player, managedBoard.tiles.GetLength(0) + managedBoard.tiles.GetLength(1) - 2, true), (item) => { return (Gridline)item; });
 
             float lineWidth = 1.00f - MiscellaneousVariables.it.boardTileSideLength;
             for (int i = 0; i < gridLines.Length; i++)

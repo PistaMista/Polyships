@@ -19,13 +19,13 @@ namespace BattleUIAgents.UI
         protected override void GatherRequiredAgents()
         {
             base.GatherRequiredAgents();
-            grid = ((Agents.Grid[])HookToThis<Agents.Grid>("", player, 1, false))[0];
+            player = Battle.main.attacker;
+
+            grid = HookToThis<Agents.Grid>("", player, 1, false)[0].GetComponent<Agents.Grid>();
             grid.ServiceDehooker += () => { grid = null; };
 
-            shipbox = ((Shipbox[])HookToThis<Shipbox>("", null, 1, false))[0];
+            shipbox = HookToThis<Shipbox>("", null, 1, false)[0].GetComponent<Shipbox>();
             shipbox.ServiceDehooker += () => { shipbox = null; };
-
-            player = Battle.main.attacker;
         }
         protected override void ProcessInput()
         {
