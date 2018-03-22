@@ -6,6 +6,8 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
 using Gameplay;
+using BattleUIAgents.Base;
+using BattleUIAgents.UI;
 
 namespace TitleUI
 {
@@ -54,6 +56,7 @@ namespace TitleUI
             if (CheckSlot(slot))
             {
                 Battle.main = Battle.CreateBattle(saveSlotContents[slot]);
+                BattleUIAgent.FindAgents<TurnNotifier>("", null, 1)[0].gameObject.SetActive(true);
             }
             else
             {

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Gameplay;
+using BattleUIAgents.Base;
+using BattleUIAgents.UI;
 
 namespace TitleUI
 {
@@ -24,6 +26,7 @@ namespace TitleUI
         {
             Battle.main = Battle.CreateBattle(Battle.GetBlankBattleData((int)boardSizeSlider.value, aiOpponent, tutorialToggle.isOn, saveSlot, flags));
             State = UIState.DISABLED;
+            BattleUIAgent.FindAgents<TurnNotifier>("", null, 1)[0].gameObject.SetActive(true);
         }
 
 

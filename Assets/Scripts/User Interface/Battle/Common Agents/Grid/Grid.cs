@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
+using BattleUIAgents.Agents;
 using BattleUIAgents.Base;
 using Gameplay;
 
@@ -8,7 +10,7 @@ namespace BattleUIAgents.Agents
 {
     public class Grid : BattleUIAgent
     {
-        Base.Tile[,] tiles;
+        Agents.Tile[,] tiles;
         public Material[] tileGraphicMaterials;
         public enum TileGraphicMaterial
         {
@@ -24,7 +26,7 @@ namespace BattleUIAgents.Agents
         {
             base.GatherRequiredAgents();
             Board managedBoard = player.board;
-            Gridline[] gridLines = (Gridline[])HookToThis<Gridline>("", player, true, managedBoard.tiles.GetLength(0) + managedBoard.tiles.GetLength(1) - 2);
+            Gridline[] gridLines = (Gridline[])HookToThis<Gridline>("", player, managedBoard.tiles.GetLength(0) + managedBoard.tiles.GetLength(1) - 2, true);
 
             float lineWidth = 1.00f - MiscellaneousVariables.it.boardTileSideLength;
             for (int i = 0; i < gridLines.Length; i++)
@@ -48,12 +50,12 @@ namespace BattleUIAgents.Agents
                 positionedLine.transform.position = positionedLine.unhookedPosition;
             }
 
-            tiles = new Base.Tile[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
+            tiles = new Agents.Tile[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
         }
 
         public void SetTileGraphic(Vector2Int tileCoordinates, TileGraphicMaterial material, Color color)
         {
-            Base.Tile tile = tiles[tileCoordinates.x, tileCoordinates.y];
+            Agents.Tile tile = tiles[tileCoordinates.x, tileCoordinates.y];
             if (material == TileGraphicMaterial.NONE)
             {
                 if (tile != null) tile.Unhook();
@@ -65,7 +67,7 @@ namespace BattleUIAgents.Agents
 
                 if (tile == null)
                 {
-                    tile = ((Base.Tile[])HookToThis<Base.Tile>("", player, true, 1))[0];
+                    tile = ((Agents.Tile[])HookToThis<Agents.Tile>("", player, 1, true))[0];
                     tile.ServiceDehooker += () => { tiles[tileCoordinates.x, tileCoordinates.y] = null; };
 
                     tile.hookedPosition = player.board.tiles[tileCoordinates.x, tileCoordinates.y].transform.position;

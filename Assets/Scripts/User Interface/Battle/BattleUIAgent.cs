@@ -41,66 +41,55 @@ namespace BattleUIAgents.Base
 
         }
 
-        protected BattleUIAgent[] HookToThis<T>(string nameFilter, Player owner, bool creationMode, int limit)
+        public static BattleUIAgent[] FindAgents<T>(string nameFilter, Player owner, int limit)
         {
             BattleUIAgent[] examinedArray = owner == null ? MiscellaneousVariables.it.generalBattleAgents.ToArray() : owner.uiAgents;
-
-            int cycles = creationMode ? limit : Mathf.Min(examinedArray.Length, limit);
             List<BattleUIAgent> matches = new List<BattleUIAgent>();
 
-            UIAgent candidate = creationMode ? RetrieveDynamicAgentPrefab<T>(nameFilter) : examinedArray[0];
-            bool typeMatch = candidate is T && candidate is BattleUIAgent;
-            bool nameMatch = candidate.name.Contains(nameFilter);
-
-            for (int i = 0; i < cycles; i++)
+            for (int i = 0; i < examinedArray.Length && matches.Count < limit; i++)
             {
-                if (!creationMode)
-                {
-                    candidate = examinedArray[i];
-                    typeMatch = candidate is T && candidate is BattleUIAgent;
-                    nameMatch = candidate.name.Contains(nameFilter);
-                }
+                BattleUIAgent candidate = examinedArray[i];
+                bool typeMatch = candidate is T;
+                bool nameMatch = candidate.name.Contains(nameFilter);
 
-                if (typeMatch && nameMatch)
-                {
-                    BattleUIAgent confirmedCandidate = (BattleUIAgent)candidate;
-                    if (creationMode) confirmedCandidate = Instantiate(confirmedCandidate).GetComponent<BattleUIAgent>();
-
-
-                    confirmedCandidate.SetInteractable(true);
-                    confirmedCandidate.GatherRequiredAgents();
-
-                    if (creationMode) confirmedCandidate.ServiceDehooker += () => { Destroy(confirmedCandidate.gameObject, 10.0f); };
-
-                    matches.Add(confirmedCandidate);
-                    ServiceDehooker += confirmedCandidate.Unhook;
-                }
+                if (typeMatch && nameMatch) matches.Add(candidate);
             }
 
             return matches.ToArray();
         }
 
-        // protected void DehookFromThis(BattleUIAgent agent)
-        // {
-        //     BattleAgentDehooker dehooker = dehookers[agent];
-        //     if (dehooker != null) dehooker();
-        // }
+        protected BattleUIAgent[] HookToThis<T>(string nameFilter, Player owner, int limit, bool creationMode)
+        {
+            List<BattleUIAgent> linkingAgents = new List<BattleUIAgent>();
 
-        // protected void DehookFromThis<T>(BattleAgentFilterPredicate<T> condition, int limit)
-        // {
-        //     List<BattleUIAgent> dehookedAgents = new List<BattleUIAgent>();
-        //     foreach (KeyValuePair<BattleUIAgent, BattleAgentDehooker> item in dehookers)
-        //     {
-        //         if (dehookedAgents.Count >= limit) break;
-        //         if (condition(item.Key))
-        //         {
-        //             item.Value();
-        //             dehookedAgents.Add(item.Key);
-        //         }
-        //     }
+            if (creationMode)
+            {
+                GameObject battleAgentPrefab = RetrieveDynamicAgentPrefab<T>(nameFilter).gameObject;
 
-        //     dehookedAgents.ForEach((x) => { dehookers.Remove(x); });
-        // }
+                for (int i = 0; i < limit; i++)
+                {
+                    BattleUIAgent instantiatedAgent = Instantiate(battleAgentPrefab).GetComponent<BattleUIAgent>();
+                    instantiatedAgent.ServiceDehooker += () => { Destroy(instantiatedAgent, 10.0f); };
+                    linkingAgents.Add(instantiatedAgent);
+                }
+            }
+            else
+            {
+                linkingAgents.AddRange(FindAgents<T>(nameFilter, owner, limit));
+            }
+
+            foreach (BattleUIAgent agent in linkingAgents)
+            {
+                agent.SetInteractable(true);
+                agent.GatherRequiredAgents();
+
+                agent.ServiceDehooker += () => { Debug.Log("Dehooked Battle Agent: " + agent.name); };
+                ServiceDehooker += agent.Unhook;
+            }
+
+            return linkingAgents.ToArray();
+        }
+
         public void Unhook()
         {
             if (ServiceDehooker != null) ServiceDehooker();

@@ -4,13 +4,14 @@ using UnityEngine;
 using Gameplay;
 using Gameplay.Ships;
 using BattleUIAgents.Base;
+using BattleUIAgents.Agents;
 
 
-namespace BattleUIAgents.Agents
+namespace BattleUIAgents.UI
 {
     public class FleetPlacer : BattleUIAgent
     {
-        Grid grid;
+        Agents.Grid grid;
         Shipbox shipbox;
         public float shipAnimationTravelTime;
         public float shipAnimationMaxSpeed;
@@ -18,11 +19,13 @@ namespace BattleUIAgents.Agents
         protected override void GatherRequiredAgents()
         {
             base.GatherRequiredAgents();
-            grid = ((Grid[])HookToThis<Grid>("", player, false, 1))[0];
+            grid = ((Agents.Grid[])HookToThis<Agents.Grid>("", player, 1, false))[0];
             grid.ServiceDehooker += () => { grid = null; };
 
-            shipbox = ((Shipbox[])HookToThis<Shipbox>("", null, false, 1))[0];
+            shipbox = ((Shipbox[])HookToThis<Shipbox>("", null, 1, false))[0];
             shipbox.ServiceDehooker += () => { shipbox = null; };
+
+            player = Battle.main.attacker;
         }
         protected override void ProcessInput()
         {
@@ -124,7 +127,7 @@ namespace BattleUIAgents.Agents
                         {
                             if (cruiser.concealing == null)
                             {
-                                grid.SetTileGraphic(tile.coordinates, Grid.TileGraphicMaterial.TILE_CONCEALMENT_AREA, Color.white);
+                                grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.TILE_CONCEALMENT_AREA, Color.white);
                                 setTiles.Add(tile);
                             }
                         }
@@ -136,7 +139,7 @@ namespace BattleUIAgents.Agents
             {
                 if (!player.board.placementInfo.occupiedTiles.Contains(tile) && !player.board.placementInfo.selectedTiles.Contains(tile))
                 {
-                    grid.SetTileGraphic(tile.coordinates, Grid.TileGraphicMaterial.TILE_RESTRICTED, Color.white);
+                    grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.TILE_RESTRICTED, Color.white);
                     setTiles.Add(tile);
                 }
             }
@@ -145,7 +148,7 @@ namespace BattleUIAgents.Agents
             {
                 if (!player.board.placementInfo.occupiedTiles.Contains(tile))
                 {
-                    grid.SetTileGraphic(tile.coordinates, Grid.TileGraphicMaterial.TILE_SELECTED_FOR_PLACEMENT, Color.white);
+                    grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.TILE_SELECTED_FOR_PLACEMENT, Color.white);
                     setTiles.Add(tile);
                 }
             }
@@ -157,11 +160,11 @@ namespace BattleUIAgents.Agents
                     Gameplay.Tile tile = ship.tiles[i];
                     if (ship.concealedBy)
                     {
-                        grid.SetTileGraphic(tile.coordinates, Grid.TileGraphicMaterial.SHIP_CONCEALED, Color.white);
+                        grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.SHIP_CONCEALED, Color.white);
                     }
                     else
                     {
-                        grid.SetTileGraphic(tile.coordinates, Grid.TileGraphicMaterial.SHIP_INTACT, Color.white);
+                        grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.SHIP_INTACT, Color.white);
                     }
                     setTiles.Add(tile);
                 }
@@ -174,7 +177,7 @@ namespace BattleUIAgents.Agents
                     Gameplay.Tile candidate = player.board.tiles[x, y];
                     if (!setTiles.Contains(candidate))
                     {
-                        grid.SetTileGraphic(candidate.coordinates, Grid.TileGraphicMaterial.NONE, Color.clear);
+                        grid.SetTileGraphic(candidate.coordinates, Agents.Grid.TileGraphicMaterial.NONE, Color.clear);
                     }
                 }
             }
