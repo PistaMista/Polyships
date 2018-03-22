@@ -26,6 +26,9 @@ namespace BattleUIAgents.UI
 
             shipbox = HookToThis<Shipbox>("", null, 1, false)[0].GetComponent<Shipbox>();
             shipbox.ServiceDehooker += () => { shipbox = null; };
+
+            player.board.SpawnShips();
+            shipbox.Populate(player.board.placementInfo.allShips);
         }
         protected override void ProcessInput()
         {
