@@ -305,8 +305,8 @@ namespace BattleUIAgents.Agents
                     ship.transform.localPosition = startingPosition + positionStep * shipIndex;
                     ship.transform.localRotation = new Quaternion(0, 1, 0, group.vertical ? 1 : 0);
 
-                    ship.placementInfo.localDrawerPosition = ship.transform.localPosition;
-                    ship.placementInfo.localDrawerRotation = ship.transform.localRotation;
+                    ship.placementInfo.localShipboxPosition = ship.transform.localPosition;
+                    ship.placementInfo.localShipboxRotation = ship.transform.localRotation;
                 }
 
                 // GameObject tmp = GameObject.CreatePrimitive(PrimitiveType.Cube);

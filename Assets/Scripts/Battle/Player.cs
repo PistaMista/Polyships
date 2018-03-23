@@ -53,9 +53,6 @@ namespace Gameplay
         public bool aiEnabled;
         public Color[,] flag;
         public List<Tile> hitTiles;
-        public BattleUIAgent[] uiAgents;
-
-
 
         public AIModule aiModule;
         public void Initialize(PlayerData data)

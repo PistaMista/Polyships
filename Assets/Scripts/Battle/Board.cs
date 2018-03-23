@@ -28,7 +28,7 @@ namespace Gameplay
                     }
                 }
 
-                if (board.ships != null)
+                if (board.ships != null && (board.placementInfo.notplacedShips == null || board.placementInfo.notplacedShips.Count == 0))
                 {
                     result.ships = new Ship.ShipData[board.ships.Length];
                     for (int i = 0; i < board.ships.Length; i++)

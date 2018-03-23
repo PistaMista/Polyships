@@ -23,16 +23,18 @@ namespace BattleUIAgents.Agents
             TILE_CONCEALMENT_AREA,
             TILE_SELECTED_FOR_PLACEMENT
         }
-        protected override void GatherRequiredAgents()
+        protected override void PerformLinkageOperations()
         {
-            base.GatherRequiredAgents();
+            base.PerformLinkageOperations();
             Board managedBoard = player.board;
-            Gridline[] gridLines = Array.ConvertAll(HookToThis<Gridline>("", player, managedBoard.tiles.GetLength(0) + managedBoard.tiles.GetLength(1) - 2, true), (item) => { return (Gridline)item; });
+            Gridline[] gridLines = Array.ConvertAll(CreateAndLinkAgents<Gridline>("", managedBoard.tiles.GetLength(0) + managedBoard.tiles.GetLength(1) - 2), (item) => { return (Gridline)item; });
 
             float lineWidth = 1.00f - MiscellaneousVariables.it.boardTileSideLength;
             for (int i = 0; i < gridLines.Length; i++)
             {
                 Gridline positionedLine = gridLines[i];
+                positionedLine.movementTime *= UnityEngine.Random.Range(0.800f, 1.200f);
+
                 int verticalIndex = i - (managedBoard.tiles.GetLength(0) - 1);
 
                 if (verticalIndex < 0)
@@ -59,7 +61,7 @@ namespace BattleUIAgents.Agents
             Agents.Tile tile = tiles[tileCoordinates.x, tileCoordinates.y];
             if (material == TileGraphicMaterial.NONE)
             {
-                if (tile != null) tile.Unhook();
+                if (tile != null) tile.delinker();
             }
             else
             {
@@ -68,8 +70,8 @@ namespace BattleUIAgents.Agents
 
                 if (tile == null)
                 {
-                    tile = ((Agents.Tile[])HookToThis<Agents.Tile>("", player, 1, true))[0];
-                    tile.ServiceDehooker += () => { tiles[tileCoordinates.x, tileCoordinates.y] = null; };
+                    tile = (Agents.Tile)CreateAndLinkAgent<Agents.Tile>("");
+                    tile.delinker += () => { tiles[tileCoordinates.x, tileCoordinates.y] = null; };
 
                     tile.hookedPosition = player.board.tiles[tileCoordinates.x, tileCoordinates.y].transform.position;
 

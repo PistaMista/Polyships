@@ -11,16 +11,16 @@ namespace BattleUIAgents.Agents
         Graphic graphic;
         float colorRate;
         public float fadeTime;
-        protected override void GatherRequiredAgents()
+        protected override void PerformLinkageOperations()
         {
-            base.GatherRequiredAgents();
+            base.PerformLinkageOperations();
             graphic = GetComponent<Graphic>();
         }
 
         protected override void Update()
         {
             base.Update();
-            float targetAlpha = hooked ? 1.0f : 0.0f;
+            float targetAlpha = linked ? 1.0f : 0.0f;
             Color color = graphic.color;
 
             if (Mathf.Abs(targetAlpha - color.a) > 0.008f)

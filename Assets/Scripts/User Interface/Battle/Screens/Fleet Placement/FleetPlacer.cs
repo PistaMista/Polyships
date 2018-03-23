@@ -16,16 +16,16 @@ namespace BattleUIAgents.UI
         public float shipAnimationTravelTime;
         public float shipAnimationMaxSpeed;
 
-        protected override void GatherRequiredAgents()
+        protected override void PerformLinkageOperations()
         {
-            base.GatherRequiredAgents();
+            base.PerformLinkageOperations();
             player = Battle.main.attacker;
 
-            grid = HookToThis<Agents.Grid>("", player, 1, false)[0].GetComponent<Agents.Grid>();
-            grid.ServiceDehooker += () => { grid = null; };
+            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x is Agents.Grid && x.player == player; }));
+            grid.delinker += () => { grid = null; };
 
-            shipbox = HookToThis<Shipbox>("", null, 1, false)[0].GetComponent<Shipbox>();
-            shipbox.ServiceDehooker += () => { shipbox = null; };
+            shipbox = (Shipbox)LinkAgent(FindAgent(x => { return x is Shipbox; }));
+            shipbox.delinker += () => { shipbox = null; };
 
             player.board.SpawnShips();
             shipbox.Populate(player.board.placementInfo.allShips);
@@ -211,7 +211,7 @@ namespace BattleUIAgents.UI
                     }
                 }
 
-                Quaternion targetRotation = ship.tiles == null ? ship.placementInfo.localDrawerRotation : ship.placementInfo.boardRotation;
+                Quaternion targetRotation = ship.tiles == null ? ship.placementInfo.localShipboxRotation : ship.placementInfo.boardRotation;
                 ship.transform.rotation = Quaternion.RotateTowards(ship.transform.rotation, targetRotation, Mathf.Pow(Quaternion.Angle(ship.transform.rotation, targetRotation) * Time.deltaTime * 10.0f, 0.5f));
             }
         }

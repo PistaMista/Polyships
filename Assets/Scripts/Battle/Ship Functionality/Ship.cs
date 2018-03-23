@@ -140,8 +140,8 @@ namespace Gameplay
             public Vector3 boardPosition;
             public Quaternion boardRotation;
 
-            public Vector3 localDrawerPosition;
-            public Quaternion localDrawerRotation;
+            public Vector3 localShipboxPosition;
+            public Quaternion localShipboxRotation;
             public List<Vector3> waypoints;
             public Vector3 animationVelocity;
             public Tile[] lastLocation;

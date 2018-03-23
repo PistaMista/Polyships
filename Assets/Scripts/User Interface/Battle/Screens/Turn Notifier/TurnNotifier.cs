@@ -11,13 +11,13 @@ namespace BattleUIAgents.UI
     public class TurnNotifier : BattleUIAgent
     {
         public float AITurnWaitTime;
-        protected override void GatherRequiredAgents()
+        protected override void PerformLinkageOperations()
         {
-            base.GatherRequiredAgents();
+            base.PerformLinkageOperations();
             player = Battle.main.attacker;
 
             SetInteractable(!player.aiEnabled);
-            HookToThis<Graphicfader>("Turn " + (player.aiEnabled ? "AI" : "PLAYER"), null, 1, false);
+            LinkAgents(FindAgents(limit: 1, predicate: x => { return x.name.Contains("Turn " + (player.aiEnabled ? "AI" : "PLAYER")) && x is Graphicfader; }));
             if (player.aiEnabled) Invoke("DoAITurn", AITurnWaitTime);
         }
 
@@ -29,7 +29,7 @@ namespace BattleUIAgents.UI
                 gameObject.SetActive(false);
                 if (player.board.ships == null)
                 {
-                    FindAgents<FleetPlacer>("", null, 1)[0].gameObject.SetActive(true);
+                    FindAgent(x => { return x is FleetPlacer; }).gameObject.SetActive(true);
                 }
                 else
                 {
