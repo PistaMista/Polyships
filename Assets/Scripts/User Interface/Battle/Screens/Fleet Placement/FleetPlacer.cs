@@ -23,10 +23,11 @@ namespace BattleUIAgents.UI
             base.PerformLinkageOperations();
 
             grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x is Agents.Grid && x.player == player; }));
-            grid.delinker += () => { grid = null; };
+            grid.Delinker += () => { grid = null; };
 
             shipbox = (Shipbox)LinkAgent(FindAgent(x => { return x is Shipbox; }));
-            shipbox.delinker += () => { shipbox = null; };
+            shipbox.Delinker += () => { shipbox = null; };
+
             shipbox.hookedPosition = player.transform.position + Vector3.left * player.board.tiles.GetLength(0) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
 
             player.board.SpawnShips();

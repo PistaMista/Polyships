@@ -19,7 +19,23 @@ namespace BattleUIAgents.Base
         /// <summary>
         /// Terminates all references this object holds to others and all references others hold to it. 
         /// </summary>
-        public AgentDelinker delinker;
+        private AgentDelinker delinker;
+        public AgentDelinker Delinker
+        {
+            get
+            {
+                return delinker + (() =>
+                {
+                    delinker = null;
+                    Reset();
+                    Debug.Log(name);
+                });
+            }
+            set
+            {
+                delinker = value;
+            }
+        }
         protected Vector3 relativeWorldInputPosition;
 
         void OnEnable()
@@ -29,7 +45,7 @@ namespace BattleUIAgents.Base
 
         void OnDisable()
         {
-            if (delinker != null) delinker();
+            Delinker();
         }
 
         protected override void ProcessInput()
@@ -72,8 +88,9 @@ namespace BattleUIAgents.Base
             {
                 BattleUIAgent agent = agents[i];
                 agent.PerformLinkageOperations(); //Inform the agent that he is being linked
-                agent.delinker += () => { delinker -= agent.delinker; agent.delinker = null; agent.Reset(); Debug.Log("Delinked " + agent.name); }; //Add the following to the its delinker - 1. Delink the agent's delinker from the delinker of the agent linking it 2. Reset the agent's delinker 3. Reset the agent
-                delinker += agent.delinker; //Link the agent's delinker to the delinker of the agent who's linking this agent
+
+                agent.Delinker += () => { Delinker -= () => { agent.Delinker(); }; }; //Add the following to the its delinker - 1. Delink the agent's delinker from the delinker of the agent linking it 2. Reset the agent's delinker 3. Reset the agent
+                Delinker += () => { agent.Delinker(); };
             }
 
             return agents;
@@ -90,7 +107,7 @@ namespace BattleUIAgents.Base
             for (int i = 0; i < limit; i++)
             {
                 BattleUIAgent instantiatedAgent = Instantiate(battleAgentPrefab).GetComponent<BattleUIAgent>(); //Create the object
-                instantiatedAgent.delinker += () => { Destroy(instantiatedAgent.gameObject, 10.0f); }; //Make its delinker destroy the object
+                instantiatedAgent.Delinker += () => { Destroy(instantiatedAgent.gameObject, 10.0f); }; //Make its delinker destroy the object
                 createdAgents.Add(instantiatedAgent);
             }
 
@@ -104,5 +121,21 @@ namespace BattleUIAgents.Base
         {
 
         }
+
+        // public void Delink()
+        // {
+        //     if (delinker != null)
+        //     {
+        //         delinker();
+        //         delinker = null;
+        //         Reset();
+        //         Debug.Log("Delinked " + name);
+        //     }
+        // }
+
+        // public void RegisterAdditionalDelinker(AgentDelinker delinker)
+        // {
+        //     this.delinker += delinker;
+        // }
     }
 }

@@ -62,7 +62,7 @@ namespace BattleUIAgents.Agents
             Agents.Tile tile = tiles[tileCoordinates.x, tileCoordinates.y];
             if (material == TileGraphicMaterial.NONE)
             {
-                if (tile != null) tile.delinker();
+                if (tile != null) tile.Delinker();
             }
             else
             {
@@ -72,7 +72,7 @@ namespace BattleUIAgents.Agents
                 if (tile == null)
                 {
                     tile = (Agents.Tile)CreateAndLinkAgent<Agents.Tile>("");
-                    tile.delinker += () => { tiles[tileCoordinates.x, tileCoordinates.y] = null; };
+                    tile.Delinker += () => { tiles[tileCoordinates.x, tileCoordinates.y] = null; };
 
                     tile.hookedPosition = player.board.tiles[tileCoordinates.x, tileCoordinates.y].transform.position + MiscellaneousVariables.it.boardUIRenderHeight * Vector3.up;
 

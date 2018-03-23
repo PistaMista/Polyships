@@ -24,7 +24,7 @@ namespace BattleUIAgents.Base
         {
             foreach (BattleUIAgent agent in FindAgents(x => { return x is ScreenBattleUIAgent; }, 20))
             {
-                if (agent.delinker != null) agent.delinker();
+                agent.Delinker();
             }
         }
 
