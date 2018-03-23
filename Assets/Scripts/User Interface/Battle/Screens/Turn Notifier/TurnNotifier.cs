@@ -8,8 +8,9 @@ using Gameplay;
 
 namespace BattleUIAgents.UI
 {
-    public class TurnNotifier : BattleUIAgent
+    public class TurnNotifier : ScreenBattleUIAgent
     {
+        [Header("Turn Notification Configuration")]
         public float AITurnWaitTime;
         protected override void PerformLinkageOperations()
         {

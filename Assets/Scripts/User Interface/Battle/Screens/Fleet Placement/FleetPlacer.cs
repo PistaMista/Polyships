@@ -9,23 +9,25 @@ using BattleUIAgents.Agents;
 
 namespace BattleUIAgents.UI
 {
-    public class FleetPlacer : BattleUIAgent
+    public class FleetPlacer : ScreenBattleUIAgent
     {
         Agents.Grid grid;
         Shipbox shipbox;
+        [Header("Ship Animation Configuration")]
         public float shipAnimationTravelTime;
         public float shipAnimationMaxSpeed;
 
         protected override void PerformLinkageOperations()
         {
-            base.PerformLinkageOperations();
             player = Battle.main.attacker;
+            base.PerformLinkageOperations();
 
             grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x is Agents.Grid && x.player == player; }));
             grid.delinker += () => { grid = null; };
 
             shipbox = (Shipbox)LinkAgent(FindAgent(x => { return x is Shipbox; }));
             shipbox.delinker += () => { shipbox = null; };
+            shipbox.hookedPosition = player.transform.position + Vector3.left * player.board.tiles.GetLength(0) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
 
             player.board.SpawnShips();
             shipbox.Populate(player.board.placementInfo.allShips);
@@ -113,6 +115,11 @@ namespace BattleUIAgents.UI
                     UpdateMarkers();
                 }
             }
+        }
+
+        protected override float CalculateConversionDistance()
+        {
+            return Camera.main.transform.position.y - MiscellaneousVariables.it.boardUIRenderHeight;
         }
 
         void UpdateMarkers()
@@ -214,6 +221,16 @@ namespace BattleUIAgents.UI
                 Quaternion targetRotation = ship.tiles == null ? ship.placementInfo.localShipboxRotation : ship.placementInfo.boardRotation;
                 ship.transform.rotation = Quaternion.RotateTowards(ship.transform.rotation, targetRotation, Mathf.Pow(Quaternion.Angle(ship.transform.rotation, targetRotation) * Time.deltaTime * 10.0f, 0.5f));
             }
+        }
+
+        protected override Vector2 GetFrameSize()
+        {
+            return base.GetFrameSize() + new Vector2(player.board.tiles.GetLength(0), player.board.tiles.GetLength(1));
+        }
+
+        protected override Vector3 GetPosition()
+        {
+            return base.GetPosition() + player.transform.position + Vector3.left * (player.board.tiles.GetLength(0) / 2.0f);
         }
     }
 }

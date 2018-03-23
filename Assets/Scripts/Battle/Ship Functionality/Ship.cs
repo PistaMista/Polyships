@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using Gameplay.Ships;
+using BattleUIAgents.Base;
 
 public enum ShipType
 {
@@ -180,7 +181,7 @@ namespace Gameplay
             }
             else
             {
-                // transform.SetParent(FleetPlacementUI.it.shipDrawer.transform);
+                transform.SetParent(BattleUIAgent.FindAgent(x => { return x is BattleUIAgents.Agents.Shipbox; }).transform);
                 tiles = location;
             }
 
@@ -188,9 +189,9 @@ namespace Gameplay
             {
                 placementInfo.waypoints = new List<Vector3>();
 
-                // Vector3 targetPosition = location != null ? placementInfo.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : FleetPlacementUI.it.shipDrawer.transform.TransformPoint(placementInfo.localDrawerPosition);
-                // placementInfo.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, targetPosition.z));
-                //placementInfo.waypoints.Add(targetPosition);
+                Vector3 targetPosition = location != null ? placementInfo.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : BattleUIAgent.FindAgent(x => { return x is BattleUIAgents.Agents.Shipbox; }).transform.TransformPoint(placementInfo.localShipboxPosition);
+                placementInfo.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + 4.0f, targetPosition.z));
+                placementInfo.waypoints.Add(targetPosition);
             }
 
             parentBoard.ReevaluateTiles();
@@ -241,7 +242,7 @@ namespace Gameplay
             if (parentBoard.owner.aiModule == null)
             {
                 placementInfo.waypoints = new List<Vector3>();
-                //placementInfo.waypoints.Add(new Vector3(transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + FleetPlacementUI.it.shipAnimationElevation, transform.position.z));
+                placementInfo.waypoints.Add(new Vector3(transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + 4.0f, transform.position.z));
             }
         }
 

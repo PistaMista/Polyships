@@ -21,7 +21,8 @@ namespace BattleUIAgents.Agents
             SHIP_CONCEALED,
             TILE_RESTRICTED,
             TILE_CONCEALMENT_AREA,
-            TILE_SELECTED_FOR_PLACEMENT
+            TILE_SELECTED_FOR_PLACEMENT,
+            TILE_HIT
         }
         protected override void PerformLinkageOperations()
         {
@@ -73,13 +74,17 @@ namespace BattleUIAgents.Agents
                     tile = (Agents.Tile)CreateAndLinkAgent<Agents.Tile>("");
                     tile.delinker += () => { tiles[tileCoordinates.x, tileCoordinates.y] = null; };
 
-                    tile.hookedPosition = player.board.tiles[tileCoordinates.x, tileCoordinates.y].transform.position;
+                    tile.hookedPosition = player.board.tiles[tileCoordinates.x, tileCoordinates.y].transform.position + MiscellaneousVariables.it.boardUIRenderHeight * Vector3.up;
 
                     tile.unhookedPosition = tile.hookedPosition;
                     tile.unhookedPosition.y = -10f;
+                    tile.transform.position = tile.unhookedPosition;
+                    tile.transform.localScale = new Vector3(1, 0, 1) * MiscellaneousVariables.it.boardTileSideLength / 10.0f + Vector3.up;
 
                     tiles[tileCoordinates.x, tileCoordinates.y] = tile;
                 }
+
+
 
                 tile.SetMaterialAndColor(actualMaterial, color);
             }
