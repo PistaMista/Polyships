@@ -315,8 +315,13 @@ namespace BattleUIAgents.Agents
             }
         }
 
+        GameObject moldParent;
         void MoldPlate()
         {
+            Destroy(moldParent);
+            moldParent = new GameObject("Mold Parent");
+            moldParent.transform.SetParent(transform, false);
+
             List<Dictionary<Vector3, List<Vector3>>> flatpanelHoles = new List<Dictionary<Vector3, List<Vector3>>>();
             for (int groupIndex = 0; groupIndex < groups.Length; groupIndex++)
             {
@@ -468,7 +473,7 @@ namespace BattleUIAgents.Agents
                     finalMesh.RecalculateNormals();
 
                     GameObject shipMold = new GameObject("Ship Mold");
-                    shipMold.transform.SetParent(transform, false);
+                    shipMold.transform.SetParent(moldParent.transform, false);
                     //shipMold.transform.position = moldedShipMesh.gameObject.transform.position + Vector3.up * 10;
                     //shipMold.transform.rotation = moldedShipMesh.gameObject.transform.rotation;
 

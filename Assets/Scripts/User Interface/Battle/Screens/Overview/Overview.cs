@@ -5,6 +5,7 @@ using System;
 
 using BattleUIAgents.Agents;
 using BattleUIAgents.Base;
+using Gameplay;
 
 namespace BattleUIAgents.UI
 {
@@ -24,9 +25,11 @@ namespace BattleUIAgents.UI
             {
                 for (int i = 0; i < flags.Length; i++)
                 {
-                    if (flags[i].IsPositionOnFlag(currentInputPosition.world))
+                    Flag flag = flags[i];
+                    if (flag.IsPositionOnFlag(currentInputPosition.world))
                     {
                         gameObject.SetActive(false);
+                        FindAgent(x => { return (flag.player == Battle.main.attacker ? x is Attackscreen : x is Attackscreen) && x.player == flag.player; }).gameObject.SetActive(true);
                         break;
                     }
                 }
