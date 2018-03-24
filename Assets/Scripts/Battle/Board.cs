@@ -18,17 +18,21 @@ namespace Gameplay
             public static implicit operator BoardData(Board board)
             {
                 BoardData result = new BoardData();
+
+                bool shipsPlaced = board.ships != null && (board.placementInfo.notplacedShips == null || board.placementInfo.notplacedShips.Count == 0);
+
                 result.ownedByAttacker = board.owner == Battle.main.attacker;
                 result.tiles = new Tile.TileData[board.tiles.GetLength(0), board.tiles.GetLength(1)];
                 for (int x = 0; x < result.tiles.GetLength(0); x++)
                 {
                     for (int y = 0; y < result.tiles.GetLength(1); y++)
                     {
+                        if (!shipsPlaced) board.tiles[x, y].containedShip = null;
                         result.tiles[x, y] = board.tiles[x, y];
                     }
                 }
 
-                if (board.ships != null && (board.placementInfo.notplacedShips == null || board.placementInfo.notplacedShips.Count == 0))
+                if (shipsPlaced)
                 {
                     result.ships = new Ship.ShipData[board.ships.Length];
                     for (int i = 0; i < board.ships.Length; i++)
@@ -37,7 +41,7 @@ namespace Gameplay
                     }
                 }
 
-                result.intactShipCount = board.intactShipCount;
+                result.intactShipCount = shipsPlaced ? board.intactShipCount : 0;
                 return result;
             }
         }

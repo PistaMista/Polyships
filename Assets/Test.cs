@@ -9,7 +9,9 @@ public class Test : MonoBehaviour
     delegate void TestDelegate();
     void Start()
     {
-        TestDelegate d1 = () => { Debug.Log("1"); };
+        TestDelegate assignee = () => { Debug.Log("1"); };
+        TestDelegate d1 = assignee;
+        d1 -= assignee;
         TestDelegate d2 = () => { d1(); };
         d1 += () => { Debug.Log("2"); };
 
