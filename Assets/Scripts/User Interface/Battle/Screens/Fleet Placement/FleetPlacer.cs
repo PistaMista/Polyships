@@ -30,8 +30,24 @@ namespace BattleUIAgents.UI
 
             shipbox.hookedPosition = player.transform.position + Vector3.left * player.board.tiles.GetLength(0) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
 
+            Delinker += () =>
+            {
+                for (int i = 0; i < player.board.ships.Length; i++)
+                {
+                    player.board.ships[i].Invoke("Hide", 3.0f);
+                }
+            };
+
             player.board.SpawnShips();
             shipbox.Populate(player.board.placementInfo.allShips);
+        }
+
+        void HidePlacedShips()
+        {
+            for (int i = 0; i < player.board.ships.Length; i++)
+            {
+                player.board.ships[i].gameObject.SetActive(false);
+            }
         }
         protected override void ProcessInput()
         {
@@ -63,7 +79,7 @@ namespace BattleUIAgents.UI
 
                 if (!newShipSelected) //If no other ship was selected
                 {
-                    bool clickedOnBoard = grid.GetTileAtCurrentInputPosition() != null;
+                    bool clickedOnBoard = grid.GetTileAtPosition(currentInputPosition.world) != null;
                     bool clickedOnDrawer = shipbox.IsPressed();
                     if (player.board.placementInfo.selectedShip != null) //If a ship is already selected
                     {
@@ -89,6 +105,7 @@ namespace BattleUIAgents.UI
                         {
                             Battle.main.NextTurn();
                             gameObject.SetActive(false);
+                            FindAgent(x => { return x is TurnNotifier; }).gameObject.SetActive(true);
                         }
                     }
                 }
@@ -96,7 +113,7 @@ namespace BattleUIAgents.UI
 
             if (pressed && player.board.placementInfo.selectedShip != null)
             {
-                Gameplay.Tile candidateTile = grid.GetTileAtCurrentInputPosition();
+                Gameplay.Tile candidateTile = grid.GetTileAtPosition(currentInputPosition.world);
                 if (candidateTile != null)
                 {
                     if (player.board.placementInfo.selectableTiles.Contains(candidateTile))

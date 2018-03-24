@@ -250,5 +250,10 @@ namespace Gameplay
         {
 
         }
+
+        void Hide()
+        {
+            gameObject.SetActive(false);
+        }
     }
 }

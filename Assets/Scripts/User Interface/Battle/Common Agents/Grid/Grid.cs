@@ -90,10 +90,10 @@ namespace BattleUIAgents.Agents
             }
         }
 
-        public Gameplay.Tile GetTileAtCurrentInputPosition()
+        public Gameplay.Tile GetTileAtPosition(Vector3 position)
         {
             Vector3 startingPosition = player.board.tiles[0, 0].transform.position - new Vector3(1, 0, 1) * 0.5f;
-            Vector3 calculatedPosition = currentInputPosition.world - startingPosition;
+            Vector3 calculatedPosition = position - startingPosition;
             calculatedPosition.x = Mathf.FloorToInt(calculatedPosition.x);
             calculatedPosition.z = Mathf.FloorToInt(calculatedPosition.z);
 

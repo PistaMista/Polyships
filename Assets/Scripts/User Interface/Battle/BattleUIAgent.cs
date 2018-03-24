@@ -94,6 +94,13 @@ namespace BattleUIAgents.Base
             for (int i = 0; i < agents.Length; i++)
             {
                 BattleUIAgent agent = agents[i];
+
+                if (agent.IsInvoking("DestroyAgent"))
+                {
+                    agent.CancelInvoke("DestroyAgent");
+                    agent.Delinker += () => { agent.Invoke("DestroyAgent", 3.0f); };
+                }
+
                 agent.PerformLinkageOperations(); //Inform the agent that he is being linked
 
                 AgentDelinker agentDelinkingSubscription = () => { agent.Delinker(); };
@@ -116,7 +123,7 @@ namespace BattleUIAgents.Base
             for (int i = 0; i < limit; i++)
             {
                 BattleUIAgent instantiatedAgent = Instantiate(battleAgentPrefab).GetComponent<BattleUIAgent>(); //Create the object
-                instantiatedAgent.Delinker += () => { Destroy(instantiatedAgent.gameObject, 3.0f); }; //Make its delinker destroy the object
+                instantiatedAgent.Delinker += () => { instantiatedAgent.Invoke("DestroyAgent", 3.0f); }; //Make its delinker destroy the object
                 createdAgents.Add(instantiatedAgent);
             }
 
@@ -129,6 +136,11 @@ namespace BattleUIAgents.Base
         protected virtual void Reset()
         {
 
+        }
+
+        void DestroyAgent()
+        {
+            Destroy(gameObject);
         }
     }
 }

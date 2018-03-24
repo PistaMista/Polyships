@@ -12,13 +12,17 @@ namespace BattleUIAgents.UI
     {
         [Header("Turn Notification Configuration")]
         public float AITurnWaitTime;
+        Flag flag;
         protected override void PerformLinkageOperations()
         {
-            base.PerformLinkageOperations();
             player = Battle.main.attacker;
+            flag = (Flag)LinkAgent(FindAgent(x => { return x is Flag && x.player == player; }));
+            flag.Delinker += () => { flag = null; };
+
+            base.PerformLinkageOperations();
 
             SetInteractable(!player.aiEnabled);
-            LinkAgents(FindAgents(limit: 1, predicate: x => { return x.name.Contains("Turn " + (player.aiEnabled ? "AI" : "PLAYER")) && x is Graphicfader; }));
+            LinkAgent(FindAgent(x => { return x.name.Contains("Turn " + (player.aiEnabled ? "AI" : "PLAYER")) && x is Graphicfader; }));
             if (player.aiEnabled) Invoke("DoAITurn", AITurnWaitTime);
         }
 
@@ -34,7 +38,7 @@ namespace BattleUIAgents.UI
                 }
                 else
                 {
-
+                    FindAgent(x => { return x is Overview; }).gameObject.SetActive(true);
                 }
             }
         }
@@ -51,6 +55,15 @@ namespace BattleUIAgents.UI
             {
                 gameObject.SetActive(true);
             }
+        }
+        protected override Vector2 GetFrameSize()
+        {
+            return base.GetFrameSize() + new Vector2(player.flag.GetLength(0), player.flag.GetLength(1)) * flag.voxelScale;
+        }
+
+        protected override Vector3 GetPosition()
+        {
+            return base.GetPosition() + player.transform.position + Vector3.up * MiscellaneousVariables.it.flagRenderHeight;
         }
     }
 }
