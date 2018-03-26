@@ -71,7 +71,8 @@ namespace BattleUIAgents.Base
 
         public static BattleUIAgent FindAgent(BattleAgentFilterPredicate predicate)
         {
-            return FindAgents(predicate, 1)[0];
+            BattleUIAgent[] foundAgents = FindAgents(predicate, 1);
+            return foundAgents.Length > 0 ? foundAgents[0] : null;
         }
         public static BattleUIAgent[] FindAgents(BattleAgentFilterPredicate predicate, int limit)
         {

@@ -38,7 +38,9 @@ namespace BattleUIAgents.UI
                 }
                 else
                 {
-                    FindAgent(x => { return x is Overview; }).gameObject.SetActive(true);
+                    Overview overview = (Overview)FindAgent(x => { return x is Overview; });
+                    overview.enterAttackScreenOnLink = true;
+                    overview.gameObject.SetActive(true);
                 }
             }
         }

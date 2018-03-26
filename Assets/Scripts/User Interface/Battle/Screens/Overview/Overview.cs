@@ -12,10 +12,15 @@ namespace BattleUIAgents.UI
     public class Overview : ScreenBattleUIAgent
     {
         Flag[] flags;
+        public bool enterAttackScreenOnLink;
+        public float autoAttackScreenTime;
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
             flags = Array.ConvertAll(LinkAgents(FindAgents(x => { return x is Flag && x.player != null; }, 2)), item => { return (Flag)item; });
+            Delinker += () => { enterAttackScreenOnLink = false; CancelInvoke("GoToAttack"); };
+
+            if (enterAttackScreenOnLink) Invoke("GoToAttack", autoAttackScreenTime);
         }
 
         protected override void ProcessInput()
@@ -46,7 +51,11 @@ namespace BattleUIAgents.UI
             return base.GetFrameSize() + MiscellaneousVariables.it.boardDistanceFromCenter * Vector2.right * 2.0f;
         }
 
-
+        void GoToAttack()
+        {
+            gameObject.SetActive(false);
+            FindAgent(x => { return x.player == Battle.main.defender && x is Attackscreen; }).gameObject.SetActive(true);
+        }
 
         protected override void Reset()
         {
