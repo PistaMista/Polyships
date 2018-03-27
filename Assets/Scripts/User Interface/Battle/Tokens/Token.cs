@@ -15,10 +15,34 @@ namespace BattleUIAgents.Tokens
         public Effect effectPrefab;
         public Effect boundEffect;
         public float pickupRadius;
+        public float height;
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
             Delinker += () => { if (boundEffect != null) { Effect.RemoveFromQueue(boundEffect); boundEffect = null; }; };
+
+            float highestPosition = Mathf.NegativeInfinity;
+            BattleUIAgent[] highestBlockerCandidates = FindAgents(x =>
+            {
+                if (x is Token && x.linked)
+                {
+                    Token token = (Token)x;
+                    if (token.boundEffect == null && token.effectPrefab == effectPrefab && token.transform.position.y > highestPosition)
+                    {
+                        highestPosition = token.transform.position.y;
+                        return true;
+                    }
+                }
+                return false;
+            }, int.MaxValue
+            );
+
+            if (highestBlockerCandidates != null && highestBlockerCandidates.Length > 0)
+            {
+                Token highestBlocker = (Token)highestBlockerCandidates[highestBlockerCandidates.Length - 1];
+                hookedPosition = highestBlocker.transform.position + Vector3.up * height + Vector3.right * 0.5f;
+            }
+
             boundEffect = GetInitialBoundEffect();
         }
 
@@ -36,22 +60,25 @@ namespace BattleUIAgents.Tokens
                     return false;
                 }
                 ) == null;
-            });
+            }
+            );
         }
 
         public bool TryPickup(Vector3 position)
         {
             Vector2 planarPosition = new Vector2(transform.position.x, transform.position.z);
             Vector2 planarInput = new Vector2(position.x, position.z);
+            float planarDistance = Vector2.Distance(planarPosition, planarInput);
 
-            if (heldToken == null && Vector2.Distance(planarPosition, planarInput) < pickupRadius)
+            if (heldToken == null && planarDistance < pickupRadius)
             {
                 if (FindAgent(x =>
                 {
                     if (x is Token)
                     {
                         Token c = (Token)x;
-                        return c.transform.position.y > transform.position.y && Vector2.Distance(planarInput, new Vector2(c.transform.position.x, c.transform.position.z)) < c.pickupRadius;
+                        float planarCandidateDistance = Vector2.Distance(planarInput, new Vector2(c.transform.position.x, c.transform.position.z));
+                        return planarCandidateDistance < c.pickupRadius && ((c.transform.position.y > transform.position.y) || (Mathf.Approximately(c.transform.position.y, transform.position.y) && planarCandidateDistance < planarDistance));
                     }
 
                     return false;
@@ -60,7 +87,6 @@ namespace BattleUIAgents.Tokens
                     Pickup();
                     return true;
                 }
-                return false;
             }
 
             return false;
@@ -76,13 +102,9 @@ namespace BattleUIAgents.Tokens
             }
         }
 
-        protected override void Update()
+        public virtual void ProcessExternalInputWhileHeld(Vector3 input)
         {
-            base.Update();
-            if (heldToken == this)
-            {
-                boundEffect = CalculateEffect();
-            }
+
         }
 
         public virtual void Drop()

@@ -40,6 +40,7 @@ namespace Gameplay
             return 8;
         }
 
+
         //Checks if the effect conflicts with another
         protected virtual bool ConflictsWith(Effect effect)
         {
