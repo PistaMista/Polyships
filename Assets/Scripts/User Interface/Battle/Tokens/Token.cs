@@ -16,11 +16,19 @@ namespace BattleUIAgents.Tokens
         public Effect boundEffect;
         public float pickupRadius;
         public float height;
+        public Vector3 initialSpot;
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
             Delinker += () => { if (boundEffect != null) { Effect.RemoveFromQueue(boundEffect); boundEffect = null; }; };
 
+            hookedPosition = GetPositionWhenNotBound();
+
+            boundEffect = GetInitialBoundEffect();
+        }
+
+        protected Vector3 GetPositionWhenNotBound()
+        {
             float highestPosition = Mathf.NegativeInfinity;
             BattleUIAgent[] highestBlockerCandidates = FindAgents(x =>
             {
@@ -40,10 +48,12 @@ namespace BattleUIAgents.Tokens
             if (highestBlockerCandidates != null && highestBlockerCandidates.Length > 0)
             {
                 Token highestBlocker = (Token)highestBlockerCandidates[highestBlockerCandidates.Length - 1];
-                hookedPosition = highestBlocker.transform.position + Vector3.up * height + Vector3.right * 0.5f;
+                return highestBlocker.transform.position + Vector3.up * height + Vector3.right * 0.5f;
             }
-
-            boundEffect = GetInitialBoundEffect();
+            else
+            {
+                return initialSpot;
+            }
         }
 
         protected virtual Effect GetInitialBoundEffect()
@@ -102,7 +112,7 @@ namespace BattleUIAgents.Tokens
             }
         }
 
-        public virtual void ProcessExternalInputWhileHeld(Vector3 input)
+        public virtual void ProcessExternalInputWhileHeld(Vector3 inputPosition)
         {
 
         }
@@ -120,6 +130,7 @@ namespace BattleUIAgents.Tokens
             else
             {
                 transform.SetAsFirstSibling();
+                hookedPosition = GetPositionWhenNotBound();
             }
         }
 

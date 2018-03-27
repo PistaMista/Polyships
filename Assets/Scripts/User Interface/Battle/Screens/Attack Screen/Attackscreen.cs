@@ -24,7 +24,16 @@ namespace BattleUIAgents.UI
 
             for (int i = 0; i < tokenTypes.Length; i++)
             {
-                LinkAgents(FindAgents(x => { return x.GetType() == tokenTypes[i].GetType(); }, tokenTypes[i].effectPrefab.GetAdditionalAllowed()));
+                LinkAgents(FindAgents(x =>
+                {
+                    if (x.GetType() == tokenTypes[i].GetType())
+                    {
+                        x.player = player;
+                        return true;
+                    }
+
+                    return false;
+                }, tokenTypes[i].effectPrefab.GetAdditionalAllowed()));
             }
         }
 
