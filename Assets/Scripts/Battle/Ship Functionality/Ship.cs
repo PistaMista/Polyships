@@ -181,7 +181,7 @@ namespace Gameplay
             }
             else
             {
-                transform.SetParent(BattleUIAgent.FindAgent(x => { return x is BattleUIAgents.Agents.Shipbox; }).transform);
+                transform.SetParent(BattleUIAgent.FindAgent(x => { return true; }, typeof(BattleUIAgents.Agents.Shipbox)).transform);
                 tiles = location;
             }
 
@@ -189,7 +189,7 @@ namespace Gameplay
             {
                 placementInfo.waypoints = new List<Vector3>();
 
-                Vector3 targetPosition = location != null ? placementInfo.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : BattleUIAgent.FindAgent(x => { return x is BattleUIAgents.Agents.Shipbox; }).transform.TransformPoint(placementInfo.localShipboxPosition);
+                Vector3 targetPosition = location != null ? placementInfo.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight : BattleUIAgent.FindAgent(x => { return true; }, typeof(BattleUIAgents.Agents.Shipbox)).transform.TransformPoint(placementInfo.localShipboxPosition);
                 placementInfo.waypoints.Add(new Vector3(targetPosition.x, MiscellaneousVariables.it.boardUIRenderHeight + 4.0f, targetPosition.z));
                 placementInfo.waypoints.Add(targetPosition);
             }

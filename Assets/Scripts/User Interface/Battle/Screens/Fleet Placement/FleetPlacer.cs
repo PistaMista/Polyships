@@ -22,10 +22,10 @@ namespace BattleUIAgents.UI
             player = Battle.main.attacker;
             base.PerformLinkageOperations();
 
-            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x is Agents.Grid && x.player == player; }));
+            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)));
             grid.Delinker += () => { grid = null; };
 
-            shipbox = (Shipbox)LinkAgent(FindAgent(x => { return x is Shipbox; }));
+            shipbox = (Shipbox)LinkAgent(FindAgent(x => { return true; }, typeof(Shipbox)));
             shipbox.Delinker += () => { shipbox = null; };
 
             shipbox.hookedPosition = player.transform.position + Vector3.left * player.board.tiles.GetLength(0) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
@@ -105,7 +105,7 @@ namespace BattleUIAgents.UI
                         {
                             Battle.main.NextTurn();
                             gameObject.SetActive(false);
-                            FindAgent(x => { return x is TurnNotifier; }).gameObject.SetActive(true);
+                            FindAgent(x => { return true; }, typeof(TurnNotifier)).gameObject.SetActive(true);
                         }
                     }
                 }

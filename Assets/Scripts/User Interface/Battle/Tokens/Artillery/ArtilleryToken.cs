@@ -29,13 +29,34 @@ namespace BattleUIAgents.Tokens
         public override void ProcessExternalInputWhileHeld(Vector3 inputPosition)
         {
             base.ProcessExternalInputWhileHeld(inputPosition);
-            if (boundEffect != null)
-            {
-                ArtilleryAttack attack = (ArtilleryAttack)boundEffect;
-            }
-            else
-            {
+            Gameplay.Tile targetedTile = grid.GetTileAtPosition(inputPosition);
 
+            if (effect == null)
+            {
+                if (targetedTile != null)
+                {
+                    effect = Effect.CreateEffect<ArtilleryAttack>();
+                }
+                else
+                {
+                    inputPosition.y = pickupPosition.y;
+                    hookedPosition = inputPosition;
+                }
+            }
+
+            if (effect != null)
+            {
+                ArtilleryAttack attack = (ArtilleryAttack)effect;
+                if (targetedTile != null)
+                {
+                    attack.target = targetedTile;
+                    hookedPosition = targetedTile.transform.position;
+                }
+                else
+                {
+                    Destroy(attack.gameObject);
+                    effect = null;
+                }
             }
         }
     }

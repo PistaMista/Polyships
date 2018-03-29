@@ -12,22 +12,20 @@ namespace BattleUIAgents.Tokens
     public class Token : WorldBattleUIAgent
     {
         public static Token heldToken;
-        public Effect effectPrefab;
-        public Effect boundEffect;
+        public Effect effectType;
+        public Effect effect;
         public float pickupRadius;
         public float height;
         public Vector3 initialSpot;
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
-            Delinker += () => { if (boundEffect != null) { Effect.RemoveFromQueue(boundEffect); boundEffect = null; }; };
+            Delinker += () => { if (effect != null) { Effect.RemoveFromQueue(effect); effect = null; }; initialSpot = Vector3.zero; };
 
-            hookedPosition = GetPositionWhenNotBound();
-
-            boundEffect = GetInitialBoundEffect();
+            hookedPosition = GetPositionWhenEffectless();
         }
 
-        protected Vector3 GetPositionWhenNotBound()
+        protected Vector3 GetPositionWhenEffectless()
         {
             float highestPosition = Mathf.NegativeInfinity;
             BattleUIAgent[] highestBlockerCandidates = FindAgents(x =>
@@ -35,7 +33,7 @@ namespace BattleUIAgents.Tokens
                 if (x is Token && x.linked)
                 {
                     Token token = (Token)x;
-                    if (token.boundEffect == null && token.effectPrefab == effectPrefab && token.transform.position.y > highestPosition)
+                    if (token.effect == null && token.effectType == effectType && token.transform.position.y > highestPosition)
                     {
                         highestPosition = token.transform.position.y;
                         return true;
@@ -56,23 +54,23 @@ namespace BattleUIAgents.Tokens
             }
         }
 
-        protected virtual Effect GetInitialBoundEffect()
-        {
-            return Battle.main.effects.Find(x =>
-            {
-                return FindAgent(y =>
-                {
-                    if (y is Token)
-                    {
-                        Token candidate = (Token)y;
-                        return candidate.boundEffect == x;
-                    }
-                    return false;
-                }
-                ) == null;
-            }
-            );
-        }
+        // protected virtual Effect GetInitialEffect()
+        // {
+        //     return Battle.main.effects.Find(x =>
+        //     {
+        //         return FindAgent(y =>
+        //         {
+        //             if (y is Token)
+        //             {
+        //                 Token candidate = (Token)y;
+        //                 return candidate.effect == x;
+        //             }
+        //             return false;
+        //         }
+        //         ) == null;
+        //     }
+        //     );
+        // }
 
         public bool TryPickup(Vector3 position)
         {
@@ -105,10 +103,10 @@ namespace BattleUIAgents.Tokens
         protected virtual void Pickup()
         {
             heldToken = this;
-            if (boundEffect != null)
+            if (effect != null)
             {
-                Effect.RemoveFromQueue(boundEffect);
-                boundEffect = null;
+                Effect.RemoveFromQueue(effect);
+                effect = null;
             }
         }
 
@@ -119,18 +117,18 @@ namespace BattleUIAgents.Tokens
 
         public virtual void Drop()
         {
-            if (boundEffect != null)
+            if (effect != null)
             {
                 transform.SetAsLastSibling();
-                if (!Battle.main.effects.Contains(boundEffect))
+                if (!Battle.main.effects.Contains(effect))
                 {
-                    Effect.AddToQueue(boundEffect);
+                    Effect.AddToQueue(effect);
                 }
             }
             else
             {
                 transform.SetAsFirstSibling();
-                hookedPosition = GetPositionWhenNotBound();
+                hookedPosition = GetPositionWhenEffectless();
             }
         }
 

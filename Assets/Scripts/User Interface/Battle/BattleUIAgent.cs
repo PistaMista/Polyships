@@ -40,15 +40,9 @@ namespace BattleUIAgents.Base
         }
         protected Vector3 relativeWorldInputPosition;
 
-        void OnEnable()
-        {
-            PerformLinkageOperations();
-        }
 
-        void OnDisable()
-        {
-            Delinker();
-        }
+
+
 
         protected override void ProcessInput()
         {
@@ -69,16 +63,16 @@ namespace BattleUIAgents.Base
             SetInteractable(true);
         }
 
-        public static BattleUIAgent FindAgent(BattleAgentFilterPredicate predicate)
+        public static BattleUIAgent FindAgent(BattleAgentFilterPredicate predicate, System.Type type)
         {
-            BattleUIAgent[] foundAgents = FindAgents(predicate, 1);
+            BattleUIAgent[] foundAgents = FindAgents(predicate, type, 1);
             return foundAgents.Length > 0 ? foundAgents[0] : null;
         }
-        public static BattleUIAgent[] FindAgents(BattleAgentFilterPredicate predicate, int limit)
+        public static BattleUIAgent[] FindAgents(BattleAgentFilterPredicate predicate, System.Type type, int limit)
         {
             List<BattleUIAgent> matches = new List<BattleUIAgent>();
 
-            foreach (BattleUIAgent candidate in Resources.FindObjectsOfTypeAll(typeof(BattleUIAgent)))
+            foreach (BattleUIAgent candidate in Resources.FindObjectsOfTypeAll(type))
             {
                 if (predicate(candidate)) matches.Add(candidate);
                 if (matches.Count == limit) break;

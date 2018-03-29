@@ -14,7 +14,7 @@ namespace BattleUIAgents.Agents
             base.PerformLinkageOperations();
             Vector3 startingPosition = -new Vector3(player.flag.GetLength(0) / 2.0f, 0, player.flag.GetLength(1) / 2.0f) * voxelScale + Vector3.up * MiscellaneousVariables.it.flagRenderHeight + player.transform.position;
 
-            BattleUIAgent[] foundVoxels = FindAgents(x => { return x is Flagvoxel && x.player == player && x.IsInvoking("DestroyAgent"); }, player.flag.Length);
+            BattleUIAgent[] foundVoxels = FindAgents(x => { return x.player == player && x.IsInvoking("DestroyAgent"); }, typeof(Flagvoxel), player.flag.Length);
 
             if (foundVoxels.Length != 0)
             {

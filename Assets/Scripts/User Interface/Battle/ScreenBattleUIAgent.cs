@@ -20,9 +20,19 @@ namespace BattleUIAgents.Base
             }
         }
 
+        void OnEnable()
+        {
+            PerformLinkageOperations();
+        }
+
+        void OnDisable()
+        {
+            Delinker();
+        }
+
         public static void DelinkAllScreenAgents()
         {
-            foreach (BattleUIAgent agent in FindAgents(x => { return x is ScreenBattleUIAgent; }, 20))
+            foreach (BattleUIAgent agent in FindAgents(x => { return true; }, typeof(ScreenBattleUIAgent), 20))
             {
                 agent.Delinker();
             }

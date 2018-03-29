@@ -16,13 +16,13 @@ namespace BattleUIAgents.UI
         protected override void PerformLinkageOperations()
         {
             player = Battle.main.attacker;
-            flag = (Flag)LinkAgent(FindAgent(x => { return x is Flag && x.player == player; }));
+            flag = (Flag)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Flag)));
             flag.Delinker += () => { flag = null; };
 
             base.PerformLinkageOperations();
 
             SetInteractable(!player.aiEnabled);
-            LinkAgent(FindAgent(x => { return x.name.Contains("Turn " + (player.aiEnabled ? "AI" : "PLAYER")) && x is Graphicfader; }));
+            LinkAgent(FindAgent(x => { return x.name.Contains("Turn " + (player.aiEnabled ? "AI" : "PLAYER")); }, typeof(Graphicfader)));
             if (player.aiEnabled) Invoke("DoAITurn", AITurnWaitTime);
         }
 
@@ -38,7 +38,7 @@ namespace BattleUIAgents.UI
                 }
                 else
                 {
-                    Overview overview = (Overview)FindAgent(x => { return x is Overview; });
+                    Overview overview = (Overview)FindAgent(x => { return true; }, typeof(Overview));
                     overview.enterAttackScreenOnLink = true;
                     overview.gameObject.SetActive(true);
                 }

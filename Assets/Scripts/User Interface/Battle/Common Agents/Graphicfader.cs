@@ -11,9 +11,9 @@ namespace BattleUIAgents.Agents
         Graphic graphic;
         float colorRate;
         public float fadeTime;
-        protected override void PerformLinkageOperations()
+
+        protected override void Start()
         {
-            base.PerformLinkageOperations();
             graphic = GetComponent<Graphic>();
         }
 

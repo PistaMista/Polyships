@@ -149,6 +149,8 @@ namespace Gameplay
             {
                 RemoveFromQueue(effect);
             }
+
+            expiredEffects = new List<Effect>();
         }
 
         public static int GetAmountInQueue<T>()

@@ -6,35 +6,29 @@ using BattleUIAgents.Base;
 using BattleUIAgents.Agents;
 using BattleUIAgents.Tokens;
 
+using Gameplay;
 
 namespace BattleUIAgents.UI
 {
     public class Attackscreen : ScreenBattleUIAgent
     {
         Agents.Grid grid;
-        public Token[] tokenTypes;
+        public Effect[] tokenEffectTypes;
+        Vector3 tokenInitialSpotStart;
+        Vector3 tokenInitialSpotStep;
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
-            LinkAgent(FindAgent(x => { return x is Flag && x.player != player; }));
-            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x is Agents.Grid && x.player == player; }));
+            LinkAgent(FindAgent(x => { return x.player != player; }, typeof(Flag)));
+            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)));
             grid.Delinker += () => { grid = null; };
 
             Delinker += () => { Token.heldToken = null; };
 
-            for (int i = 0; i < tokenTypes.Length; i++)
-            {
-                LinkAgents(FindAgents(x =>
-                {
-                    if (x.GetType() == tokenTypes[i].GetType())
-                    {
-                        x.player = player;
-                        return true;
-                    }
+            tokenInitialSpotStart = player.transform.position + Vector3.right * (player.board.tiles.GetLength(0) / 1.5f) + Vector3.forward * (player.board.tiles.GetLength(1) / 2.0f);
+            tokenInitialSpotStep = Vector3.back * (player.board.tiles.GetLength(1) / (2.0f * tokenEffectTypes.Length));
 
-                    return false;
-                }, tokenTypes[i].effectPrefab.GetAdditionalAllowed()));
-            }
+            UpdateTokenSelection();
         }
 
         protected override void ProcessInput()
@@ -44,7 +38,7 @@ namespace BattleUIAgents.UI
             {
                 if (beginPress)
                 {
-                    BattleUIAgent[] allTokens = FindAgents(x => { return x is Token && x.linked; }, int.MaxValue);
+                    BattleUIAgent[] allTokens = FindAgents(x => { return x.linked; }, typeof(Token), int.MaxValue);
                     for (int i = 0; i < allTokens.Length; i++)
                     {
                         if (((Token)allTokens[i]).TryPickup(currentInputPosition.world)) break;
@@ -56,7 +50,7 @@ namespace BattleUIAgents.UI
                     if (tapOutsideOfBoardArea)
                     {
                         gameObject.SetActive(false);
-                        FindAgent(x => { return x is Overview; }).gameObject.SetActive(true);
+                        FindAgent(x => { return true; }, typeof(Overview)).gameObject.SetActive(true);
                     }
                 }
             }
@@ -66,14 +60,52 @@ namespace BattleUIAgents.UI
                 else if (endPress)
                 {
                     Token.heldToken.Drop();
+                    UpdateTokenSelection();
+                }
+            }
+        }
 
-                    List<BattleUIAgent> toDelink = new List<BattleUIAgent>();
-                    for (int i = 0; i < tokenTypes.Length; i++)
+        void UpdateTokenSelection()
+        {
+            for (int i = 0; i < tokenEffectTypes.Length; i++)
+            {
+                BattleAgentFilterPredicate effectlessLinkedTokenFilter = x =>
+                {
+                    if (x.linked && x is Token)
                     {
-                        toDelink.AddRange(FindAgents(x => { return x.GetType() == tokenTypes[i].GetType() && x.linked && ((Token)x).boundEffect == null; }, FindAgents(x => { return x.GetType() == tokenTypes[i].GetType() && x.linked; }, int.MaxValue).Length - tokenTypes[i].effectPrefab.GetAdditionalAllowed()));
+                        Token token = (Token)x;
+                        return token.effectType.GetType() == tokenEffectTypes.GetType() && token.effect == null;
                     }
 
-                    toDelink.ForEach(x => { x.Delinker(); });
+                    return false;
+                };
+
+                int extraTokens = FindAgents(effectlessLinkedTokenFilter, typeof(Token), int.MaxValue).Length - tokenEffectTypes[i].GetAdditionalAllowed();
+                if (extraTokens > 0)
+                {
+                    BattleUIAgent[] toDelink = FindAgents(effectlessLinkedTokenFilter, typeof(Token), extraTokens);
+                    for (int z = 0; z < toDelink.Length; z++)
+                    {
+                        toDelink[z].Delinker();
+                    }
+                }
+                else if (extraTokens < 0)
+                {
+                    LinkAgents(FindAgents(x =>
+                    {
+                        if (!x.linked && x is Token)
+                        {
+                            Token token = (Token)x;
+                            if (token.effectType.GetType() == tokenEffectTypes[i].GetType())
+                            {
+                                token.player = player;
+                                token.initialSpot = tokenInitialSpotStart + tokenInitialSpotStep * i;
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    }, -extraTokens));
                 }
             }
         }

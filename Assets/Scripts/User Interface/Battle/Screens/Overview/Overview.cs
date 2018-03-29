@@ -17,7 +17,7 @@ namespace BattleUIAgents.UI
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
-            flags = Array.ConvertAll(LinkAgents(FindAgents(x => { return x is Flag && x.player != null; }, 2)), item => { return (Flag)item; });
+            flags = Array.ConvertAll(LinkAgents(FindAgents(x => { return x.player != null; }, typeof(Flag), 2)), item => { return (Flag)item; });
             Delinker += () => { enterAttackScreenOnLink = false; CancelInvoke("GoToAttack"); };
 
             if (enterAttackScreenOnLink) Invoke("GoToAttack", autoAttackScreenTime);
@@ -34,7 +34,7 @@ namespace BattleUIAgents.UI
                     if (flag.IsPositionOnFlag(currentInputPosition.world))
                     {
                         gameObject.SetActive(false);
-                        FindAgent(x => { return (flag.player == Battle.main.attacker ? x is Attackscreen : x is Attackscreen) && x.player == flag.player; }).gameObject.SetActive(true);
+                        FindAgent(x => { return x.player == flag.player; }, flag.player == Battle.main.attacker ? typeof(Attackscreen) : typeof(Attackscreen)).gameObject.SetActive(true);
                         break;
                     }
                 }
@@ -54,7 +54,7 @@ namespace BattleUIAgents.UI
         void GoToAttack()
         {
             gameObject.SetActive(false);
-            FindAgent(x => { return x.player == Battle.main.defender && x is Attackscreen; }).gameObject.SetActive(true);
+            FindAgent(x => { return x.player == Battle.main.defender; }, typeof(Attackscreen)).gameObject.SetActive(true);
         }
 
         protected override void Reset()
