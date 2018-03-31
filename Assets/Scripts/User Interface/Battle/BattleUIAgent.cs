@@ -102,12 +102,12 @@ namespace BattleUIAgents.Base
                 AgentDelinker agentDelinkingSubscription = () => { };
                 AgentDelinker agentDelinkingUnsubscriber = () => { Delinker -= agentDelinkingSubscription; };
 
-                agent.Delinker += agentDelinkingUnsubscriber; //Add the following to the its delinker - 1. Delink the agent's delinker from the delinker of the agent linking it 2. Reset the agent's delinker 3. Reset the agent
-                Delinker += agentDelinkingSubscription;
-
                 if (callAgentDelinkerOnDelink)
                     agentDelinkingSubscription += () => { agent.Delinker(); };
                 else Delinker += () => { agent.Delinker -= agentDelinkingUnsubscriber; };
+
+                agent.Delinker += agentDelinkingUnsubscriber; //Add the following to the its delinker - 1. Delink the agent's delinker from the delinker of the agent linking it 2. Reset the agent's delinker 3. Reset the agent
+                Delinker += agentDelinkingSubscription;
             }
 
             return agents;

@@ -17,6 +17,7 @@ namespace BattleUIAgents.UI
         public Effect[] tokenEffectTypes;
         Vector3 tokenInitialSpotStart;
         Vector3 tokenInitialSpotStep;
+        public float startingPositionPadding;
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
@@ -26,8 +27,25 @@ namespace BattleUIAgents.UI
 
             Delinker += () => { Token.heldToken = null; };
 
-            tokenInitialSpotStart = player.transform.position + Vector3.right * (player.board.tiles.GetLength(0) / 1.5f) + Vector3.forward * (player.board.tiles.GetLength(1) / 2.0f);
-            tokenInitialSpotStep = Vector3.back * (player.board.tiles.GetLength(1) / (2.0f * tokenEffectTypes.Length));
+            Vector3 startingPositionRelativeToCamera = player.transform.position + Vector3.right * (player.board.tiles.GetLength(0) / 1.5f) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight - cameraWaypoint.transform.position;
+            Vector3 boardEdgeRelativeToCamera = new Vector3(player.board.tiles[player.board.tiles.GetLength(0) - 1, 0].transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight, 0) - cameraWaypoint.transform.position;
+            float originalDistance = Vector3.Distance(startingPositionRelativeToCamera, boardEdgeRelativeToCamera);
+
+            float startPosNormalAngle = Vector3.Angle(Vector3.down, startingPositionRelativeToCamera.normalized);
+            float boardEdgeNormalAngle = Vector3.Angle(Vector3.down, boardEdgeRelativeToCamera.normalized);
+            float angleBetweenNormals = Mathf.Abs(startPosNormalAngle - boardEdgeNormalAngle);
+
+            float axisNormalPadding = Mathf.Cos((startPosNormalAngle + angleBetweenNormals / 2.0f) * Mathf.Deg2Rad) * startingPositionPadding;
+            float positionDistance = axisNormalPadding / (2.0f * Mathf.Cos((180 - angleBetweenNormals) / 2.0f * Mathf.Deg2Rad));
+
+            startingPositionRelativeToCamera = startingPositionRelativeToCamera.normalized * positionDistance;
+            boardEdgeRelativeToCamera = boardEdgeRelativeToCamera.normalized * positionDistance;
+
+            float scalar = Vector3.Distance(startingPositionRelativeToCamera, boardEdgeRelativeToCamera) / originalDistance;
+
+
+            tokenInitialSpotStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / 2.0f) * scalar + cameraWaypoint.transform.position;
+            tokenInitialSpotStep = Vector3.back * (player.board.tiles.GetLength(1) / (2.0f * tokenEffectTypes.Length)) * scalar;
 
             UpdateTokenSelection();
         }

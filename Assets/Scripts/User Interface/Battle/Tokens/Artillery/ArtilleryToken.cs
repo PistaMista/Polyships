@@ -51,7 +51,7 @@ namespace BattleUIAgents.Tokens
                 if (targetedTile != null)
                 {
                     attack.target = targetedTile;
-                    hookedPosition = targetedTile.transform.position;
+                    hookedPosition = targetedTile.transform.position + Vector3.up * (MiscellaneousVariables.it.boardUIRenderHeight + height);
                 }
                 else
                 {
