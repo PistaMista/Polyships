@@ -16,13 +16,13 @@ namespace BattleUIAgents.UI
         protected override void PerformLinkageOperations()
         {
             player = Battle.main.attacker;
-            flag = (Flag)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Flag)));
+            flag = (Flag)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Flag)), true);
             flag.Delinker += () => { flag = null; };
 
             base.PerformLinkageOperations();
 
             SetInteractable(!player.aiEnabled);
-            LinkAgent(FindAgent(x => { return x.name.Contains("Turn " + (player.aiEnabled ? "AI" : "PLAYER")); }, typeof(Graphicfader)));
+            LinkAgent(FindAgent(x => { return x.name.Contains("Turn " + (player.aiEnabled ? "AI" : "PLAYER")); }, typeof(Graphicfader)), true);
             if (player.aiEnabled) Invoke("DoAITurn", AITurnWaitTime);
         }
 

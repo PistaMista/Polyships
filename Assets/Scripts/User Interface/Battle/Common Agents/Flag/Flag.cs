@@ -18,7 +18,7 @@ namespace BattleUIAgents.Agents
 
             if (foundVoxels.Length != 0)
             {
-                LinkAgents(foundVoxels);
+                LinkAgents(foundVoxels, true);
             }
             else
             {

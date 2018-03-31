@@ -17,7 +17,7 @@ namespace BattleUIAgents.UI
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
-            flags = Array.ConvertAll(LinkAgents(FindAgents(x => { return x.player != null; }, typeof(Flag), 2)), item => { return (Flag)item; });
+            flags = Array.ConvertAll(LinkAgents(FindAgents(x => { return x.player != null; }, typeof(Flag), 2), true), item => { return (Flag)item; });
             Delinker += () => { enterAttackScreenOnLink = false; CancelInvoke("GoToAttack"); };
 
             if (enterAttackScreenOnLink) Invoke("GoToAttack", autoAttackScreenTime);

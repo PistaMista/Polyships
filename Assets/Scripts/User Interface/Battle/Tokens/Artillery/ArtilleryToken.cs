@@ -16,7 +16,8 @@ namespace BattleUIAgents.Tokens
 
         protected override void PerformLinkageOperations()
         {
-            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)));
+            base.PerformLinkageOperations();
+            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)), false);
             grid.Delinker += () => { grid = null; };
         }
         Vector3 pickupPosition;

@@ -22,10 +22,10 @@ namespace BattleUIAgents.UI
             player = Battle.main.attacker;
             base.PerformLinkageOperations();
 
-            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)));
+            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)), true);
             grid.Delinker += () => { grid = null; };
 
-            shipbox = (Shipbox)LinkAgent(FindAgent(x => { return true; }, typeof(Shipbox)));
+            shipbox = (Shipbox)LinkAgent(FindAgent(x => { return true; }, typeof(Shipbox)), true);
             shipbox.Delinker += () => { shipbox = null; };
 
             shipbox.hookedPosition = player.transform.position + Vector3.left * player.board.tiles.GetLength(0) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;

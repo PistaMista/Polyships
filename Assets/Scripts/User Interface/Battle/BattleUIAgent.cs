@@ -81,11 +81,11 @@ namespace BattleUIAgents.Base
 
             return matches.ToArray();
         }
-        protected BattleUIAgent LinkAgent(BattleUIAgent agent)
+        protected BattleUIAgent LinkAgent(BattleUIAgent agent, bool callAgentDelinkerOnDelink)
         {
-            return LinkAgents(new BattleUIAgent[] { agent })[0];
+            return LinkAgents(new BattleUIAgent[] { agent }, callAgentDelinkerOnDelink)[0];
         }
-        protected BattleUIAgent[] LinkAgents(BattleUIAgent[] agents)
+        protected BattleUIAgent[] LinkAgents(BattleUIAgent[] agents, bool callAgentDelinkerOnDelink)
         {
             for (int i = 0; i < agents.Length; i++)
             {
@@ -99,10 +99,15 @@ namespace BattleUIAgents.Base
 
                 agent.PerformLinkageOperations(); //Inform the agent that he is being linked
 
-                AgentDelinker agentDelinkingSubscription = () => { agent.Delinker(); };
+                AgentDelinker agentDelinkingSubscription = () => { };
+                AgentDelinker agentDelinkingUnsubscriber = () => { Delinker -= agentDelinkingSubscription; };
 
-                agent.Delinker += () => { Delinker -= agentDelinkingSubscription; }; //Add the following to the its delinker - 1. Delink the agent's delinker from the delinker of the agent linking it 2. Reset the agent's delinker 3. Reset the agent
+                agent.Delinker += agentDelinkingUnsubscriber; //Add the following to the its delinker - 1. Delink the agent's delinker from the delinker of the agent linking it 2. Reset the agent's delinker 3. Reset the agent
                 Delinker += agentDelinkingSubscription;
+
+                if (callAgentDelinkerOnDelink)
+                    agentDelinkingSubscription += () => { agent.Delinker(); };
+                else Delinker += () => { agent.Delinker -= agentDelinkingUnsubscriber; };
             }
 
             return agents;
@@ -123,7 +128,7 @@ namespace BattleUIAgents.Base
                 createdAgents.Add(instantiatedAgent);
             }
 
-            return LinkAgents(createdAgents.ToArray());
+            return LinkAgents(createdAgents.ToArray(), true);
         }
 
         /// <summary>

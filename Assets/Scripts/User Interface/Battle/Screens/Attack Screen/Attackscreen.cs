@@ -20,8 +20,8 @@ namespace BattleUIAgents.UI
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
-            LinkAgent(FindAgent(x => { return x.player != player; }, typeof(Flag)));
-            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)));
+            LinkAgent(FindAgent(x => { return x.player != player; }, typeof(Flag)), true);
+            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)), true);
             grid.Delinker += () => { grid = null; };
 
             Delinker += () => { Token.heldToken = null; };
@@ -78,8 +78,8 @@ namespace BattleUIAgents.UI
                 else if (extraTokens < 0)
                 {
                     Token[] requestedTokens = Token.FindTokens(false, false, tokenEffectTypes[i].GetType(), -extraTokens);
-                    LinkAgents(requestedTokens);
                     Array.ForEach(requestedTokens, requestedToken => { requestedToken.player = player; requestedToken.initialSpot = tokenInitialSpotStart + tokenInitialSpotStep * i; });
+                    LinkAgents(requestedTokens, true);
                 }
             }
         }

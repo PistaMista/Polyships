@@ -34,7 +34,7 @@ namespace BattleUIAgents.Tokens
                 if (x.linked)
                 {
                     Token token = (Token)x;
-                    if (token.effect == null && token.effectType == effectType && token.transform.position.y > highestPosition)
+                    if (token != this && token.effect == null && token.effectType == effectType && token.transform.position.y > highestPosition)
                     {
                         highestPosition = token.transform.position.y;
                         return true;
