@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 using BattleUIAgents.Base;
@@ -69,41 +70,16 @@ namespace BattleUIAgents.UI
         {
             for (int i = 0; i < tokenEffectTypes.Length; i++)
             {
-                BattleAgentFilterPredicate effectlessLinkedTokenFilter = x =>
-                {
-                    if (x.linked)
-                    {
-                        Token token = (Token)x;
-                        return token.effect == null;
-                    }
-
-                    return false;
-                };
-
-                int extraTokens = FindAgents(effectlessLinkedTokenFilter, tokenEffectTypes[i].GetType(), int.MaxValue).Length - tokenEffectTypes[i].GetAdditionalAllowed();
+                int extraTokens = Token.FindTokens(true, false, tokenEffectTypes[i].GetType(), int.MaxValue).Length - tokenEffectTypes[i].GetAdditionalAllowed();
                 if (extraTokens > 0)
                 {
-                    BattleUIAgent[] toDelink = FindAgents(effectlessLinkedTokenFilter, tokenEffectTypes[i].GetType(), extraTokens);
-                    for (int z = 0; z < toDelink.Length; z++)
-                    {
-                        toDelink[z].Delinker();
-                    }
+                    Array.ForEach(Token.FindTokens(true, false, tokenEffectTypes[i].GetType(), extraTokens), x => { x.Delinker(); });
                 }
                 else if (extraTokens < 0)
                 {
-                    LinkAgents(FindAgents(x =>
-                    {
-                        if (!x.linked)
-                        {
-                            Token token = (Token)x;
-
-                            token.player = player;
-                            token.initialSpot = tokenInitialSpotStart + tokenInitialSpotStep * i;
-                            return true;
-                        }
-
-                        return false;
-                    }, tokenEffectTypes[i].GetType(), -extraTokens));
+                    Token[] requestedTokens = Token.FindTokens(false, false, tokenEffectTypes[i].GetType(), -extraTokens);
+                    LinkAgents(requestedTokens);
+                    Array.ForEach(requestedTokens, requestedToken => { requestedToken.player = player; requestedToken.initialSpot = tokenInitialSpotStart + tokenInitialSpotStep * i; });
                 }
             }
         }

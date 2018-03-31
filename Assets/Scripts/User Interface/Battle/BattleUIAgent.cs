@@ -72,6 +72,7 @@ namespace BattleUIAgents.Base
         {
             List<BattleUIAgent> matches = new List<BattleUIAgent>();
 
+
             foreach (BattleUIAgent candidate in Resources.FindObjectsOfTypeAll(type))
             {
                 if (predicate(candidate)) matches.Add(candidate);

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 using BattleUIAgents.Base;
@@ -130,6 +131,15 @@ namespace BattleUIAgents.Tokens
         protected virtual Effect CalculateEffect()
         {
             return null;
+        }
+
+        public static Token[] FindTokens(bool linked, bool used, Type effectType, int limit)
+        {
+            return Array.ConvertAll(FindAgents(x =>
+            {
+                Token token = (Token)x;
+                return token.linked == linked && (token.effect != null) == used && token.effectType.GetType() == effectType;
+            }, typeof(Token), limit), x => { return (Token)x; });
         }
     }
 }
