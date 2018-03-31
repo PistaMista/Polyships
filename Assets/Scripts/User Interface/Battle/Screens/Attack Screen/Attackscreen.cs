@@ -71,19 +71,19 @@ namespace BattleUIAgents.UI
             {
                 BattleAgentFilterPredicate effectlessLinkedTokenFilter = x =>
                 {
-                    if (x.linked && x is Token)
+                    if (x.linked)
                     {
                         Token token = (Token)x;
-                        return token.effectType.GetType() == tokenEffectTypes.GetType() && token.effect == null;
+                        return token.effect == null;
                     }
 
                     return false;
                 };
 
-                int extraTokens = FindAgents(effectlessLinkedTokenFilter, typeof(Token), int.MaxValue).Length - tokenEffectTypes[i].GetAdditionalAllowed();
+                int extraTokens = FindAgents(effectlessLinkedTokenFilter, tokenEffectTypes[i].GetType(), int.MaxValue).Length - tokenEffectTypes[i].GetAdditionalAllowed();
                 if (extraTokens > 0)
                 {
-                    BattleUIAgent[] toDelink = FindAgents(effectlessLinkedTokenFilter, typeof(Token), extraTokens);
+                    BattleUIAgent[] toDelink = FindAgents(effectlessLinkedTokenFilter, tokenEffectTypes[i].GetType(), extraTokens);
                     for (int z = 0; z < toDelink.Length; z++)
                     {
                         toDelink[z].Delinker();
@@ -93,19 +93,17 @@ namespace BattleUIAgents.UI
                 {
                     LinkAgents(FindAgents(x =>
                     {
-                        if (!x.linked && x is Token)
+                        if (!x.linked)
                         {
                             Token token = (Token)x;
-                            if (token.effectType.GetType() == tokenEffectTypes[i].GetType())
-                            {
-                                token.player = player;
-                                token.initialSpot = tokenInitialSpotStart + tokenInitialSpotStep * i;
-                                return true;
-                            }
+
+                            token.player = player;
+                            token.initialSpot = tokenInitialSpotStart + tokenInitialSpotStep * i;
+                            return true;
                         }
 
                         return false;
-                    }, -extraTokens));
+                    }, tokenEffectTypes[i].GetType(), -extraTokens));
                 }
             }
         }

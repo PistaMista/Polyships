@@ -26,7 +26,7 @@ namespace TitleUI
         {
             Battle.main = Battle.CreateBattle(Battle.GetBlankBattleData((int)boardSizeSlider.value, aiOpponent, tutorialToggle.isOn, saveSlot, flags));
             State = UIState.DISABLED;
-            BattleUIAgent.FindAgent(x => { return x is TurnNotifier; }).gameObject.SetActive(true);
+            BattleUIAgent.FindAgent(x => { return true; }, typeof(TurnNotifier)).gameObject.SetActive(true);
         }
 
 

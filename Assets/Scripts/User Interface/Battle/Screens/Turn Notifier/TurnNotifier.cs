@@ -34,7 +34,7 @@ namespace BattleUIAgents.UI
                 gameObject.SetActive(false);
                 if (player.board.ships == null)
                 {
-                    FindAgent(x => { return x is FleetPlacer; }).gameObject.SetActive(true);
+                    FindAgent(x => { return true; }, typeof(FleetPlacer)).gameObject.SetActive(true);
                 }
                 else
                 {

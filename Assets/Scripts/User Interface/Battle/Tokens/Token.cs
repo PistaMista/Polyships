@@ -30,7 +30,7 @@ namespace BattleUIAgents.Tokens
             float highestPosition = Mathf.NegativeInfinity;
             BattleUIAgent[] highestBlockerCandidates = FindAgents(x =>
             {
-                if (x is Token && x.linked)
+                if (x.linked)
                 {
                     Token token = (Token)x;
                     if (token.effect == null && token.effectType == effectType && token.transform.position.y > highestPosition)
@@ -40,7 +40,7 @@ namespace BattleUIAgents.Tokens
                     }
                 }
                 return false;
-            }, int.MaxValue
+            }, typeof(Token), int.MaxValue
             );
 
             if (highestBlockerCandidates != null && highestBlockerCandidates.Length > 0)
@@ -82,15 +82,10 @@ namespace BattleUIAgents.Tokens
             {
                 if (FindAgent(x =>
                 {
-                    if (x is Token)
-                    {
-                        Token c = (Token)x;
-                        float planarCandidateDistance = Vector2.Distance(planarInput, new Vector2(c.transform.position.x, c.transform.position.z));
-                        return planarCandidateDistance < c.pickupRadius && ((c.transform.position.y > transform.position.y) || (Mathf.Approximately(c.transform.position.y, transform.position.y) && planarCandidateDistance < planarDistance));
-                    }
-
-                    return false;
-                }) == null)
+                    Token c = (Token)x;
+                    float planarCandidateDistance = Vector2.Distance(planarInput, new Vector2(c.transform.position.x, c.transform.position.z));
+                    return planarCandidateDistance < c.pickupRadius && ((c.transform.position.y > transform.position.y) || (Mathf.Approximately(c.transform.position.y, transform.position.y) && planarCandidateDistance < planarDistance));
+                }, typeof(Token)) == null)
                 {
                     Pickup();
                     return true;

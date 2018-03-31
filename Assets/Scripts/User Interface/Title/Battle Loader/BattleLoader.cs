@@ -56,7 +56,7 @@ namespace TitleUI
             if (CheckSlot(slot))
             {
                 Battle.main = Battle.CreateBattle(saveSlotContents[slot]);
-                BattleUIAgent.FindAgent(x => { return x is TurnNotifier; }).gameObject.SetActive(true);
+                BattleUIAgent.FindAgent(x => { return true; }, typeof(TurnNotifier)).gameObject.SetActive(true);
             }
             else
             {
