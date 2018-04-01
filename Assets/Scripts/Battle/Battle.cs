@@ -233,13 +233,13 @@ namespace Gameplay
 
         void OnApplicationQuit()
         {
-            SaveToDisk();
+            QuitBattle();
         }
 
         public void QuitBattle()
         {
+            BattleUIAgents.Base.ScreenBattleUIAgent.DelinkAllScreenAgents();
             SaveToDisk();
-            //BattleUIMaster.ForceResetAllBUIs();
             MiscellaneousVariables.it.titleUI.State = UIState.ENABLED;
             Destroy(this.gameObject);
         }

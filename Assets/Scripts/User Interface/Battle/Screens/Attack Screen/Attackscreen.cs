@@ -18,12 +18,18 @@ namespace BattleUIAgents.UI
         Vector3 tokenInitialSpotStart;
         Vector3 tokenInitialSpotStep;
         public float startingPositionPadding;
+        Firebutton firebutton;
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
             LinkAgent(FindAgent(x => { return x.player != player; }, typeof(Flag)), true);
             grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)), true);
             grid.Delinker += () => { grid = null; };
+
+            firebutton = (Firebutton)LinkAgent(FindAgent(x => { return true; }, typeof(Firebutton)), true);
+            firebutton.Delinker += () => { firebutton = null; };
+
+            firebutton.hookedPosition = player.transform.position + Vector3.left * (player.board.tiles.GetLength(0) / 1.5f) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight + Vector3.back * player.board.tiles.GetLength(1) / 3.0f;
 
             Delinker += () => { Token.heldToken = null; };
 
@@ -55,8 +61,14 @@ namespace BattleUIAgents.UI
             base.ProcessInput();
             if (Token.heldToken == null)
             {
-                if (beginPress)
+                if (endPress && firebutton.TryPush(initialInputPosition.world))
                 {
+                    gameObject.SetActive(false);
+                    Battle.main.NextTurn();
+                }
+                else if (beginPress)
+                {
+                    firebutton.TryPush(initialInputPosition.world);
                     BattleUIAgent[] allTokens = FindAgents(x => { return x.linked; }, typeof(Token), int.MaxValue);
                     for (int i = 0; i < allTokens.Length; i++)
                     {

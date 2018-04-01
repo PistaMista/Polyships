@@ -20,13 +20,13 @@ namespace BattleUIAgents.Base
         {
             base.Update();
             Vector3 targetPosition = linked ? hookedPosition : unhookedPosition;
-            if (Vector3.Distance(transform.position, targetPosition) > 0.005f)
+            if (Vector3.Distance(transform.localPosition, targetPosition) > 0.005f)
             {
-                transform.position = Vector3.SmoothDamp(transform.position, linked ? hookedPosition : unhookedPosition, ref currentVelocity, movementTime, movementMaxSpeed);
+                transform.localPosition = Vector3.SmoothDamp(transform.localPosition, targetPosition, ref currentVelocity, movementTime, movementMaxSpeed);
             }
             else
             {
-                transform.position = targetPosition;
+                transform.localPosition = targetPosition;
             }
 
             bool aboveMaxInteractableVelocity = currentVelocity.magnitude > maximumInteractableVelocity;
