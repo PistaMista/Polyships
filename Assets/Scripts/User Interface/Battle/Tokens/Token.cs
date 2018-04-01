@@ -19,6 +19,7 @@ namespace BattleUIAgents.Tokens
         public float occlusionRadius;
         public float height;
         public Vector3 initialSpot;
+
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
@@ -58,17 +59,21 @@ namespace BattleUIAgents.Tokens
 
         public bool TryPickup(Vector3 position)
         {
-            Vector2 planarPosition = new Vector2(transform.position.x, transform.position.z);
-            Vector2 planarInput = new Vector2(position.x, position.z);
-            float planarDistance = Vector2.Distance(planarPosition, planarInput);
+            if (!interactable) return false;
 
-            if (heldToken == null && planarDistance < pickupRadius)
+            Vector2 planarInput = new Vector2(position.x, position.z);
+
+            Utilities.PerspectiveProjection scaleInfo = Utilities.GetPositionOnElevationFromPerspective(hookedPosition, Camera.main.transform.position, MiscellaneousVariables.it.boardUIRenderHeight);
+            float planarDistance = Vector2.Distance(scaleInfo.planarPosition, planarInput);
+
+            if (heldToken == null && planarDistance < pickupRadius * scaleInfo.scalar)
             {
                 if (FindAgent(x =>
                 {
                     Token c = (Token)x;
-                    float planarCandidateDistance = Vector2.Distance(planarInput, new Vector2(c.transform.position.x, c.transform.position.z));
-                    return planarCandidateDistance < c.occlusionRadius && ((c.transform.position.y > transform.position.y) || (Mathf.Approximately(c.transform.position.y, transform.position.y) && planarCandidateDistance < planarDistance));
+                    Utilities.PerspectiveProjection candidateScaleInfo = Utilities.GetPositionOnElevationFromPerspective(c.hookedPosition, Camera.main.transform.position, MiscellaneousVariables.it.boardUIRenderHeight);
+                    float planarCandidateDistance = Vector2.Distance(planarInput, candidateScaleInfo.planarPosition);
+                    return planarCandidateDistance < c.occlusionRadius * scaleInfo.scalar && ((c.transform.position.y > transform.position.y) || (Mathf.Approximately(c.transform.position.y, transform.position.y) && planarCandidateDistance < planarDistance));
                 }, typeof(Token)) == null)
                 {
                     Pickup();

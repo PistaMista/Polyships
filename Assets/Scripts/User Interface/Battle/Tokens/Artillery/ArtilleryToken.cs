@@ -40,8 +40,7 @@ namespace BattleUIAgents.Tokens
                 }
                 else
                 {
-                    inputPosition.y = pickupPosition.y;
-                    hookedPosition = inputPosition;
+                    hookedPosition = Utilities.GetPositionOnElevationFromPerspective(inputPosition, Camera.main.transform.position, pickupPosition.y).projectedPosition;
                 }
             }
 

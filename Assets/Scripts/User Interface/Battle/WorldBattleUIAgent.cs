@@ -13,6 +13,9 @@ namespace BattleUIAgents.Base
         public float maximumInteractableVelocity;
         public Vector3 currentVelocity;
         bool belowMaxInteractableVelocity;
+
+
+
         protected override void Update()
         {
             base.Update();
@@ -32,6 +35,16 @@ namespace BattleUIAgents.Base
                 SetInteractable(!aboveMaxInteractableVelocity && linked);
                 belowMaxInteractableVelocity = !aboveMaxInteractableVelocity;
             }
+        }
+
+        protected virtual void OnHookedPositionSet(Vector3 position)
+        {
+
+        }
+
+        protected virtual void OnUnhookedPositionSet(Vector3 position)
+        {
+
         }
     }
 }
