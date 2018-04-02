@@ -26,6 +26,8 @@ namespace BattleUIAgents.UI
             grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)), true);
             grid.Delinker += () => { grid = null; };
 
+            grid.ShowInformation(false, false, true, true);
+
             firebutton = (Firebutton)LinkAgent(FindAgent(x => { return true; }, typeof(Firebutton)), true);
             firebutton.Delinker += () => { firebutton = null; };
 

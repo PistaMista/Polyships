@@ -104,5 +104,35 @@ namespace BattleUIAgents.Agents
 
             return null;
         }
+
+        public void ShowInformation(bool undamagedShips, bool damagedShips, bool destroyedShips, bool hitTiles)
+        {
+            List<Gameplay.Tile> blankTiles = new List<Gameplay.Tile>();
+            for (int i = 0; i < player.board.ships.Length; i++)
+            {
+                Ship ship = player.board.ships[i];
+                if ((undamagedShips && ship.health == ship.maxHealth) || (damagedShips && ship.health < ship.maxHealth && ship.health > 0) || (destroyedShips && ship.health == 0))
+                {
+                    ship.gameObject.SetActive(true);
+                    foreach (Gameplay.Tile tile in ship.tiles)
+                    {
+                        blankTiles.Add(tile);
+                        SetTileGraphic(tile.coordinates, ship.concealedBy != null ? TileGraphicMaterial.SHIP_CONCEALED : TileGraphicMaterial.SHIP_INTACT, Color.white);
+                    }
+                }
+            }
+
+            if (hitTiles)
+            {
+                Player attacker = player != Battle.main.attacker ? Battle.main.attacker : Battle.main.defender;
+                foreach (Gameplay.Tile tile in attacker.hitTiles)
+                {
+                    blankTiles.Add(tile);
+                    SetTileGraphic(tile.coordinates, tile.containedShip != null ? TileGraphicMaterial.SHIP_DAMAGED : TileGraphicMaterial.TILE_HIT, Color.white);
+                }
+            }
+
+            blankTiles.ForEach(x => { SetTileGraphic(x.coordinates, TileGraphicMaterial.NONE, Color.white); });
+        }
     }
 }
