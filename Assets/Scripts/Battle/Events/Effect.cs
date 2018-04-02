@@ -7,7 +7,6 @@ namespace Gameplay
 {
     public class Effect : MonoBehaviour
     {
-        public int playerAbilityIndex; //The token ID used by the player to do this effect - < 0 means none
         public Effect[] conflictingEffects;
         public int duration; //The amount of turns this effect lasts
         public int priority; //The priority this effect takes over others
@@ -162,6 +161,11 @@ namespace Gameplay
             }
 
             return result;
+        }
+
+        public virtual string GetDescription()
+        {
+            return "";
         }
     }
 }
