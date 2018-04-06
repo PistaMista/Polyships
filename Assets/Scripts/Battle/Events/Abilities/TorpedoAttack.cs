@@ -70,7 +70,7 @@ namespace Gameplay.Effects
 
         public override int GetAdditionalAllowed()
         {
-            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumTorpedoCount - Effect.GetAmountInQueue<TorpedoAttack>(), 0, Mathf.Min(base.GetAdditionalAllowed(), MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn)) * (target < 0 || Battle.main.attackerCapabilities.torpedoFiringArea[target] ? 1 : 0);
+            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumTorpedoCount - Effect.GetEffectsInQueue<TorpedoAttack>().Length, 0, Mathf.Min(base.GetAdditionalAllowed(), MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn)) * (target < 0 || Battle.main.attackerCapabilities.torpedoFiringArea[target] ? 1 : 0);
         }
 
         protected override bool ConflictsWith(Effect effect)

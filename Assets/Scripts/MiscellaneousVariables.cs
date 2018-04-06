@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using BattleUIAgents.Base;
 
+using Gameplay;
+
 public class MiscellaneousVariables : MonoBehaviour
 {
     public int[] boardSizes;
     public GameObject playerPrefab;
     public GameObject[] shipPrefabs;
-    public GameObject[] effectPrefabs;
+    public Effect[] effectPrefabs;
     public GameObject[] defaultShipLoadout;
     public float boardTileSideLength;
     public float boardUIRenderHeight;

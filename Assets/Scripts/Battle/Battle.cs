@@ -127,6 +127,7 @@ namespace Gameplay
             public Player.PlayerData defender;
             public int saveSlot;
             public TurnInfoData[] log;
+            public Effect.EffectData[] effects;
             public int tutorialStage;
 
             public static implicit operator BattleData(Battle battle)
@@ -139,6 +140,11 @@ namespace Gameplay
                 for (int i = 0; i < battle.log.Count; i++)
                 {
                     result.log[i] = battle.log[i];
+                }
+                result.effects = new Effect.EffectData[battle.effects.Count];
+                for (int i = 0; i < battle.effects.Count; i++)
+                {
+                    result.effects[i] = battle.effects[i];
                 }
                 result.tutorialStage = battle.tutorialStage;
                 return result;
@@ -194,6 +200,13 @@ namespace Gameplay
 
             //LOG - REF
 
+            for (int i = 0; i < data.effects.Length; i++)
+            {
+                Effect initializedEffect = Effect.CreateEffect(MiscellaneousVariables.it.effectPrefabs[data.effects[i].prefabIndex].GetType());
+                initializedEffect.Initialize(data.effects[i]);
+                effects.Add(initializedEffect);
+            }
+
             saveSlot = data.saveSlot;
             tutorialStage = data.tutorialStage;
         }
@@ -212,6 +225,11 @@ namespace Gameplay
 
                     log.Add(turn);
                 }
+            }
+
+            for (int i = 0; i < effects.Count; i++)
+            {
+                effects[i].AssignReferences(data.effects[i]);
             }
 
             attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
@@ -262,6 +280,11 @@ namespace Gameplay
             {
                 log.Insert(0, new TurnInfo(1));
                 CollectAttackerCapabilities();
+            }
+
+            if (attacker.board.ships != null)
+            {
+                Event.RandomEventsRoll();
             }
 
             attacker.OnTurnStart();
@@ -640,6 +663,7 @@ namespace Gameplay
 
             data.tutorialStage = tutorialEnabled ? 1 : 0;
             data.saveSlot = saveSlot;
+            data.effects = new Effect.EffectData[0];
 
             return data;
         }

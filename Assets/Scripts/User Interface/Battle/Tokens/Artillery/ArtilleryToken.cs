@@ -36,7 +36,7 @@ namespace BattleUIAgents.Tokens
             {
                 if (targetedTile != null)
                 {
-                    effect = Effect.CreateEffect<ArtilleryAttack>();
+                    effect = Effect.CreateEffect(typeof(ArtilleryAttack));
                 }
                 else
                 {

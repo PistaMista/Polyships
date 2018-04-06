@@ -7,9 +7,54 @@ namespace Gameplay
 {
     public class Effect : MonoBehaviour
     {
+        [Serializable]
+        public struct EffectData
+        {
+            public bool affectingAll;
+            public bool affectingAttacker;
+            public int duration;
+            public int priority;
+            public int prefabIndex;
+            public int[] metadata;
+            public static implicit operator EffectData(Effect effect)
+            {
+                EffectData result;
+
+                result.affectingAttacker = effect.affectedPlayer == Battle.main.attacker;
+                result.affectingAll = effect.affectedPlayer == null;
+
+                result.duration = effect.duration;
+                result.priority = effect.priority;
+                result.prefabIndex = effect.prefabIndex;
+
+                result.metadata = effect.GetMetadata();
+
+                return result;
+            }
+        }
+
+        public virtual void Initialize(EffectData data)
+        {
+            duration = data.duration;
+            priority = data.priority;
+            prefabIndex = data.prefabIndex;
+        }
+
+        public virtual void AssignReferences(EffectData data)
+        {
+            affectedPlayer = data.affectingAll ? null : data.affectingAttacker ? Battle.main.attacker : Battle.main.defender;
+        }
+
+        protected virtual int[] GetMetadata()
+        {
+            return new int[0];
+        }
+
         public Effect[] conflictingEffects;
+        public Player affectedPlayer;
         public int duration; //The amount of turns this effect lasts
         public int priority; //The priority this effect takes over others
+        public int prefabIndex;
 
         public virtual void OnTurnStart()
         {
@@ -69,10 +114,10 @@ namespace Gameplay
 
         }
 
-        public static Effect CreateEffect<T>()
+        public static Effect CreateEffect(Type type)
         {
             Effect result = null;
-            Effect candidate = RetrieveEffectPrefab<T>();
+            Effect candidate = RetrieveEffectPrefab(type);
             if (candidate.GetAdditionalAllowed() > 0)
             {
                 result = Instantiate(candidate.gameObject).GetComponent<Effect>();
@@ -81,15 +126,16 @@ namespace Gameplay
             return result;
         }
 
-        public static Effect RetrieveEffectPrefab<T>()
+        public static Effect RetrieveEffectPrefab(Type type)
         {
             Effect result = null;
             for (int i = 0; i < MiscellaneousVariables.it.effectPrefabs.Length; i++)
             {
-                Effect candidate = MiscellaneousVariables.it.effectPrefabs[i].GetComponent<Effect>();
-                if (candidate is T)
+                Effect candidate = MiscellaneousVariables.it.effectPrefabs[i];
+                if (ReferenceEquals(candidate.GetType(), type))
                 {
                     result = candidate;
+                    result.prefabIndex = i;
                     break;
                 }
             }
@@ -152,15 +198,15 @@ namespace Gameplay
             expiredEffects = new List<Effect>();
         }
 
-        public static int GetAmountInQueue<T>()
+        public static Effect[] GetEffectsInQueue<T>()
         {
-            int result = 0;
+            List<Effect> result = new List<Effect>();
             foreach (Effect effect in Battle.main.effects)
             {
-                if (effect is T) result++;
+                if (effect is T) result.Add(effect);
             }
 
-            return result;
+            return result.ToArray();
         }
 
         public virtual string GetDescription()
