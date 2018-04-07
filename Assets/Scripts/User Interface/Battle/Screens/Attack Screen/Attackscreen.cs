@@ -14,10 +14,12 @@ namespace BattleUIAgents.UI
     public class Attackscreen : ScreenBattleUIAgent
     {
         Agents.Grid grid;
-        public Effect[] tokenEffectTypes;
+        public Effect[] abilityTokenTypes;
         Vector3 tokenInitialSpotStart;
         Vector3 tokenInitialSpotStep;
         public float startingPositionPadding;
+        public float abilityTokenSpace;
+        float actualAbilityTokenSpace;
         Firebutton firebutton;
         protected override void PerformLinkageOperations()
         {
@@ -53,9 +55,16 @@ namespace BattleUIAgents.UI
 
 
             tokenInitialSpotStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / 2.0f) * scalar + cameraWaypoint.transform.position;
-            tokenInitialSpotStep = Vector3.back * (player.board.tiles.GetLength(1) / (2.0f * tokenEffectTypes.Length)) * scalar;
+            tokenInitialSpotStep = Vector3.back * (player.board.tiles.GetLength(1) / (2.0f * abilityTokenTypes.Length)) * scalar;
 
-            UpdateTokenSelection();
+            actualAbilityTokenSpace = abilityTokenSpace * scalar;
+
+            for (int i = 0; i < abilityTokenTypes.Length; i++)
+            {
+                Token.SetTypeStacking(abilityTokenTypes[i].GetType(), tokenInitialSpotStart + tokenInitialSpotStep * i, Vector3.right * (actualAbilityTokenSpace / 5));
+            }
+
+            UpdateAbilityTokenSelection();
         }
 
         protected override void ProcessInput()
@@ -93,24 +102,25 @@ namespace BattleUIAgents.UI
                 else if (endPress)
                 {
                     Token.heldToken.Drop();
-                    UpdateTokenSelection();
+                    UpdateAbilityTokenSelection();
                 }
             }
         }
 
-        void UpdateTokenSelection()
+        void UpdateAbilityTokenSelection()
         {
-            for (int i = 0; i < tokenEffectTypes.Length; i++)
+            for (int i = 0; i < abilityTokenTypes.Length; i++)
             {
-                int extraTokens = Token.FindTokens(true, false, tokenEffectTypes[i].GetType(), int.MaxValue).Length - tokenEffectTypes[i].GetAdditionalAllowed();
+                int currentTokenCount = Token.FindTokens(true, false, abilityTokenTypes[i].GetType(), int.MaxValue).Length;
+                int extraTokens = currentTokenCount - abilityTokenTypes[i].GetAdditionalAllowed();
                 if (extraTokens > 0)
                 {
-                    Array.ForEach(Token.FindTokens(true, false, tokenEffectTypes[i].GetType(), extraTokens), x => { x.Delinker(); });
+                    Array.ForEach(Token.FindTokens(true, false, abilityTokenTypes[i].GetType(), extraTokens), x => { x.Delinker(); });
                 }
                 else if (extraTokens < 0)
                 {
-                    Token[] requestedTokens = Token.FindTokens(false, false, tokenEffectTypes[i].GetType(), -extraTokens);
-                    Array.ForEach(requestedTokens, requestedToken => { requestedToken.player = player; requestedToken.initialSpot = tokenInitialSpotStart + tokenInitialSpotStep * i; });
+                    Token[] requestedTokens = Token.FindTokens(false, false, abilityTokenTypes[i].GetType(), -extraTokens);
+                    Array.ForEach(requestedTokens, requestedToken => { requestedToken.player = player; });
                     LinkAgents(requestedTokens, true);
                 }
             }

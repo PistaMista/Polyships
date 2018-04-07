@@ -18,43 +18,57 @@ namespace BattleUIAgents.Tokens
         public float pickupRadius;
         public float occlusionRadius;
         public float height;
-        public Vector3 initialSpot;
+        bool stacked;
+        public struct Stacking
+        {
+            public Vector3 stackStart;
+            public Vector3 stackStep;
+            public Stacking(Vector3 stackStart, Vector3 stackStep)
+            {
+                this.stackStart = stackStart;
+                this.stackStep = stackStep;
+            }
+        }
+        Stacking stackingMethod;
+        public Stacking stacking
+        {
+            set
+            {
+                stackingMethod = value;
+                stackingMethod.stackStep.y = height;
+                if (effect == null)
+                {
+                    MoveToStack();
+                }
+            }
+            get
+            {
+                return stackingMethod;
+            }
+        }
 
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
-            Delinker += () => { if (effect != null) { Effect.RemoveFromQueue(effect); effect = null; }; initialSpot = Vector3.zero; };
+            Delinker += () => { if (effect != null) { Effect.RemoveFromQueue(effect); effect = null; }; stacked = false; };
 
-            hookedPosition = GetPositionWhenEffectless();
+            MoveToStack();
         }
 
         protected Vector3 GetPositionWhenEffectless()
         {
-            float highestPosition = Mathf.NegativeInfinity;
-            BattleUIAgent[] highestBlockerCandidates = FindAgents(x =>
+            float blockers = FindAgents(x =>
             {
                 if (x.linked)
                 {
                     Token token = (Token)x;
-                    if (token != this && token.effect == null && token.effectType == effectType && token.hookedPosition.y > highestPosition)
-                    {
-                        highestPosition = token.hookedPosition.y;
-                        return true;
-                    }
+                    return token != this && token.effect == null && token.effectType == effectType && token.stacked;
                 }
                 return false;
             }, typeof(Token), int.MaxValue
-            );
+            ).Length;
 
-            if (highestBlockerCandidates != null && highestBlockerCandidates.Length > 0)
-            {
-                Token highestBlocker = (Token)highestBlockerCandidates[highestBlockerCandidates.Length - 1];
-                return highestBlocker.hookedPosition + Vector3.up * height + Vector3.right * 0.5f;
-            }
-            else
-            {
-                return initialSpot;
-            }
+            return stacking.stackStart + stacking.stackStep * blockers;
         }
 
         public bool TryPickup(Vector3 position)
@@ -86,6 +100,7 @@ namespace BattleUIAgents.Tokens
 
         protected virtual void Pickup()
         {
+            stacked = false;
             heldToken = this;
             if (effect != null)
             {
@@ -114,8 +129,14 @@ namespace BattleUIAgents.Tokens
             else
             {
                 transform.SetAsFirstSibling();
-                hookedPosition = GetPositionWhenEffectless();
+                MoveToStack();
             }
+        }
+
+        public void MoveToStack()
+        {
+            hookedPosition = GetPositionWhenEffectless();
+            stacked = true;
         }
 
         protected virtual Effect CalculateEffect()
@@ -127,9 +148,21 @@ namespace BattleUIAgents.Tokens
         {
             return Array.ConvertAll(FindAgents(x =>
             {
-                Token token = (Token)x;
+                Token token = x as Token;
                 return token.linked == linked && (token.effect != null) == used && token.effectType.GetType() == effectType;
-            }, typeof(Token), limit), x => { return (Token)x; });
+            }, typeof(Token), limit), x => { return x as Token; });
+        }
+
+        public static void SetTypeStacking(Type tokenEffectType, Vector3 stackStart, Vector3 stackStep)
+        {
+            Token[] tokens = Array.ConvertAll(FindAgents(x =>
+            {
+                Token token = x as Token;
+                return token.effectType.GetType() == tokenEffectType;
+            }, typeof(Token), int.MaxValue), x => { return x as Token; });
+
+            Array.ForEach(tokens, x => { x.stacked = false; });
+            Array.ForEach(tokens, x => { x.stacking = new Stacking(stackStart, stackStep); });
         }
     }
 }

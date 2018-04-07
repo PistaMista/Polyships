@@ -32,5 +32,10 @@ namespace Gameplay.Effects
         {
             return (GetEffectsInQueue<LastStand>().Length == 0) ? 1 : 0;
         }
+
+        public override string GetDescription()
+        {
+            return "We WILL NOT go down without a fight!";
+        }
     }
 }

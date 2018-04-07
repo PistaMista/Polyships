@@ -20,15 +20,18 @@ namespace Gameplay.Effects
         public override void OnTurnStart()
         {
             base.OnTurnStart();
-            Battle.main.attackerCapabilities.maximumArtilleryCount -= artilleryAttackDecrease;
+            if (Battle.main.attacker == affectedPlayer) Battle.main.attackerCapabilities.maximumArtilleryCount -= artilleryAttackDecrease;
         }
 
         public override void OnTurnEnd()
         {
-            artilleryAttackDecrease = Mathf.Clamp(artilleryAttackDecrease, 0, Battle.main.attackerCapabilities.maximumArtilleryCount - 1);
-            if (artilleryAttackDecrease == 0)
+            if (Battle.main.attacker == affectedPlayer)
             {
-                duration = 1;
+                artilleryAttackDecrease = Mathf.Clamp(artilleryAttackDecrease, 0, Battle.main.attackerCapabilities.maximumArtilleryCount - 1);
+                if (artilleryAttackDecrease == 0)
+                {
+                    duration = 1;
+                }
             }
 
             base.OnTurnEnd();
@@ -46,7 +49,7 @@ namespace Gameplay.Effects
 
         public override string GetDescription()
         {
-            return "Number of gun attacks decreased by " + artilleryAttackDecrease + " for " + duration + " turns.";
+            return "Gun Maintenance - Number of your gun attacks is decreased by " + artilleryAttackDecrease + " for " + duration + (duration == 1 ? "turn" : "turns") + ".";
         }
     }
 }

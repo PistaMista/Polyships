@@ -47,5 +47,10 @@ namespace Gameplay.Effects
         {
             return (GetEffectsInQueue<Cyclone>().Length == 0) ? 1 : 0;
         }
+
+        public override string GetDescription()
+        {
+            return "Cyclone - Gun attacks clustered too close together don't always hit their mark. Lasts for " + duration + (duration == 1 ? "turn" : "turns") + ".";
+        }
     }
 }
