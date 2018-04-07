@@ -21,6 +21,16 @@ namespace Gameplay.Effects
             base.OnTurnEnd();
         }
 
+        protected override int[] GetMetadata()
+        {
+            return new int[2] { target.coordinates.x, target.coordinates.y };
+        }
+
+        public override void AssignReferences(EffectData data)
+        {
+            target = Battle.main.defender.board.tiles[data.metadata[0], data.metadata[1]];
+        }
+
         public override int GetAdditionalAllowed()
         {
             return Mathf.Clamp(Battle.main.attackerCapabilities.maximumArtilleryCount - Effect.GetEffectsInQueue<ArtilleryAttack>().Length, 0, base.GetAdditionalAllowed()) * (Battle.main.attacker.hitTiles.Contains(target) ? 0 : 1);

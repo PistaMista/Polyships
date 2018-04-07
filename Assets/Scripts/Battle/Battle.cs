@@ -202,7 +202,7 @@ namespace Gameplay
 
             for (int i = 0; i < data.effects.Length; i++)
             {
-                Effect initializedEffect = Effect.CreateEffect(MiscellaneousVariables.it.effectPrefabs[data.effects[i].prefabIndex].GetType());
+                Effect initializedEffect = Instantiate(MiscellaneousVariables.it.effectPrefabs[data.effects[i].prefabIndex]).gameObject.GetComponent<Effect>();
                 initializedEffect.Initialize(data.effects[i]);
                 effects.Add(initializedEffect);
             }
@@ -258,7 +258,7 @@ namespace Gameplay
         {
             BattleUIAgents.Base.ScreenBattleUIAgent.DelinkAllScreenAgents();
             SaveToDisk();
-            MiscellaneousVariables.it.titleUI.State = UIState.ENABLED;
+            //MiscellaneousVariables.it.titleUI.State = UIState.ENABLED;
             Destroy(this.gameObject);
         }
 

@@ -50,12 +50,37 @@ namespace BattleUIAgents.Tokens
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
-            Delinker += () => { if (effect != null) { Effect.RemoveFromQueue(effect); effect = null; }; stacked = false; };
-
-            MoveToStack();
+            Delinker += () => { stacked = false; effect = null; };
+            if (effect == null)
+            {
+                //Delinker += () => { if (effect != null) { Effect.RemoveFromQueue(effect); }; };
+                MoveToStack();
+            }
+            else
+            {
+                RefreshEffectRepresentation();
+                interactable = effect.editable;
+            }
         }
 
-        protected Vector3 GetPositionWhenEffectless()
+        public bool HasConnectionWithExistingEffect()
+        {
+            foreach (Effect effect in Battle.main.effects)
+            {
+                if (effect.GetType() == effectType.GetType())
+                {
+                    if (FindAgent(x => { return (x as Token).effect == effect; }, typeof(Token)) == null)
+                    {
+                        this.effect = effect;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        protected Vector3 GetPositionOnStack()
         {
             float blockers = FindAgents(x =>
             {
@@ -135,13 +160,13 @@ namespace BattleUIAgents.Tokens
 
         public void MoveToStack()
         {
-            hookedPosition = GetPositionWhenEffectless();
+            hookedPosition = GetPositionOnStack();
             stacked = true;
         }
 
-        protected virtual Effect CalculateEffect()
+        protected virtual void RefreshEffectRepresentation()
         {
-            return null;
+
         }
 
         public static Token[] FindTokens(bool linked, bool used, Type effectType, int limit)

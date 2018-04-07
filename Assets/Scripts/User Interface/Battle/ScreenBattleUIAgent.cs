@@ -34,7 +34,7 @@ namespace BattleUIAgents.Base
         {
             foreach (BattleUIAgent agent in FindAgents(x => { return true; }, typeof(ScreenBattleUIAgent), 20))
             {
-                agent.Delinker();
+                if (agent.Delinker != null) agent.Delinker();
             }
         }
 

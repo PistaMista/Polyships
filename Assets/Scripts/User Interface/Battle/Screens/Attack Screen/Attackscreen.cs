@@ -18,6 +18,7 @@ namespace BattleUIAgents.UI
         Vector3 tokenInitialSpotStart;
         Vector3 tokenInitialSpotStep;
         public float startingPositionPadding;
+        public float abilityTokenSpacing;
         public float abilityTokenSpace;
         float actualAbilityTokenSpace;
         Firebutton firebutton;
@@ -54,8 +55,8 @@ namespace BattleUIAgents.UI
             float scalar = Vector3.Distance(startingPositionRelativeToCamera, boardEdgeRelativeToCamera) / originalDistance;
 
 
-            tokenInitialSpotStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / 2.0f) * scalar + cameraWaypoint.transform.position;
-            tokenInitialSpotStep = Vector3.back * (player.board.tiles.GetLength(1) / (2.0f * abilityTokenTypes.Length)) * scalar;
+            tokenInitialSpotStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / abilityTokenSpacing) * scalar + cameraWaypoint.transform.position;
+            tokenInitialSpotStep = Vector3.back * (player.board.tiles.GetLength(1) / (abilityTokenSpacing * abilityTokenTypes.Length)) * scalar;
 
             actualAbilityTokenSpace = abilityTokenSpace * scalar;
 
@@ -63,6 +64,12 @@ namespace BattleUIAgents.UI
             {
                 Token.SetTypeStacking(abilityTokenTypes[i].GetType(), tokenInitialSpotStart + tokenInitialSpotStep * i, Vector3.right * (actualAbilityTokenSpace / 5));
             }
+
+            LinkAgents(FindAgents(x =>
+            {
+                Token token = x as Token;
+                return token.HasConnectionWithExistingEffect();
+            }, typeof(Token), int.MaxValue), true);
 
             UpdateAbilityTokenSelection();
         }
@@ -101,6 +108,10 @@ namespace BattleUIAgents.UI
                 if (pressed) Token.heldToken.ProcessExternalInputWhileHeld(currentInputPosition.world);
                 else if (endPress)
                 {
+                    if (tap)
+                    {
+                        Debug.Log("Tapped on token.");
+                    }
                     Token.heldToken.Drop();
                     UpdateAbilityTokenSelection();
                 }
@@ -133,7 +144,7 @@ namespace BattleUIAgents.UI
 
         protected override Vector3 GetPosition()
         {
-            return base.GetPosition() + player.transform.position + Vector3.left * (player.board.tiles.GetLength(0) / 4.0f);
+            return base.GetPosition() + player.transform.position;
         }
 
         protected override float CalculateConversionDistance()

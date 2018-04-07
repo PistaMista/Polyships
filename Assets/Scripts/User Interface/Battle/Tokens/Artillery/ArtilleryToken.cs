@@ -17,7 +17,7 @@ namespace BattleUIAgents.Tokens
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
-            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)), false);
+            grid = (Agents.Grid)LinkAgent(FindAgent(x => { return x.player == Battle.main.defender; }, typeof(Agents.Grid)), false);
             grid.Delinker += () => { grid = null; };
         }
         Vector3 pickupPosition;
@@ -46,11 +46,11 @@ namespace BattleUIAgents.Tokens
 
             if (effect != null)
             {
-                ArtilleryAttack attack = (ArtilleryAttack)effect;
+                ArtilleryAttack attack = effect as ArtilleryAttack;
                 if (targetedTile != null)
                 {
                     attack.target = targetedTile;
-                    hookedPosition = targetedTile.transform.position + Vector3.up * (MiscellaneousVariables.it.boardUIRenderHeight + height);
+                    RefreshEffectRepresentation();
                 }
                 else
                 {
@@ -58,6 +58,12 @@ namespace BattleUIAgents.Tokens
                     effect = null;
                 }
             }
+        }
+
+        protected override void RefreshEffectRepresentation()
+        {
+            base.RefreshEffectRepresentation();
+            hookedPosition = (effect as ArtilleryAttack).target.transform.position + Vector3.up * (MiscellaneousVariables.it.boardUIRenderHeight + height);
         }
     }
 }

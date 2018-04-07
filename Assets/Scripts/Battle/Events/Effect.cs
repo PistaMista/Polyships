@@ -54,6 +54,7 @@ namespace Gameplay
         public Player affectedPlayer;
         public int duration; //The amount of turns this effect lasts
         public int priority; //The priority this effect takes over others
+        public bool editable;
         public int prefabIndex;
 
         public virtual void OnTurnStart()
