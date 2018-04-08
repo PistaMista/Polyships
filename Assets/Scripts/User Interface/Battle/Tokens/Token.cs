@@ -71,7 +71,7 @@ namespace BattleUIAgents.Tokens
                 if (x.linked)
                 {
                     Token token = (Token)x;
-                    return token != this && token.effect == null && token.effectType == effectType && token.stacked;
+                    return token != this && token.stacked && ((token.effect == null && token.effectType == effectType) || (this is EventToken && x is EventToken));
                 }
                 return false;
             }, typeof(Token), int.MaxValue

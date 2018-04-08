@@ -65,7 +65,7 @@ namespace BattleUIAgents.UI
             eventTokenStart.x *= -1;
             eventTokenStart += cameraWaypoint.transform.position;
 
-            Token.SetTypeStacking(typeof(Gameplay.Event), eventTokenStart, Vector3.back * player.board.tiles.GetLength(1) / 5.0f * scalar);
+            Token.SetTypeStacking(typeof(Gameplay.Event), eventTokenStart, Vector3.back * player.board.tiles.GetLength(1) / 4.7f * scalar);
 
             LinkAgents(FindAgents(x =>
             {
