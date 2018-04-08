@@ -47,7 +47,7 @@ namespace BattleUIAgents.Tokens
             }
         }
 
-        public bool HasConnectionWithExistingEffect()
+        public virtual bool HasConnectionWithExistingEffect()
         {
             foreach (Effect effect in Battle.main.effects)
             {
@@ -96,7 +96,7 @@ namespace BattleUIAgents.Tokens
                     Token c = (Token)x;
                     Utilities.PerspectiveProjection candidateScaleInfo = Utilities.GetPositionOnElevationFromPerspective(c.hookedPosition, Camera.main.transform.position, MiscellaneousVariables.it.boardUIRenderHeight);
                     float planarCandidateDistance = Vector2.Distance(planarInput, candidateScaleInfo.planarPosition);
-                    return planarCandidateDistance < c.occlusionRadius * scaleInfo.scalar && ((c.transform.position.y > transform.position.y) || (Mathf.Approximately(c.transform.position.y, transform.position.y) && planarCandidateDistance < planarDistance));
+                    return planarCandidateDistance < c.occlusionRadius * scaleInfo.scalar && ((c.hookedPosition.y > hookedPosition.y) || (Mathf.Approximately(c.hookedPosition.y, hookedPosition.y) && planarCandidateDistance < planarDistance));
                 }, typeof(Token)) == null)
                 {
                     Pickup();
@@ -129,17 +129,20 @@ namespace BattleUIAgents.Tokens
 
             if (effect != null)
             {
-                transform.SetAsLastSibling();
-                if (!Battle.main.effects.Contains(effect))
+                if (Effect.AddToQueue(effect))
                 {
-                    Effect.AddToQueue(effect);
+                    transform.SetAsLastSibling();
+                    return;
+                }
+                else
+                {
+                    Destroy(effect.gameObject);
+                    effect = null;
                 }
             }
-            else
-            {
-                transform.SetAsFirstSibling();
-                MoveToStack();
-            }
+
+            transform.SetAsFirstSibling();
+            MoveToStack();
         }
 
         public void MoveToStack()

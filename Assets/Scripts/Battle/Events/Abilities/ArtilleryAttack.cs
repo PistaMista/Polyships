@@ -10,12 +10,35 @@ namespace Gameplay.Effects
         public override void OnTurnEnd()
         {
             Battle.main.log[0].artilleryImpacts.Add(target);
-            Battle.main.attacker.hitTiles.Add(target);
-            target.hit = true;
 
-            if (target.containedShip)
+            if (target.containedShip && target.containedShip.concealedBy)
             {
-                target.containedShip.Damage(1);
+                for (int x = (target.coordinates.x == 0 ? 0 : -1); x <= ((target.coordinates.x == target.parentBoard.tiles.GetLength(0) - 1) ? 0 : 1); x++)
+                {
+                    for (int y = (target.coordinates.y == 0 ? 0 : -1); y <= ((target.coordinates.y == target.parentBoard.tiles.GetLength(1) - 1) ? 0 : 1); y++)
+                    {
+                        if (!(y == 0 && x == 0))
+                        {
+                            Tile candidate = target.parentBoard.tiles[x + (int)target.coordinates.x, y + (int)target.coordinates.y];
+                            if (!candidate.hit && candidate.containedShip == null)
+                            {
+                                target = candidate;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!target.hit)
+            {
+                Battle.main.attacker.hitTiles.Add(target);
+                target.hit = true;
+
+                if (target.containedShip)
+                {
+                    target.containedShip.Damage(1);
+                }
             }
 
             base.OnTurnEnd();

@@ -107,7 +107,7 @@ namespace BattleUIAgents.Agents
 
         public void ShowInformation(bool undamagedShips, bool damagedShips, bool destroyedShips, bool hitTiles)
         {
-            List<Gameplay.Tile> blankTiles = new List<Gameplay.Tile>();
+            List<Gameplay.Tile> drawnTiles = new List<Gameplay.Tile>();
             for (int i = 0; i < player.board.ships.Length; i++)
             {
                 Ship ship = player.board.ships[i];
@@ -116,7 +116,7 @@ namespace BattleUIAgents.Agents
                     ship.gameObject.SetActive(true);
                     foreach (Gameplay.Tile tile in ship.tiles)
                     {
-                        blankTiles.Add(tile);
+                        drawnTiles.Add(tile);
                         SetTileGraphic(tile.coordinates, ship.concealedBy != null ? TileGraphicMaterial.SHIP_CONCEALED : TileGraphicMaterial.SHIP_INTACT, Color.white);
                     }
                 }
@@ -127,12 +127,15 @@ namespace BattleUIAgents.Agents
                 Player attacker = player != Battle.main.attacker ? Battle.main.attacker : Battle.main.defender;
                 foreach (Gameplay.Tile tile in attacker.hitTiles)
                 {
-                    blankTiles.Add(tile);
+                    drawnTiles.Add(tile);
                     SetTileGraphic(tile.coordinates, tile.containedShip != null ? TileGraphicMaterial.SHIP_DAMAGED : TileGraphicMaterial.TILE_HIT, Color.white);
                 }
             }
 
-            blankTiles.ForEach(x => { SetTileGraphic(x.coordinates, TileGraphicMaterial.NONE, Color.white); });
+            foreach (Gameplay.Tile tile in player.board.tiles)
+            {
+                if (!drawnTiles.Contains(tile)) SetTileGraphic(tile.coordinates, TileGraphicMaterial.NONE, Color.clear);
+            }
         }
     }
 }

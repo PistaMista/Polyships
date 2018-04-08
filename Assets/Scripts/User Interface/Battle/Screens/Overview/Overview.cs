@@ -34,7 +34,7 @@ namespace BattleUIAgents.UI
                     if (flag.IsPositionOnFlag(currentInputPosition.world))
                     {
                         gameObject.SetActive(false);
-                        FindAgent(x => { return x.player == flag.player; }, flag.player == Battle.main.attacker ? typeof(Attackscreen) : typeof(Attackscreen)).gameObject.SetActive(true);
+                        FindAgent(x => { return x.player == flag.player; }, flag.player == Battle.main.attacker ? typeof(Fleetinfo) : typeof(Attackscreen)).gameObject.SetActive(true);
                         break;
                     }
                 }

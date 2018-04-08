@@ -14,6 +14,23 @@ namespace BattleUIAgents.Tokens
             MoveToStack();
         }
 
+        public override bool HasConnectionWithExistingEffect()
+        {
+            foreach (Effect effect in Battle.main.effects)
+            {
+                if (effect.GetType() == effectType.GetType() && effect.affectedPlayer != Battle.main.defender)
+                {
+                    if (FindAgent(x => { return (x as Token).effect == effect; }, typeof(Token)) == null)
+                    {
+                        this.effect = effect;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         protected sealed override void Pickup()
         {
             heldToken = this;
