@@ -15,12 +15,9 @@ namespace BattleUIAgents.UI
     {
         Agents.Grid grid;
         public Effect[] abilityTokenTypes;
-        Vector3 tokenInitialSpotStart;
-        Vector3 tokenInitialSpotStep;
-        public float startingPositionPadding;
+        public float tokenStartingPositionPadding;
         public float abilityTokenSpacing;
         public float abilityTokenSpace;
-        float actualAbilityTokenSpace;
         Firebutton firebutton;
         protected override void PerformLinkageOperations()
         {
@@ -46,7 +43,7 @@ namespace BattleUIAgents.UI
             float boardEdgeNormalAngle = Vector3.Angle(Vector3.down, boardEdgeRelativeToCamera.normalized);
             float angleBetweenNormals = Mathf.Abs(startPosNormalAngle - boardEdgeNormalAngle);
 
-            float axisNormalPadding = Mathf.Cos((startPosNormalAngle + angleBetweenNormals / 2.0f) * Mathf.Deg2Rad) * startingPositionPadding;
+            float axisNormalPadding = Mathf.Cos((startPosNormalAngle + angleBetweenNormals / 2.0f) * Mathf.Deg2Rad) * tokenStartingPositionPadding;
             float positionDistance = axisNormalPadding / (2.0f * Mathf.Cos((180 - angleBetweenNormals) / 2.0f * Mathf.Deg2Rad));
 
             startingPositionRelativeToCamera = startingPositionRelativeToCamera.normalized * positionDistance;
@@ -55,15 +52,20 @@ namespace BattleUIAgents.UI
             float scalar = Vector3.Distance(startingPositionRelativeToCamera, boardEdgeRelativeToCamera) / originalDistance;
 
 
-            tokenInitialSpotStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / abilityTokenSpacing) * scalar + cameraWaypoint.transform.position;
-            tokenInitialSpotStep = Vector3.back * (player.board.tiles.GetLength(1) / (abilityTokenSpacing * abilityTokenTypes.Length)) * scalar;
 
-            actualAbilityTokenSpace = abilityTokenSpace * scalar;
+            Vector3 abilityTokenStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / abilityTokenSpacing) * scalar + cameraWaypoint.transform.position;
+            Vector3 abilityTokenStep = Vector3.back * (player.board.tiles.GetLength(1) / (abilityTokenSpacing * abilityTokenTypes.Length)) * scalar;
 
             for (int i = 0; i < abilityTokenTypes.Length; i++)
             {
-                Token.SetTypeStacking(abilityTokenTypes[i].GetType(), tokenInitialSpotStart + tokenInitialSpotStep * i, Vector3.right * (actualAbilityTokenSpace / 5));
+                Token.SetTypeStacking(abilityTokenTypes[i].GetType(), abilityTokenStart + abilityTokenStep * i, Vector3.right * (abilityTokenSpace * scalar / 5));
             }
+
+            Vector3 eventTokenStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / 2.0f) * scalar;
+            eventTokenStart.x *= -1;
+            eventTokenStart += cameraWaypoint.transform.position;
+
+            Token.SetTypeStacking(typeof(Gameplay.Event), eventTokenStart, Vector3.back * player.board.tiles.GetLength(1) / 5.0f * scalar);
 
             LinkAgents(FindAgents(x =>
             {

@@ -82,7 +82,7 @@ namespace BattleUIAgents.Tokens
 
         protected Vector3 GetPositionOnStack()
         {
-            float blockers = FindAgents(x =>
+            int blockers = FindAgents(x =>
             {
                 if (x.linked)
                 {
@@ -183,7 +183,7 @@ namespace BattleUIAgents.Tokens
             Token[] tokens = Array.ConvertAll(FindAgents(x =>
             {
                 Token token = x as Token;
-                return token.effectType.GetType() == tokenEffectType;
+                return token.effectType.GetType() == tokenEffectType || (tokenEffectType == typeof(Gameplay.Event) && token.effectType is Gameplay.Event);
             }, typeof(Token), int.MaxValue), x => { return x as Token; });
 
             Array.ForEach(tokens, x => { x.stacked = false; });
