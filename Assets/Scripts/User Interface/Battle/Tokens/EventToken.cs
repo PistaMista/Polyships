@@ -14,12 +14,12 @@ namespace BattleUIAgents.Tokens
             MoveToStack();
         }
 
-        protected override void Pickup()
+        protected sealed override void Pickup()
         {
             heldToken = this;
         }
 
-        public override void Drop()
+        public sealed override void Drop()
         {
             heldToken = null;
         }

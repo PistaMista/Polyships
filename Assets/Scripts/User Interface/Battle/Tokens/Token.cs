@@ -29,37 +29,21 @@ namespace BattleUIAgents.Tokens
                 this.stackStep = stackStep;
             }
         }
-        Stacking stackingMethod;
-        public Stacking stacking
-        {
-            set
-            {
-                stackingMethod = value;
-                stackingMethod.stackStep.y = height;
-                if (effect == null)
-                {
-                    MoveToStack();
-                }
-            }
-            get
-            {
-                return stackingMethod;
-            }
-        }
+        Stacking stacking;
 
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
-            Delinker += () => { stacked = false; effect = null; };
+            float initialMaxInteractableVelocity = maximumInteractableVelocity;
+            Delinker += () => { stacked = false; effect = null; maximumInteractableVelocity = initialMaxInteractableVelocity; };
             if (effect == null)
             {
-                //Delinker += () => { if (effect != null) { Effect.RemoveFromQueue(effect); }; };
                 MoveToStack();
             }
             else
             {
                 RefreshEffectRepresentation();
-                interactable = effect.editable;
+                if (!effect.editable) maximumInteractableVelocity = 0;
             }
         }
 
@@ -98,7 +82,7 @@ namespace BattleUIAgents.Tokens
 
         public bool TryPickup(Vector3 position)
         {
-            if (!interactable) return false;
+            if (!interactable && !(this is EventToken)) return false;
 
             Vector2 planarInput = new Vector2(position.x, position.z);
 
@@ -187,7 +171,7 @@ namespace BattleUIAgents.Tokens
             }, typeof(Token), int.MaxValue), x => { return x as Token; });
 
             Array.ForEach(tokens, x => { x.stacked = false; });
-            Array.ForEach(tokens, x => { x.stacking = new Stacking(stackStart, stackStep); });
+            Array.ForEach(tokens, x => { x.stacking = new Stacking(stackStart, stackStep); x.stacking.stackStep.y = x.height; });
         }
     }
 }

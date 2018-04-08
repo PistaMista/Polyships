@@ -50,7 +50,7 @@ namespace Gameplay.Effects
 
         public override string GetDescription()
         {
-            return "Cyclone - Gun attacks clustered too close together don't always hit their mark. Lasts for " + duration + (duration == 1 ? "turn" : "turns") + ".";
+            return "Cyclone - Gun attacks clustered too close together don't always hit their mark. Lasts for " + duration + (duration == 1 ? " turn" : " turns") + ".";
         }
     }
 }

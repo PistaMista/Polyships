@@ -11,6 +11,8 @@ namespace BattleUIAgents.Agents
         Graphic graphic;
         float colorRate;
         public float fadeTime;
+        [Range(0.00f, 1.00f)]
+        public float maxAlpha;
 
         protected override void Start()
         {
@@ -20,7 +22,7 @@ namespace BattleUIAgents.Agents
         protected override void Update()
         {
             base.Update();
-            float targetAlpha = linked ? 1.0f : 0.0f;
+            float targetAlpha = linked ? maxAlpha : 0.0f;
             Color color = graphic.color;
 
             if (Mathf.Abs(targetAlpha - color.a) > 0.008f)

@@ -73,7 +73,7 @@ namespace BattleUIAgents.UI
                 return token.HasConnectionWithExistingEffect();
             }, typeof(Token), int.MaxValue), true);
 
-            UpdateAbilityTokenSelection();
+            UpdateAbilityTokens();
         }
 
         protected override void ProcessInput()
@@ -88,12 +88,12 @@ namespace BattleUIAgents.UI
                 }
                 else if (beginPress)
                 {
-                    firebutton.TryPush(initialInputPosition.world);
                     BattleUIAgent[] allTokens = FindAgents(x => { return x.linked; }, typeof(Token), int.MaxValue);
                     for (int i = 0; i < allTokens.Length; i++)
                     {
-                        if (((Token)allTokens[i]).TryPickup(currentInputPosition.world)) break;
+                        if (((Token)allTokens[i]).TryPickup(currentInputPosition.world)) return;
                     }
+                    firebutton.TryPush(initialInputPosition.world);
                 }
                 else if (tap)
                 {
@@ -110,17 +110,22 @@ namespace BattleUIAgents.UI
                 if (pressed) Token.heldToken.ProcessExternalInputWhileHeld(currentInputPosition.world);
                 else if (endPress)
                 {
-                    if (tap)
+                    if (tap && Token.heldToken.effect != null && Token.heldToken.effect.GetDescription().Length > 0)
                     {
-                        Debug.Log("Tapped on token.");
+                        SetInteractable(false);
+                        TokenHinter hinter = FindAgent(x => { return true; }, typeof(TokenHinter)) as TokenHinter;
+
+                        hinter.token = Token.heldToken;
+                        hinter.gameObject.SetActive(true);
+                        hinter.Delinker += () => { SetInteractable(true); CameraControl.GoToWaypoint(cameraWaypoint); };
                     }
                     Token.heldToken.Drop();
-                    UpdateAbilityTokenSelection();
+                    UpdateAbilityTokens();
                 }
             }
         }
 
-        void UpdateAbilityTokenSelection()
+        void UpdateAbilityTokens()
         {
             for (int i = 0; i < abilityTokenTypes.Length; i++)
             {

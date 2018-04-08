@@ -49,7 +49,7 @@ namespace Gameplay.Effects
 
         public override string GetDescription()
         {
-            return "Gun Maintenance - Number of your gun attacks is decreased by " + artilleryAttackDecrease + " for " + duration + (duration == 1 ? "turn" : "turns") + ".";
+            return "Gun Maintenance - Number of your gun attacks is decreased by " + artilleryAttackDecrease + " for " + duration + (duration == 1 ? " turn" : " turns") + ".";
         }
     }
 }
