@@ -56,7 +56,7 @@ namespace Gameplay.Effects
 
         public override int GetAdditionalAllowed()
         {
-            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumArtilleryCount - Effect.GetEffectsInQueue<ArtilleryAttack>().Length, 0, base.GetAdditionalAllowed()) * (Battle.main.attacker.hitTiles.Contains(target) ? 0 : 1);
+            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumArtilleryCount - Effect.GetEffectsInQueue<ArtilleryAttack>().Length, 0, base.GetAdditionalAllowed()) * (target.hit ? 0 : 1);
         }
 
         protected override bool ConflictsWith(Effect effect)
