@@ -240,6 +240,11 @@ namespace Gameplay
                 CollectAttackerCapabilities();
             }
 
+            foreach (Effect effect in effects)
+            {
+                effect.OnTurnStart();
+            }
+
             //BattleUIMaster.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
         }
 
