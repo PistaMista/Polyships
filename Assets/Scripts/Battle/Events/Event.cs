@@ -10,7 +10,7 @@ namespace Gameplay
         public float baseSummoningChance = 0.5f;
         public bool GetSummoningRoll()
         {
-            if (GetAdditionalAllowed() > 0)
+            if (GetAdditionalAllowed(true) > 0)
             {
                 return ProcessSummoningRoll();
             }

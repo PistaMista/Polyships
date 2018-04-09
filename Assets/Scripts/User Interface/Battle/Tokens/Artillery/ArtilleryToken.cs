@@ -21,7 +21,7 @@ namespace BattleUIAgents.Tokens
             grid.Delinker += () => { grid = null; };
         }
         Vector3 pickupPosition;
-        protected override void Pickup()
+        public override void Pickup()
         {
             base.Pickup();
             pickupPosition = transform.position;

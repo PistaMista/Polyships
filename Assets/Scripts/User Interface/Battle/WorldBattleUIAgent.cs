@@ -37,6 +37,11 @@ namespace BattleUIAgents.Base
             }
         }
 
+        protected sealed override void ProcessInput()
+        {
+
+        }
+
         protected virtual void OnHookedPositionSet(Vector3 position)
         {
 

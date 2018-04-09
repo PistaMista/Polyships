@@ -54,9 +54,10 @@ namespace Gameplay.Effects
             target = Battle.main.defender.board.tiles[data.metadata[0], data.metadata[1]];
         }
 
-        public override int GetAdditionalAllowed()
+        public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
-            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumArtilleryCount - Effect.GetEffectsInQueue<ArtilleryAttack>().Length, 0, base.GetAdditionalAllowed()) * (target != null ? (target.hit ? 0 : 1) : 1);
+            int modifier = ignoreObjectValues ? 1 : (target.hit ? 0 : 1);
+            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumArtilleryCount - Effect.GetEffectsInQueue<ArtilleryAttack>().Length, 0, base.GetAdditionalAllowed(ignoreObjectValues)) * modifier;
         }
 
         protected override bool ConflictsWith(Effect effect)

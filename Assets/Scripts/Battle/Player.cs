@@ -6,7 +6,7 @@ using BattleUIAgents.Base;
 
 namespace Gameplay
 {
-    public class Player : MonoBehaviour
+    public class Player : BattleBehaviour
     {
         [Serializable]
         public struct PlayerData
@@ -104,8 +104,12 @@ namespace Gameplay
             }
         }
 
-        public void OnTurnStart()
+        /// <summary>
+        /// Executes every time a new turn starts.
+        /// </summary>
+        public override void OnTurnStart()
         {
+            base.OnTurnStart();
             if (board.ships != null)
             {
                 for (int i = 0; i < board.ships.Length; i++)
@@ -115,8 +119,27 @@ namespace Gameplay
             }
         }
 
-        public void OnTurnEnd()
+        /// <summary>
+        /// Executes every time a game is loaded and the current turn is therefore resumed.
+        /// </summary>
+        public override void OnTurnResume()
         {
+            base.OnTurnResume();
+            if (board.ships != null)
+            {
+                for (int i = 0; i < board.ships.Length; i++)
+                {
+                    board.ships[i].OnTurnResume();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Executes every time a turn ends.
+        /// </summary>
+        public override void OnTurnEnd()
+        {
+            base.OnTurnEnd();
             if (board.ships != null)
             {
                 for (int i = 0; i < board.ships.Length; i++)

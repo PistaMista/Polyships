@@ -14,6 +14,12 @@ namespace Gameplay.Effects
         public override void OnTurnStart()
         {
             base.OnTurnStart();
+            OnTurnResume();
+        }
+
+        public override void OnTurnResume()
+        {
+            base.OnTurnResume();
             if (Battle.main.attacker == affectedPlayer)
             {
                 Battle.main.attackerCapabilities.maximumArtilleryCount += artilleryAttackIncrease;
@@ -28,7 +34,7 @@ namespace Gameplay.Effects
         {
             return base.ProcessSummoningRoll() && (Battle.main.attackerCapabilities.maximumArtilleryCount <= triggerGunCountThreshold && Battle.main.attackerCapabilities.torpedoFiringAreaSize <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
         }
-        public override int GetAdditionalAllowed()
+        public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
             return (GetEffectsInQueue<LastStand>().Length == 0) ? 1 : 0;
         }

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Gameplay
 {
-    public class Effect : MonoBehaviour
+    public class Effect : BattleBehaviour
     {
         [Serializable]
         public struct EffectData
@@ -57,13 +57,28 @@ namespace Gameplay
         public bool editable;
         public int prefabIndex;
 
-        public virtual void OnTurnStart()
+        /// <summary>
+        /// Executes every time a new turn starts.
+        /// </summary>
+        public override void OnTurnStart()
         {
-
+            base.OnTurnStart();
         }
 
-        public virtual void OnTurnEnd()
+        /// <summary>
+        /// Executes every time a game is loaded and the current turn is therefore resumed.
+        /// </summary>
+        public override void OnTurnResume()
         {
+            base.OnTurnResume();
+        }
+
+        /// <summary>
+        /// Executes every time a turn ends.
+        /// </summary>
+        public override void OnTurnEnd()
+        {
+            base.OnTurnEnd();
             duration--;
             if (duration == 0)
             {
@@ -71,8 +86,12 @@ namespace Gameplay
             }
         }
 
-        //Checks how many of these effects can be added to the battle effect queue
-        public virtual int GetAdditionalAllowed()
+        /// <summary>
+        /// Gets the amount of this effect that can be applied.
+        /// </summary>
+        /// <param name="ignoreObjectValues">Ignores any data this object carries and uses the type as a whole instead.</param>
+        /// <returns>How many of these effects can we add.</returns>
+        public virtual int GetAdditionalAllowed(bool ignoreObjectValues)
         {
             foreach (Effect potentialConflictor in Battle.main.effects)
             {
@@ -86,12 +105,21 @@ namespace Gameplay
         }
 
 
-        //Checks if the effect conflicts with another
+        /// <summary>
+        /// Checks if this effect conflicts with another.
+        /// </summary>
+        /// <param name="effect">Potential conflictor effect.</param>
+        /// <returns>Whether the effect conflicts.</returns>
         protected virtual bool ConflictsWith(Effect effect)
         {
             return ConflictsWithType(effect.GetType());
         }
 
+        /// <summary>
+        /// Checks if this effect type conflicts with another.
+        /// </summary>
+        /// <param name="type">Potential conflictor effect type.</param>
+        /// <returns>Whether the effect type conflicts.</returns>
         protected bool ConflictsWithType(Type type)
         {
             for (int i = 0; i < conflictingEffects.Length; i++)
@@ -105,28 +133,44 @@ namespace Gameplay
             return false;
         }
 
+        /// <summary>
+        /// Executes when another effect is added.
+        /// </summary>
+        /// <param name="addedEffect">Effect that was added.</param>
         public virtual void OnOtherEffectAdd(Effect addedEffect)
         {
 
         }
 
+        /// <summary>
+        /// Executes when another effect is removed.
+        /// </summary>
+        /// <param name="removedEffect">Effect that was removed.</param>
         public virtual void OnOtherEffectRemove(Effect removedEffect)
         {
 
         }
 
+        /// <summary>
+        /// Creates an effect object.
+        /// </summary>
+        /// <param name="type">The type of effect to create.</param>
+        /// <returns>The created effect.</returns>
         public static Effect CreateEffect(Type type)
         {
             Effect result = null;
             Effect candidate = RetrieveEffectPrefab(type);
-            if (candidate.GetAdditionalAllowed() > 0)
-            {
-                result = Instantiate(candidate.gameObject).GetComponent<Effect>();
-            }
+            result = Instantiate(candidate.gameObject).GetComponent<Effect>();
+
 
             return result;
         }
 
+        /// <summary>
+        /// Retrieves the prefab for an effect.
+        /// </summary>
+        /// <param name="type">Type of effect prefab.</param>
+        /// <returns>The prefab of the effect.</returns>
         public static Effect RetrieveEffectPrefab(Type type)
         {
             Effect result = null;
@@ -144,9 +188,14 @@ namespace Gameplay
             return result;
         }
 
+        /// <summary>
+        /// If this effect can be added to the queue, adds it.
+        /// </summary>
+        /// <param name="effect">The effect to be added.</param>
+        /// <returns>Whether the effect was added.</returns>
         public static bool AddToQueue(Effect effect)
         {
-            if (effect.GetAdditionalAllowed() <= 0)
+            if (effect.GetAdditionalAllowed(false) <= 0)
             {
                 return false;
             }
@@ -177,6 +226,10 @@ namespace Gameplay
             return true;
         }
 
+        /// <summary>
+        /// Removes an effect from the queue.
+        /// </summary>
+        /// <param name="effect">Effect to remove.</param>
         public static void RemoveFromQueue(Effect effect)
         {
             Battle.main.effects.Remove(effect);
@@ -189,6 +242,9 @@ namespace Gameplay
         }
 
         static List<Effect> expiredEffects = new List<Effect>();
+        /// <summary>
+        /// Removes expired effects from the queue.
+        /// </summary>
         public static void RemoveExpiredEffectsFromQueue()
         {
             foreach (Effect effect in expiredEffects)
@@ -199,6 +255,10 @@ namespace Gameplay
             expiredEffects = new List<Effect>();
         }
 
+        /// <summary>
+        /// Finds effects of one type in the queue.
+        /// </summary>
+        /// <returns>Found effects.</returns>
         public static Effect[] GetEffectsInQueue<T>()
         {
             List<Effect> result = new List<Effect>();
@@ -210,6 +270,10 @@ namespace Gameplay
             return result.ToArray();
         }
 
+        /// <summary>
+        /// Gets the description for what the effect does.
+        /// </summary>
+        /// <returns>Short detailed description for player's eyes.</returns>
         public virtual string GetDescription()
         {
             return "";

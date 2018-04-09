@@ -11,10 +11,10 @@ namespace BattleUIAgents.Tokens
         protected override void RefreshEffectRepresentation()
         {
             base.RefreshEffectRepresentation();
-            MoveToStack();
+            PutOnStack();
         }
 
-        public override bool HasConnectionWithExistingEffect()
+        public override bool ConnectWithAnyCompatibleEffect()
         {
             foreach (Effect effect in Battle.main.effects)
             {
@@ -31,7 +31,7 @@ namespace BattleUIAgents.Tokens
             return false;
         }
 
-        protected sealed override void Pickup()
+        public sealed override void Pickup()
         {
             heldToken = this;
         }

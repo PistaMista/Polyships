@@ -20,6 +20,11 @@ namespace Gameplay.Effects
         public override void OnTurnStart()
         {
             base.OnTurnStart();
+            OnTurnResume();
+        }
+        public override void OnTurnResume()
+        {
+            base.OnTurnResume();
             if (Battle.main.attacker == affectedPlayer) Battle.main.attackerCapabilities.maximumArtilleryCount -= artilleryAttackDecrease;
         }
 
@@ -36,7 +41,7 @@ namespace Gameplay.Effects
 
             base.OnTurnEnd();
         }
-        public override int GetAdditionalAllowed()
+        public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
             return (GetEffectsInQueue<GunMaintenance>().Length == 0 && Battle.main.attackerCapabilities.maximumArtilleryCount > artilleryAttackDecrease) ? 1 : 0;
         }

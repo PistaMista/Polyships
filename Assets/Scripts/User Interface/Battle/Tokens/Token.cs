@@ -38,7 +38,7 @@ namespace BattleUIAgents.Tokens
             Delinker += () => { stacked = false; effect = null; maximumInteractableVelocity = initialMaxInteractableVelocity; };
             if (effect == null)
             {
-                MoveToStack();
+                PutOnStack();
             }
             else
             {
@@ -47,7 +47,11 @@ namespace BattleUIAgents.Tokens
             }
         }
 
-        public virtual bool HasConnectionWithExistingEffect()
+        /// <summary>
+        /// Connects the token with any effect of the same type in the battle.
+        /// </summary>
+        /// <returns>Connection successful.</returns>
+        public virtual bool ConnectWithAnyCompatibleEffect()
         {
             foreach (Effect effect in Battle.main.effects)
             {
@@ -64,6 +68,10 @@ namespace BattleUIAgents.Tokens
             return false;
         }
 
+        /// <summary>
+        /// Gets the position of this token when its stacked.
+        /// </summary>
+        /// <returns>Position on the stack.</returns>
         protected Vector3 GetPositionOnStack()
         {
             int blockers = FindAgents(x =>
@@ -80,7 +88,12 @@ namespace BattleUIAgents.Tokens
             return stacking.stackStart + stacking.stackStep * blockers;
         }
 
-        public bool TryPickup(Vector3 position)
+        /// <summary>
+        /// Checks whether this position activates the token.
+        /// </summary>
+        /// <param name="position">Position.</param>
+        /// <returns>Will activate.</returns>
+        public bool IsPositionActivating(Vector3 position)
         {
             if (!interactable && !(this is EventToken)) return false;
 
@@ -99,7 +112,6 @@ namespace BattleUIAgents.Tokens
                     return planarCandidateDistance < c.occlusionRadius * scaleInfo.scalar && ((c.hookedPosition.y > hookedPosition.y) || (Mathf.Approximately(c.hookedPosition.y, hookedPosition.y) && planarCandidateDistance < planarDistance));
                 }, typeof(Token)) == null)
                 {
-                    Pickup();
                     return true;
                 }
             }
@@ -107,7 +119,10 @@ namespace BattleUIAgents.Tokens
             return false;
         }
 
-        protected virtual void Pickup()
+        /// <summary>
+        /// Picks up the token.
+        /// </summary>
+        public virtual void Pickup()
         {
             stacked = false;
             heldToken = this;
@@ -123,6 +138,9 @@ namespace BattleUIAgents.Tokens
 
         }
 
+        /// <summary>
+        /// Drops the token and applies any effect it has attached.
+        /// </summary>
         public virtual void Drop()
         {
             heldToken = null;
@@ -142,20 +160,35 @@ namespace BattleUIAgents.Tokens
             }
 
             transform.SetAsFirstSibling();
-            MoveToStack();
+            PutOnStack();
         }
 
-        public void MoveToStack()
+        /// <summary>
+        /// Puts the token on the stack.
+        /// </summary>
+        public void PutOnStack()
         {
             hookedPosition = GetPositionOnStack();
             stacked = true;
         }
 
+
+        /// <summary>
+        /// Updates the graphical representation of the current effect.
+        /// </summary>
         protected virtual void RefreshEffectRepresentation()
         {
 
         }
 
+        /// <summary>
+        /// Finds tokens based on:
+        /// </summary>
+        /// <param name="linked">Whether they are linked.</param>
+        /// <param name="used">Whether they are used.</param>
+        /// <param name="effectType">If their effect type is this.</param>
+        /// <param name="limit">Limits the amount of results possible.</param>
+        /// <returns></returns>
         public static Token[] FindTokens(bool linked, bool used, Type effectType, int limit)
         {
             return Array.ConvertAll(FindAgents(x =>
@@ -165,6 +198,12 @@ namespace BattleUIAgents.Tokens
             }, typeof(Token), limit), x => { return x as Token; });
         }
 
+        /// <summary>
+        /// Sets the stacking method for a given type.
+        /// </summary>
+        /// <param name="tokenEffectType">The type stack to change.</param>
+        /// <param name="stackStart">Where the stack starts.</param>
+        /// <param name="stackStep">Where any additional tokens get stacked. (relative to the start)</param>
         public static void SetTypeStacking(Type tokenEffectType, Vector3 stackStart, Vector3 stackStep)
         {
             Token[] tokens = Array.ConvertAll(FindAgents(x =>

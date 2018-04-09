@@ -35,9 +35,9 @@ namespace Gameplay.Effects
 
             base.OnTurnEnd();
         }
-        public override int GetAdditionalAllowed()
+        public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
-            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumAircraftCount - Effect.GetEffectsInQueue<AircraftRecon>().Length, 0, base.GetAdditionalAllowed());
+            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumAircraftCount - Effect.GetEffectsInQueue<AircraftRecon>().Length, 0, base.GetAdditionalAllowed(ignoreObjectValues));
         }
 
         protected override bool ConflictsWith(Effect effect)

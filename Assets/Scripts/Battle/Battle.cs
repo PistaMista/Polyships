@@ -8,7 +8,7 @@ using Gameplay.Ships;
 
 namespace Gameplay
 {
-    public class Battle : MonoBehaviour
+    public class Battle : BattleBehaviour
     {
         public struct TurnInfo
         {
@@ -158,6 +158,13 @@ namespace Gameplay
         public List<Effect> effects = new List<Effect>(); //Effects change the battle parameters - at the start/end of each turn or when another effect is added/removed. Effects are applied in the order of this list.
         public int saveSlot;
         public int tutorialStage;
+        public bool fighting
+        {
+            get
+            {
+                return attacker.board.ships != null && defender.board.ships != null;
+            }
+        }
         public void SaveToDisk()
         {
             bool success = true;
@@ -240,9 +247,10 @@ namespace Gameplay
                 CollectAttackerCapabilities();
             }
 
+            attacker.OnTurnResume();
             foreach (Effect effect in effects)
             {
-                effect.OnTurnStart();
+                effect.OnTurnResume();
             }
 
             //BattleUIMaster.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
@@ -269,26 +277,28 @@ namespace Gameplay
 
         public void NextTurn()
         {
-            attacker.OnTurnEnd();
-            foreach (Effect effect in effects)
-            {
-                effect.OnTurnEnd();
-            }
-
-            Effect.RemoveExpiredEffectsFromQueue();
+            OnTurnEnd();
 
             Player lastAttacker = attacker;
             attacker = defender;
             defender = lastAttacker;
 
-            if (attacker.board.ships != null)
+            OnTurnStart();
+            SaveToDisk();
+        }
+
+        /// <summary>
+        /// Executes every time a new turn starts.
+        /// </summary>
+        public override void OnTurnStart()
+        {
+            base.OnTurnStart();
+            OnTurnResume();
+
+            if (fighting)
             {
                 log.Insert(0, new TurnInfo(1));
                 CollectAttackerCapabilities();
-            }
-
-            if (attacker.board.ships != null)
-            {
                 Event.RandomEventsRoll();
             }
 
@@ -297,8 +307,34 @@ namespace Gameplay
             {
                 effect.OnTurnStart();
             }
+        }
 
-            SaveToDisk();
+        /// <summary>
+        /// Executes every time a game is loaded and the current turn is therefore resumed.
+        /// </summary>
+        public override void OnTurnResume()
+        {
+            base.OnTurnResume();
+            attacker.OnTurnResume();
+            foreach (Effect effect in effects)
+            {
+                effect.OnTurnResume();
+            }
+        }
+
+        /// <summary>
+        /// Executes every time a turn ends.
+        /// </summary>
+        public override void OnTurnEnd()
+        {
+            base.OnTurnEnd();
+            attacker.OnTurnEnd();
+            foreach (Effect effect in effects)
+            {
+                effect.OnTurnEnd();
+            }
+
+            Effect.RemoveExpiredEffectsFromQueue();
         }
 
         public struct AttackerCapabilities

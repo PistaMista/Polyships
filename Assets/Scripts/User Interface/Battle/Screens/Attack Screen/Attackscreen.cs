@@ -70,7 +70,7 @@ namespace BattleUIAgents.UI
             LinkAgents(FindAgents(x =>
             {
                 Token token = x as Token;
-                return token.HasConnectionWithExistingEffect();
+                return token.ConnectWithAnyCompatibleEffect();
             }, typeof(Token), int.MaxValue), true);
 
             UpdateAbilityTokens();
@@ -89,49 +89,66 @@ namespace BattleUIAgents.UI
                 }
                 else if (beginPress)
                 {
+                    firebutton.TryPush(initialInputPosition.world);
+                }
+                else
+                {
                     BattleUIAgent[] allTokens = FindAgents(x => { return x.linked; }, typeof(Token), int.MaxValue);
                     for (int i = 0; i < allTokens.Length; i++)
                     {
-                        if (((Token)allTokens[i]).TryPickup(currentInputPosition.world)) return;
+                        Token token = allTokens[i] as Token;
+                        if (token.IsPositionActivating(initialInputPosition.world))
+                        {
+                            if (dragging && !(token is EventToken))
+                            {
+                                token.Pickup();
+                            }
+                            else if (tap && token.effect != null && token.effect.GetDescription().Length > 0)
+                            {
+                                SetInteractable(false);
+                                TokenHinter hinter = FindAgent(x => { return true; }, typeof(TokenHinter)) as TokenHinter;
+
+                                hinter.token = token;
+                                hinter.gameObject.SetActive(true);
+                                hinter.Delinker += () => { SetInteractable(true); CameraControl.GoToWaypoint(cameraWaypoint); };
+
+                                return;
+                            }
+                        }
                     }
-                    firebutton.TryPush(initialInputPosition.world);
-                }
-                else if (tap)
-                {
-                    bool tapOutsideOfBoardArea = grid.GetTileAtPosition(currentInputPosition.world) == null;
-                    if (tapOutsideOfBoardArea)
+
+                    if (tap)
                     {
-                        gameObject.SetActive(false);
-                        FindAgent(x => { return true; }, typeof(Overview)).gameObject.SetActive(true);
+                        bool tapOutsideOfBoardArea = grid.GetTileAtPosition(currentInputPosition.world) == null;
+                        if (tapOutsideOfBoardArea)
+                        {
+                            gameObject.SetActive(false);
+                            FindAgent(x => { return true; }, typeof(Overview)).gameObject.SetActive(true);
+                        }
                     }
                 }
             }
+
             if (Token.heldToken != null)
             {
                 if (pressed) Token.heldToken.ProcessExternalInputWhileHeld(currentInputPosition.world);
                 else if (endPress)
                 {
-                    if (tap && Token.heldToken.effect != null && Token.heldToken.effect.GetDescription().Length > 0)
-                    {
-                        SetInteractable(false);
-                        TokenHinter hinter = FindAgent(x => { return true; }, typeof(TokenHinter)) as TokenHinter;
-
-                        hinter.token = Token.heldToken;
-                        hinter.gameObject.SetActive(true);
-                        hinter.Delinker += () => { SetInteractable(true); CameraControl.GoToWaypoint(cameraWaypoint); };
-                    }
                     Token.heldToken.Drop();
                     UpdateAbilityTokens();
                 }
             }
         }
 
+        /// <summary>
+        /// Regulates the amount of each ability token, based on the usability of their effects.
+        /// </summary>
         void UpdateAbilityTokens()
         {
             for (int i = 0; i < abilityTokenTypes.Length; i++)
             {
                 int currentTokenCount = Token.FindTokens(true, false, abilityTokenTypes[i].GetType(), int.MaxValue).Length;
-                int extraTokens = currentTokenCount - abilityTokenTypes[i].GetAdditionalAllowed();
+                int extraTokens = currentTokenCount - abilityTokenTypes[i].GetAdditionalAllowed(true);
                 if (extraTokens > 0)
                 {
                     Array.ForEach(Token.FindTokens(true, false, abilityTokenTypes[i].GetType(), extraTokens), x => { x.Delinker(); });

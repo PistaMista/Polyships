@@ -16,7 +16,7 @@ public enum ShipType
 
 namespace Gameplay
 {
-    public class Ship : MonoBehaviour
+    public class Ship : BattleBehaviour
     {
         [Serializable]
         public struct ShipData
@@ -102,15 +102,31 @@ namespace Gameplay
             return new int[3];
         }
 
-        public virtual void OnTurnStart()
+        /// <summary>
+        /// Executes every time a new turn starts.
+        /// </summary>
+        public override void OnTurnStart()
         {
-
+            base.OnTurnStart();
         }
 
-        public virtual void OnTurnEnd()
+        /// <summary>
+        /// Executes every time a game is loaded and the current turn is therefore resumed.
+        /// </summary>
+        public override void OnTurnResume()
         {
-
+            base.OnTurnResume();
         }
+
+        /// <summary>
+        /// Executes every time a turn ends.
+        /// </summary>
+        public override void OnTurnEnd()
+        {
+            base.OnTurnEnd();
+        }
+
+
 
         public virtual void Destroy()
         {

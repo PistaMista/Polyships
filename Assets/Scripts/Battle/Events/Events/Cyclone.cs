@@ -45,7 +45,7 @@ namespace Gameplay.Effects
             base.OnTurnEnd();
         }
 
-        public override int GetAdditionalAllowed()
+        public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
             return (GetEffectsInQueue<Cyclone>().Length == 0) ? 1 : 0;
         }
