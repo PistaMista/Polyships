@@ -49,8 +49,11 @@ namespace BattleUIAgents.Tokens
                 ArtilleryAttack attack = effect as ArtilleryAttack;
                 if (targetedTile != null)
                 {
-                    attack.target = targetedTile;
-                    RefreshEffectRepresentation();
+                    if (targetedTile != attack.target)
+                    {
+                        attack.target = targetedTile;
+                        RefreshEffectRepresentation();
+                    }
                 }
                 else
                 {
