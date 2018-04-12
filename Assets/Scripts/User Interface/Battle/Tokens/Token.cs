@@ -138,12 +138,15 @@ namespace BattleUIAgents.Tokens
 
         }
 
+        protected List<Highlighterline> usageHighlighters = new List<Highlighterline>();
         /// <summary>
         /// Drops the token and applies any effect it has attached.
         /// </summary>
         public virtual void Drop()
         {
             heldToken = null;
+            usageHighlighters.ForEach(x => { x.Delinker(); });
+            usageHighlighters = new List<Highlighterline>();
 
             if (effect != null)
             {
