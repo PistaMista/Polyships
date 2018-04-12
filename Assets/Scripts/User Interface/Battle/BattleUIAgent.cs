@@ -1,8 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+
 using BattleUIAgents;
+using BattleUIAgents.Agents;
+
 using Gameplay;
+
 
 namespace BattleUIAgents.Base
 {
@@ -94,7 +98,7 @@ namespace BattleUIAgents.Base
                 if (agent.IsInvoking("DestroyAgent"))
                 {
                     agent.CancelInvoke("DestroyAgent");
-                    agent.Delinker += () => { agent.Invoke("DestroyAgent", 3.0f); };
+                    agent.Delinker += () => { agent.Invoke("DestroyAgent", 12.0f); };
                 }
 
                 agent.PerformLinkageOperations(); //Inform the agent that he is being linked
@@ -129,6 +133,30 @@ namespace BattleUIAgents.Base
             }
 
             return LinkAgents(createdAgents.ToArray(), true);
+        }
+
+        protected Highlighterline RequestLineMarker(int id, bool overrideSettingsOfExisting, Vector3[] nodes, int[][] connections, int startingNode, Material material)
+        {
+            Highlighterline line = FindAgent(x => { return ((Highlighterline)x).id == id; }, typeof(Highlighterline)) as Highlighterline;
+            if (line)
+            {
+                LinkAgent(line, true);
+                if (overrideSettingsOfExisting)
+                {
+                    line.lineMaterial = material;
+                    line.Set(nodes, connections, startingNode);
+                }
+            }
+            else
+            {
+                line = new GameObject("Highlighterline").AddComponent<Highlighterline>();
+                LinkAgent(line, true);
+
+                line.lineMaterial = material;
+                line.Set(nodes, connections, startingNode);
+            }
+
+            return line;
         }
 
         /// <summary>
