@@ -10,7 +10,7 @@ namespace Gameplay.Effects
         public int dispersionRadius;
         public override void OnTurnEnd()
         {
-            Effect[] artilleryAttacks = GetEffectsInQueue<ArtilleryAttack>();
+            Effect[] artilleryAttacks = GetEffectsInQueue(null, typeof(ArtilleryAttack), int.MaxValue);
             float[] minimumDistances = new float[artilleryAttacks.Length];
 
             for (int i = 0; i < artilleryAttacks.Length; i++) //Measure the minimum distance to another target for all targets
@@ -47,7 +47,7 @@ namespace Gameplay.Effects
 
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
-            return (GetEffectsInQueue<Cyclone>().Length == 0) ? 1 : 0;
+            return (GetEffectsInQueue(null, typeof(Cyclone), 1).Length == 0) ? 1 : 0;
         }
 
         public override string GetDescription()

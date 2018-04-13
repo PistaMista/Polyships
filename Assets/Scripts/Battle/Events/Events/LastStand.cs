@@ -30,13 +30,13 @@ namespace Gameplay.Effects
         {
             affectedPlayer = Battle.main.attacker;
         }
-        protected override bool ProcessSummoningRoll()
+        protected override bool GetSummoningRoll()
         {
-            return base.ProcessSummoningRoll() && (Battle.main.attackerCapabilities.maximumArtilleryCount <= triggerGunCountThreshold && Battle.main.attackerCapabilities.torpedoFiringAreaSize <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
+            return base.GetSummoningRoll() && (Battle.main.attackerCapabilities.maximumArtilleryCount <= triggerGunCountThreshold && Battle.main.attackerCapabilities.torpedoFiringAreaSize <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
         }
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
-            return (GetEffectsInQueue<LastStand>().Length == 0) ? 1 : 0;
+            return (GetEffectsInQueue(null, typeof(LastStand), 1).Length == 0) ? 1 : 0;
         }
 
         public override string GetDescription()

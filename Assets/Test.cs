@@ -1,21 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Test : MonoBehaviour
 {
 
     // Use this for initialization
-    delegate void TestDelegate();
     void Start()
     {
-        TestDelegate assignee = () => { Debug.Log("1"); };
-        TestDelegate d1 = assignee;
-        d1 -= assignee;
-        TestDelegate d2 = () => { d1(); };
-        d1 += () => { Debug.Log("2"); };
+        Predicate<int> d1 = x => { return x == 1; };
+        Predicate<int> d2 = x => { return x > 0; };
+        d1 += d2;
 
-        d2();
+        Debug.Log(d1(1));
     }
 
     // Update is called once per frame

@@ -43,7 +43,12 @@ namespace Gameplay.Effects
         }
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
-            return (GetEffectsInQueue<GunMaintenance>().Length == 0 && Battle.main.attackerCapabilities.maximumArtilleryCount > artilleryAttackDecrease) ? 1 : 0;
+            if (ignoreObjectValues)
+            {
+                return (GetEffectsInQueue(null, typeof(GunMaintenance), 1).Length == 0 && Battle.main.attackerCapabilities.maximumArtilleryCount > artilleryAttackDecrease) ? 1 : 0;
+            }
+
+            return (GetEffectsInQueue(x => { return x.affectedPlayer == Battle.main.attacker; }, typeof(GunMaintenance), 1).Length == 0 && Battle.main.attackerCapabilities.maximumArtilleryCount > artilleryAttackDecrease) ? 1 : 0;
         }
 
         protected override void OnSummon()

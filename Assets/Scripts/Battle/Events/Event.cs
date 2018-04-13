@@ -8,16 +8,7 @@ namespace Gameplay
     {
         [Range(0.00f, 1.00f)]
         public float baseSummoningChance = 0.5f;
-        public bool GetSummoningRoll()
-        {
-            if (GetAdditionalAllowed(true) > 0)
-            {
-                return ProcessSummoningRoll();
-            }
-
-            return false;
-        }
-        protected virtual bool ProcessSummoningRoll()
+        protected virtual bool GetSummoningRoll()
         {
             return Random.Range(0.00f, 1.00f) <= baseSummoningChance;
         }
@@ -37,8 +28,16 @@ namespace Gameplay
                     if (eventPrefab.GetSummoningRoll())
                     {
                         Event createdEvent = Effect.CreateEffect(eventPrefab.GetType()) as Event;
-                        Effect.AddToQueue(createdEvent);
                         createdEvent.OnSummon();
+
+                        if (createdEvent.GetAdditionalAllowed(false) > 0)
+                        {
+                            Effect.AddToQueue(createdEvent);
+                        }
+                        else
+                        {
+                            Destroy(createdEvent.gameObject);
+                        }
                     }
                 }
             }

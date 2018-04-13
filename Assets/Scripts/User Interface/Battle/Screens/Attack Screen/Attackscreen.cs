@@ -61,7 +61,7 @@ namespace BattleUIAgents.UI
                 Token.SetTypeStacking(abilityTokenTypes[i].GetType(), abilityTokenStart + abilityTokenStep * i, Vector3.right * (abilityTokenSpace * scalar / 5));
             }
 
-            Vector3 eventTokenStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / 2.0f) * scalar;
+            Vector3 eventTokenStart = startingPositionRelativeToCamera + Vector3.right * scalar * 2 + Vector3.forward * (player.board.tiles.GetLength(1) / 2.0f) * scalar;
             eventTokenStart.x *= -1;
             eventTokenStart += cameraWaypoint.transform.position;
 

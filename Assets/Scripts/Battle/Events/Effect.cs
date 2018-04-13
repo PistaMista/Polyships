@@ -259,15 +259,23 @@ namespace Gameplay
         /// Finds effects of one type in the queue.
         /// </summary>
         /// <returns>Found effects.</returns>
-        public static Effect[] GetEffectsInQueue<T>()
+        public static Effect[] GetEffectsInQueue(Predicate<Effect> predicate, Type type, uint limit)
         {
-            List<Effect> result = new List<Effect>();
-            foreach (Effect effect in Battle.main.effects)
+            if (predicate == null)
             {
-                if (effect is T) result.Add(effect);
+                predicate = x => { return true; };
             }
 
-            return result.ToArray();
+            List<Effect> matches = new List<Effect>();
+
+
+            foreach (Effect candidate in Battle.main.effects)
+            {
+                if (predicate(candidate) && candidate.GetType() == type) matches.Add(candidate);
+                if (matches.Count == limit) break;
+            }
+
+            return matches.ToArray();
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 using BattleUIAgents;
 using BattleUIAgents.Agents;
@@ -12,8 +13,6 @@ namespace BattleUIAgents.Base
 {
     public class BattleUIAgent : InputEnabledUI
     {
-        public delegate bool BattleAgentFilterPredicate(BattleUIAgent agent);
-        public delegate void AgentDelinker();
         [Header("Battle Agent Configuration")]
         public Player player;
         public bool linked
@@ -23,15 +22,15 @@ namespace BattleUIAgents.Base
         /// <summary>
         /// DO NOT MODIFY. Delinks everything linked to this agent.
         /// </summary>
-        AgentDelinker delinker;
+        Action delinker;
         /// <summary>
         /// DO NOT MODIFY. Terminates the delinker and resets the agent.
         /// </summary>
-        AgentDelinker delinkerTerminator;
+        Action delinkerTerminator;
         /// <summary>
         /// Terminates all references this object holds to others and all references others hold to it. 
         /// </summary>
-        public AgentDelinker Delinker
+        public Action Delinker
         {
             get
             {
@@ -67,12 +66,12 @@ namespace BattleUIAgents.Base
             SetInteractable(true);
         }
 
-        public static BattleUIAgent FindAgent(BattleAgentFilterPredicate predicate, System.Type type)
+        public static BattleUIAgent FindAgent(Predicate<BattleUIAgent> predicate, System.Type type)
         {
             BattleUIAgent[] foundAgents = FindAgents(predicate, type, 1);
             return foundAgents.Length > 0 ? foundAgents[0] : null;
         }
-        public static BattleUIAgent[] FindAgents(BattleAgentFilterPredicate predicate, System.Type type, int limit)
+        public static BattleUIAgent[] FindAgents(Predicate<BattleUIAgent> predicate, System.Type type, int limit)
         {
             List<BattleUIAgent> matches = new List<BattleUIAgent>();
 
@@ -103,8 +102,8 @@ namespace BattleUIAgents.Base
 
                 agent.PerformLinkageOperations(); //Inform the agent that he is being linked
 
-                AgentDelinker agentDelinkingSubscription = () => { };
-                AgentDelinker agentDelinkingUnsubscriber = () => { Delinker -= agentDelinkingSubscription; };
+                Action agentDelinkingSubscription = () => { };
+                Action agentDelinkingUnsubscriber = () => { Delinker -= agentDelinkingSubscription; };
 
                 if (callAgentDelinkerOnDelink)
                     agentDelinkingSubscription += () => { agent.Delinker(); };

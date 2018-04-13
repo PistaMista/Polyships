@@ -57,7 +57,7 @@ namespace Gameplay.Effects
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
             int modifier = ignoreObjectValues ? 1 : (target.hit ? 0 : 1);
-            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumArtilleryCount - Effect.GetEffectsInQueue<ArtilleryAttack>().Length, 0, base.GetAdditionalAllowed(ignoreObjectValues)) * modifier;
+            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumArtilleryCount - Effect.GetEffectsInQueue(null, typeof(ArtilleryAttack), int.MaxValue).Length, 0, base.GetAdditionalAllowed(ignoreObjectValues)) * modifier;
         }
 
         protected override bool ConflictsWith(Effect effect)

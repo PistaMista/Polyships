@@ -71,7 +71,7 @@ namespace Gameplay.Effects
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
             int modifier = ignoreObjectValues ? 1 : (Battle.main.attackerCapabilities.torpedoFiringArea[target] ? 1 : 0);
-            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumTorpedoCount - Effect.GetEffectsInQueue<TorpedoAttack>().Length, 0, Mathf.Min(base.GetAdditionalAllowed(ignoreObjectValues), MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn)) * modifier;
+            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumTorpedoCount - Effect.GetEffectsInQueue(null, typeof(TorpedoAttack), int.MaxValue).Length, 0, Mathf.Min(base.GetAdditionalAllowed(ignoreObjectValues), MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn)) * modifier;
         }
 
         protected override bool ConflictsWith(Effect effect)
