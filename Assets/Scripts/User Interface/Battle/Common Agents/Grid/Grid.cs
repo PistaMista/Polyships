@@ -92,17 +92,23 @@ namespace BattleUIAgents.Agents
 
         public Gameplay.Tile GetTileAtPosition(Vector3 position)
         {
-            Vector3 startingPosition = player.board.tiles[0, 0].transform.position - new Vector3(1, 0, 1) * 0.5f;
-            Vector3 calculatedPosition = position - startingPosition;
-            calculatedPosition.x = Mathf.FloorToInt(calculatedPosition.x);
-            calculatedPosition.z = Mathf.FloorToInt(calculatedPosition.z);
-
+            Vector3 calculatedPosition = GetFlatTileCoordinateAtPosition(position);
             if (calculatedPosition.x >= 0 && calculatedPosition.x < player.board.tiles.GetLength(0) && calculatedPosition.z >= 0 && calculatedPosition.z < player.board.tiles.GetLength(1))
             {
                 return player.board.tiles[(int)calculatedPosition.x, (int)calculatedPosition.z];
             }
 
             return null;
+        }
+
+        public Vector3 GetFlatTileCoordinateAtPosition(Vector3 position)
+        {
+            Vector3 startingPosition = player.board.tiles[0, 0].transform.position - new Vector3(1, 0, 1) * 0.5f;
+            Vector3 calculatedPosition = position - startingPosition;
+            calculatedPosition.x = Mathf.FloorToInt(calculatedPosition.x);
+            calculatedPosition.z = Mathf.FloorToInt(calculatedPosition.z);
+
+            return calculatedPosition;
         }
 
         public void ShowInformation(bool undamagedShips, bool damagedShips, bool destroyedShips, bool hitTiles)

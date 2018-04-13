@@ -70,7 +70,19 @@ namespace BattleUIAgents.Tokens
         public override void ProcessExternalInputWhileHeld(Vector3 inputPosition)
         {
             base.ProcessExternalInputWhileHeld(inputPosition);
-            Gameplay.Tile targetedTile = grid.GetTileAtPosition(inputPosition);
+            int targetLine = -1;
+            Vector3 flatTileCoordinate = grid.GetFlatTileCoordinateAtPosition(inputPosition);
+            if (Mathf.Sign(flatTileCoordinate.x) != Mathf.Sign(flatTileCoordinate.z))
+            {
+                if (flatTileCoordinate.x > 0)
+                {
+                    targetLine =
+                }
+                else
+                {
+
+                }
+            }
             hookedPosition = Utilities.GetPositionOnElevationFromPerspective(inputPosition, Camera.main.transform.position, pickupPosition.y).projectedPosition;
 
 
