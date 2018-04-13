@@ -109,7 +109,7 @@ namespace BattleUIAgents.Tokens
                     Token c = (Token)x;
                     Utilities.PerspectiveProjection candidateScaleInfo = Utilities.GetPositionOnElevationFromPerspective(c.hookedPosition, Camera.main.transform.position, MiscellaneousVariables.it.boardUIRenderHeight);
                     float planarCandidateDistance = Vector2.Distance(planarInput, candidateScaleInfo.planarPosition);
-                    return planarCandidateDistance < c.occlusionRadius * scaleInfo.scalar && ((c.hookedPosition.y > hookedPosition.y) || (Mathf.Approximately(c.hookedPosition.y, hookedPosition.y) && planarCandidateDistance < planarDistance));
+                    return planarCandidateDistance < c.occlusionRadius * scaleInfo.scalar && c.GetType() == GetType() && ((c.hookedPosition.y > hookedPosition.y) || (Mathf.Approximately(c.hookedPosition.y, hookedPosition.y) && planarCandidateDistance < planarDistance));
                 }, typeof(Token)) == null)
                 {
                     return true;

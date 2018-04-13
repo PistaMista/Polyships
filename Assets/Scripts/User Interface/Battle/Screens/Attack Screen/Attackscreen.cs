@@ -54,7 +54,7 @@ namespace BattleUIAgents.UI
 
 
             Vector3 abilityTokenStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / abilityTokenSpacing) * scalar + cameraWaypoint.transform.position;
-            Vector3 abilityTokenStep = Vector3.back * (player.board.tiles.GetLength(1) / (abilityTokenSpacing * abilityTokenTypes.Length)) * scalar;
+            Vector3 abilityTokenStep = Vector3.back * (player.board.tiles.GetLength(1) / (abilityTokenSpacing * (abilityTokenTypes.Length - 1))) * scalar;
 
             for (int i = 0; i < abilityTokenTypes.Length; i++)
             {

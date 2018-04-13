@@ -142,7 +142,11 @@ namespace BattleUIAgents.Base
                 LinkAgent(line, true);
                 if (overrideSettingsOfExisting)
                 {
+                    line.lineWidth = 1.00f - MiscellaneousVariables.it.boardTileSideLength;
                     line.lineMaterial = material;
+                    line.extensionMaxSpeed = 20f;
+                    line.extensionTime = 0.18f;
+
                     line.Set(nodes, connections, startingNode);
                 }
             }
@@ -151,9 +155,15 @@ namespace BattleUIAgents.Base
                 line = new GameObject("Highlighterline").AddComponent<Highlighterline>();
                 LinkAgent(line, true);
 
+                line.lineWidth = 1.00f - MiscellaneousVariables.it.boardTileSideLength;
                 line.lineMaterial = material;
+                line.extensionMaxSpeed = 20f;
+                line.extensionTime = 0.18f;
+
                 line.Set(nodes, connections, startingNode);
             }
+
+            line.Delinker += () => { line.Invoke("DestroyAgent", 3 * line.extensionTime); };
 
             return line;
         }

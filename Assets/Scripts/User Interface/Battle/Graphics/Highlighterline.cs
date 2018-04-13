@@ -8,11 +8,6 @@ namespace BattleUIAgents.Agents
 {
     public class Highlighterline : WorldBattleUIAgent
     {
-        protected override void Start()
-        {
-            base.Start();
-            Set(new Vector3[] { Vector3.zero, Vector3.forward, Vector3.forward + Vector3.left * 4, Vector3.forward * 4, Vector3.forward * 4 + Vector3.right * 2 }, new int[][] { new int[] { 1 }, new int[] { 2, 3 }, new int[0], new int[] { 4 }, new int[0] });
-        }
         public int id;
         public Material lineMaterial;
         public float lineWidth;
@@ -24,10 +19,14 @@ namespace BattleUIAgents.Agents
         protected override void Update()
         {
             base.Update();
-            //float targetExtension = linked ? 1.0f : 0.0f;
-            float targetExtension = 1.0f;
-            if (Mathf.Abs(extensionProgress - targetExtension) > 0.01f)
+            float targetExtension = linked ? 1.0f : 0.0f;
+            if (Mathf.Abs(extensionProgress - targetExtension) != 0)
             {
+                if (Mathf.Abs(extensionProgress - targetExtension) < 0.005f)
+                {
+                    extensionProgress = targetExtension;
+                }
+
                 extensionProgress = Mathf.SmoothDamp(extensionProgress, targetExtension, ref extensionSpeed, extensionTime, extensionMaxSpeed);
 
                 float extendedDistance = longestBranchLength * extensionProgress;
