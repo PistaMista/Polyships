@@ -9,6 +9,18 @@ namespace Gameplay.Effects
         public int target;
         public int result;
 
+        protected override int[] GetMetadata()
+        {
+            return new int[] { target, result };
+        }
+
+        public override void Initialize(EffectData data)
+        {
+            target = data.metadata[0];
+            result = data.metadata[1];
+            base.Initialize(data);
+        }
+
         public override void OnTurnEnd()
         {
             float linePosition = (target % (Battle.main.defender.board.tiles.GetLength(0) - 1)) + 0.5f;
@@ -37,7 +49,10 @@ namespace Gameplay.Effects
         }
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
-            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumAircraftCount - Effect.GetEffectsInQueue(null, typeof(AircraftRecon), int.MaxValue).Length, 0, base.GetAdditionalAllowed(ignoreObjectValues));
+            int max = Battle.main.attackerCapabilities.maximumAircraftCount;
+            int existing = Effect.GetEffectsInQueue(null, typeof(AircraftRecon), int.MaxValue).Length;
+            int baseAllowed = base.GetAdditionalAllowed(ignoreObjectValues);
+            return Mathf.Clamp(max - existing, 0, baseAllowed);
         }
 
         protected override bool ConflictsWith(Effect effect)

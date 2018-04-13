@@ -26,8 +26,10 @@ namespace BattleUIAgents.Tokens
             base.Pickup();
             pickupPosition = transform.position;
 
+
             indicator = RequestLineMarker(458, false, new Vector3[] { Vector3.zero, Vector3.forward * Battle.main.defender.board.tiles.GetLength(0) }, new int[][] { new int[] { 1 }, new int[0] }, 0, linesMaterial);
             indicator.transform.SetParent(transform, false);
+
 
             int[][] areaMarkerConnections = new int[][] { new int[] { 1 }, new int[] { 2 }, new int[] { 3 }, new int[] { 4 }, new int[0] };
             Vector3[] areaMarkerNodes = new Vector3[5];
@@ -62,30 +64,59 @@ namespace BattleUIAgents.Tokens
         public override void Drop()
         {
             base.Drop();
-
-
-            indicator.Delinker();
+            if (effect == null) indicator.Delinker();
         }
 
         public override void ProcessExternalInputWhileHeld(Vector3 inputPosition)
         {
             base.ProcessExternalInputWhileHeld(inputPosition);
             int targetLine = -1;
-            Vector3 flatTileCoordinate = grid.GetFlatTileCoordinateAtPosition(inputPosition);
-            if (Mathf.Sign(flatTileCoordinate.x) != Mathf.Sign(flatTileCoordinate.z))
+            Vector3Int flatTileCoordinate = grid.GetFlatTileCoordinateAtPosition(inputPosition);
+            if (Mathf.Sign(flatTileCoordinate.x) != Mathf.Sign(flatTileCoordinate.z) && flatTileCoordinate.x < Battle.main.defender.board.tiles.GetLength(0) - 1 && flatTileCoordinate.z < Battle.main.defender.board.tiles.GetLength(1) - 1)
             {
-                if (flatTileCoordinate.x > 0)
+                if (flatTileCoordinate.x >= 0)
                 {
-                    targetLine =
+                    targetLine = flatTileCoordinate.x;
                 }
                 else
                 {
-
+                    targetLine = flatTileCoordinate.z + (Battle.main.defender.board.tiles.GetLength(0) - 1);
                 }
             }
-            hookedPosition = Utilities.GetPositionOnElevationFromPerspective(inputPosition, Camera.main.transform.position, pickupPosition.y).projectedPosition;
+            else
+            {
+                targetLine = -1;
+            }
 
+            if (effect == null)
+            {
+                if (targetLine >= 0)
+                {
+                    effect = Effect.CreateEffect(typeof(AircraftRecon));
+                }
+                else
+                {
+                    hookedPosition = Utilities.GetPositionOnElevationFromPerspective(inputPosition, Camera.main.transform.position, pickupPosition.y).projectedPosition;
+                }
+            }
 
+            if (effect != null)
+            {
+                AircraftRecon recon = effect as AircraftRecon;
+                if (targetLine >= 0)
+                {
+                    if (targetLine != recon.target)
+                    {
+                        recon.target = targetLine;
+                        RefreshEffectRepresentation();
+                    }
+                }
+                else
+                {
+                    Destroy(recon.gameObject);
+                    effect = null;
+                }
+            }
         }
 
         protected override void RefreshEffectRepresentation()
@@ -95,6 +126,13 @@ namespace BattleUIAgents.Tokens
             {
 
             }
+
+            AircraftRecon recon = effect as AircraftRecon;
+            int actualPosition = recon.target % (Battle.main.defender.board.tiles.GetLength(0) - 1);
+            bool lineVertical = recon.target == actualPosition;
+
+            Vector3 startingPosition = Battle.main.defender.board.tiles[0, 0].transform.position - new Vector3(1, 0, 1) * 1f + Vector3.up * (MiscellaneousVariables.it.boardUIRenderHeight + 0.005f);
+            hookedPosition = startingPosition + new Vector3(lineVertical ? 1 : 0, 0, lineVertical ? 0 : 1) * (actualPosition + 1.5f);
         }
     }
 }

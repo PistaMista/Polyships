@@ -159,6 +159,7 @@ namespace BattleUIAgents.Base
                 line.lineMaterial = material;
                 line.extensionMaxSpeed = 20f;
                 line.extensionTime = 0.18f;
+                line.id = id;
 
                 line.Set(nodes, connections, startingNode);
             }
