@@ -136,7 +136,11 @@ namespace BattleUIAgents.Base
 
         protected Highlighterline RequestLineMarker(int id, bool overrideSettingsOfExisting, Vector3[] nodes, int[][] connections, int startingNode, Material material)
         {
-            Highlighterline line = FindAgent(x => { return ((Highlighterline)x).id == id; }, typeof(Highlighterline)) as Highlighterline;
+            Highlighterline line = FindAgent(x =>
+            {
+                Highlighterline l = x as Highlighterline;
+                return l.owner == this && l.id == id;
+            }, typeof(Highlighterline)) as Highlighterline;
             if (line)
             {
                 LinkAgent(line, true);
@@ -160,6 +164,7 @@ namespace BattleUIAgents.Base
                 line.extensionMaxSpeed = 20f;
                 line.extensionTime = 0.18f;
                 line.id = id;
+                line.owner = this;
 
                 line.Set(nodes, connections, startingNode);
             }

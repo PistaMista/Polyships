@@ -27,34 +27,37 @@ namespace BattleUIAgents.Agents
         protected override void PerformLinkageOperations()
         {
             base.PerformLinkageOperations();
-            Board managedBoard = player.board;
-            Gridline[] gridLines = Array.ConvertAll(CreateAndLinkAgents<Gridline>("", managedBoard.tiles.GetLength(0) + managedBoard.tiles.GetLength(1) - 2), (item) => { return (Gridline)item; });
-
-            float lineWidth = 1.00f - MiscellaneousVariables.it.boardTileSideLength;
-            for (int i = 0; i < gridLines.Length; i++)
+            if (!linked)
             {
-                Gridline positionedLine = gridLines[i];
-                positionedLine.movementTime *= UnityEngine.Random.Range(0.800f, 1.200f);
+                Board managedBoard = player.board;
+                Gridline[] gridLines = Array.ConvertAll(CreateAndLinkAgents<Gridline>("", managedBoard.tiles.GetLength(0) + managedBoard.tiles.GetLength(1) - 2), (item) => { return (Gridline)item; });
 
-                int verticalIndex = i - (managedBoard.tiles.GetLength(0) - 1);
-
-                if (verticalIndex < 0)
+                float lineWidth = 1.00f - MiscellaneousVariables.it.boardTileSideLength;
+                for (int i = 0; i < gridLines.Length; i++)
                 {
-                    positionedLine.transform.localScale = new Vector3(lineWidth, 1, managedBoard.tiles.GetLength(1));
-                    positionedLine.hookedPosition = new Vector3(-managedBoard.tiles.GetLength(0) / 2.0f + i + 1, 0, 0);
-                }
-                else
-                {
-                    positionedLine.transform.localScale = new Vector3(managedBoard.tiles.GetLength(0), 1, lineWidth);
-                    positionedLine.hookedPosition = new Vector3(0, 0, -managedBoard.tiles.GetLength(1) / 2.0f + verticalIndex + 1);
+                    Gridline positionedLine = gridLines[i];
+                    positionedLine.movementTime *= UnityEngine.Random.Range(0.800f, 1.200f);
+
+                    int verticalIndex = i - (managedBoard.tiles.GetLength(0) - 1);
+
+                    if (verticalIndex < 0)
+                    {
+                        positionedLine.transform.localScale = new Vector3(lineWidth, 1, managedBoard.tiles.GetLength(1));
+                        positionedLine.hookedPosition = new Vector3(-managedBoard.tiles.GetLength(0) / 2.0f + i + 1, 0, 0);
+                    }
+                    else
+                    {
+                        positionedLine.transform.localScale = new Vector3(managedBoard.tiles.GetLength(0), 1, lineWidth);
+                        positionedLine.hookedPosition = new Vector3(0, 0, -managedBoard.tiles.GetLength(1) / 2.0f + verticalIndex + 1);
+                    }
+
+                    positionedLine.hookedPosition += managedBoard.transform.position + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+                    positionedLine.unhookedPosition = positionedLine.hookedPosition - Vector3.up * positionedLine.hookedPosition.y * 1.25f;
+                    positionedLine.transform.position = positionedLine.unhookedPosition;
                 }
 
-                positionedLine.hookedPosition += managedBoard.transform.position + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
-                positionedLine.unhookedPosition = positionedLine.hookedPosition - Vector3.up * positionedLine.hookedPosition.y * 1.25f;
-                positionedLine.transform.position = positionedLine.unhookedPosition;
+                tiles = new Agents.Tile[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
             }
-
-            tiles = new Agents.Tile[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
         }
 
         public void SetTileGraphic(Vector2Int tileCoordinates, TileGraphicMaterial material, Color color)

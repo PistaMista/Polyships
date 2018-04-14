@@ -8,6 +8,7 @@ namespace BattleUIAgents.Agents
 {
     public class Highlighterline : WorldBattleUIAgent
     {
+        public BattleUIAgent owner;
         public int id;
         public Material lineMaterial;
         public float lineWidth;

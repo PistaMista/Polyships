@@ -26,8 +26,8 @@ namespace BattleUIAgents.Tokens
             base.Pickup();
             pickupPosition = transform.position;
 
-
-            indicator = RequestLineMarker(458, false, new Vector3[] { Vector3.zero, Vector3.forward * Battle.main.defender.board.tiles.GetLength(0) }, new int[][] { new int[] { 1 }, new int[0] }, 0, linesMaterial);
+            if (indicator != null && indicator.id == 50) indicator.Delinker();
+            indicator = RequestLineMarker(1, false, new Vector3[] { Vector3.zero, Vector3.forward * Battle.main.defender.board.tiles.GetLength(0) * 2.05f }, new int[][] { new int[] { 1 }, new int[0] }, 0, linesMaterial);
             indicator.transform.SetParent(transform, false);
 
 
@@ -56,7 +56,7 @@ namespace BattleUIAgents.Tokens
                     finalNodes[x] += Battle.main.defender.transform.position + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
                 }
 
-                Highlighterline areaMarker = RequestLineMarker(459 + i, false, finalNodes, areaMarkerConnections, 0, linesMaterial);
+                Highlighterline areaMarker = RequestLineMarker(2 + i, false, finalNodes, areaMarkerConnections, 0, linesMaterial);
                 usageHighlighters.Add(areaMarker);
             }
         }
@@ -122,14 +122,18 @@ namespace BattleUIAgents.Tokens
         protected override void RefreshEffectRepresentation()
         {
             base.RefreshEffectRepresentation();
-            if (indicator == null)
-            {
-
-            }
-
             AircraftRecon recon = effect as AircraftRecon;
             int actualPosition = recon.target % (Battle.main.defender.board.tiles.GetLength(0) - 1);
             bool lineVertical = recon.target == actualPosition;
+
+            if (indicator == null)
+            {
+                indicator = RequestLineMarker(50, true, new Vector3[] { Vector3.zero, Vector3.forward * 0.925f * Battle.main.defender.board.tiles.GetLength(0), Vector3.forward * 1.025f * Battle.main.defender.board.tiles.GetLength(0) + Vector3.right * recon.result * 2, Vector3.forward * 1.125f * Battle.main.defender.board.tiles.GetLength(0), Vector3.forward * 2.05f * Battle.main.defender.board.tiles.GetLength(0) }, new int[][] { new int[] { 1 }, new int[] { 2 }, new int[] { 3 }, new int[] { 4 }, new int[0] }, 0, linesMaterial);
+                indicator.transform.SetParent(transform, false);
+            }
+
+            indicator.transform.rotation = Quaternion.Euler(0, lineVertical ? 0 : 90, 0);
+
 
             Vector3 startingPosition = Battle.main.defender.board.tiles[0, 0].transform.position - new Vector3(1, 0, 1) * 1f + Vector3.up * (MiscellaneousVariables.it.boardUIRenderHeight + 0.005f);
             hookedPosition = startingPosition + new Vector3(lineVertical ? 1 : 0, 0, lineVertical ? 0 : 1) * (actualPosition + 1.5f);
