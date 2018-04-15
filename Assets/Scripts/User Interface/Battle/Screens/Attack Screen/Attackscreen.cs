@@ -99,20 +99,26 @@ namespace BattleUIAgents.UI
                         Token token = allTokens[i] as Token;
                         if (token.IsPositionActivating(initialInputPosition.world))
                         {
-                            if (dragging && !(token is EventToken))
+                            if (dragging && !(token is EventToken) && (token.effect == null || token.effect.editable))
                             {
                                 token.Pickup();
                             }
-                            else if (tap && token.effect != null && token.effect.GetDescription().Length > 0)
+                            else if (tap)
                             {
-                                SetInteractable(false);
-                                TokenHinter hinter = FindAgent(x => { return true; }, typeof(TokenHinter)) as TokenHinter;
+                                string description = token.effect != null ? token.effect.GetDescription() : token.effectType.GetDescription();
 
-                                hinter.token = token;
-                                hinter.gameObject.SetActive(true);
-                                hinter.Delinker += () => { SetInteractable(true); CameraControl.GoToWaypoint(cameraWaypoint); };
+                                if (description.Length > 0)
+                                {
+                                    SetInteractable(false);
+                                    TokenHinter hinter = FindAgent(x => { return true; }, typeof(TokenHinter)) as TokenHinter;
 
-                                return;
+                                    hinter.text.text = description;
+                                    hinter.token = token;
+                                    hinter.gameObject.SetActive(true);
+                                    hinter.Delinker += () => { SetInteractable(true); CameraControl.GoToWaypoint(cameraWaypoint); };
+
+                                    return;
+                                }
                             }
                         }
                     }

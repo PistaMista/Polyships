@@ -36,5 +36,10 @@ namespace BattleUIAgents.Agents
 
             graphic.color = color;
         }
+
+        protected override sealed void ProcessInput()
+        {
+
+        }
     }
 }

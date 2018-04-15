@@ -12,8 +12,11 @@ namespace Gameplay
         {
             public bool affectingAll;
             public bool affectingAttacker;
+            public bool visibleToAll;
+            public bool visibleToAttacker;
             public int duration;
             public int priority;
+            public bool editable;
             public int prefabIndex;
             public int[] metadata;
             public static implicit operator EffectData(Effect effect)
@@ -23,8 +26,12 @@ namespace Gameplay
                 result.affectingAttacker = effect.affectedPlayer == Battle.main.attacker;
                 result.affectingAll = effect.affectedPlayer == null;
 
+                result.visibleToAttacker = effect.visibleTo == Battle.main.attacker;
+                result.visibleToAll = effect.visibleTo == null;
+
                 result.duration = effect.duration;
                 result.priority = effect.priority;
+                result.editable = effect.editable;
                 result.prefabIndex = effect.prefabIndex;
 
                 result.metadata = effect.GetMetadata();
@@ -37,12 +44,14 @@ namespace Gameplay
         {
             duration = data.duration;
             priority = data.priority;
+            editable = data.editable;
             prefabIndex = data.prefabIndex;
         }
 
         public virtual void AssignReferences(EffectData data)
         {
             affectedPlayer = data.affectingAll ? null : data.affectingAttacker ? Battle.main.attacker : Battle.main.defender;
+            visibleTo = data.visibleToAll ? null : data.visibleToAttacker ? Battle.main.attacker : Battle.main.defender;
         }
 
         protected virtual int[] GetMetadata()
@@ -52,6 +61,7 @@ namespace Gameplay
 
         public Effect[] conflictingEffects;
         public Player affectedPlayer;
+        public Player visibleTo;
         public int duration; //The amount of turns this effect lasts
         public int priority; //The priority this effect takes over others
         public bool editable;

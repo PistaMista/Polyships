@@ -93,6 +93,8 @@ namespace BattleUIAgents.Tokens
                 if (targetLine >= 0)
                 {
                     effect = Effect.CreateEffect(typeof(AircraftRecon));
+                    effect.visibleTo = Battle.main.attacker;
+                    effect.affectedPlayer = Battle.main.defender;
                 }
                 else
                 {
@@ -128,7 +130,7 @@ namespace BattleUIAgents.Tokens
 
             if (indicator == null)
             {
-                indicator = RequestLineMarker(50, true, new Vector3[] { Vector3.zero, Vector3.forward * 0.925f * Battle.main.defender.board.tiles.GetLength(0), Vector3.forward * 1.025f * Battle.main.defender.board.tiles.GetLength(0) + Vector3.right * recon.result * 2, Vector3.forward * 1.125f * Battle.main.defender.board.tiles.GetLength(0), Vector3.forward * 2.05f * Battle.main.defender.board.tiles.GetLength(0) }, new int[][] { new int[] { 1 }, new int[] { 2 }, new int[] { 3 }, new int[] { 4 }, new int[0] }, 0, linesMaterial);
+                indicator = RequestLineMarker(50, true, new Vector3[] { Vector3.zero, Vector3.forward * 0.925f * Battle.main.defender.board.tiles.GetLength(0), Vector3.forward * 1.025f * Battle.main.defender.board.tiles.GetLength(0) + Vector3.right * (lineVertical ? recon.result : -recon.result) * 2, Vector3.forward * 1.125f * Battle.main.defender.board.tiles.GetLength(0), Vector3.forward * 2.05f * Battle.main.defender.board.tiles.GetLength(0) }, new int[][] { new int[] { 1 }, new int[] { 2 }, new int[] { 3 }, new int[] { 4 }, new int[0] }, 0, linesMaterial);
                 indicator.transform.SetParent(transform, false);
             }
 

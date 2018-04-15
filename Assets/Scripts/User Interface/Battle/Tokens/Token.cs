@@ -43,7 +43,6 @@ namespace BattleUIAgents.Tokens
             else
             {
                 RefreshEffectRepresentation();
-                if (!effect.editable) maximumInteractableVelocity = 0;
             }
         }
 
@@ -55,7 +54,7 @@ namespace BattleUIAgents.Tokens
         {
             foreach (Effect effect in Battle.main.effects)
             {
-                if (effect.GetType() == effectType.GetType())
+                if (effect.GetType() == effectType.GetType() && (effect.visibleTo == null || effect.visibleTo == Battle.main.attacker))
                 {
                     if (FindAgent(x => { return (x as Token).effect == effect; }, typeof(Token)) == null)
                     {

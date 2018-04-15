@@ -73,5 +73,10 @@ namespace Gameplay.Effects
 
             return true;
         }
+
+        public override string GetDescription()
+        {
+            return target != null ? "Fires the fleet's main guns at this tile." : "Fires guns at a target tile. Drag onto the board to select target tile.";
+        }
     }
 }

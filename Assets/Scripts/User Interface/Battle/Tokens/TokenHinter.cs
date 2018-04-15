@@ -18,7 +18,8 @@ namespace BattleUIAgents.UI
         {
             base.PerformLinkageOperations();
             LinkAgents(FindAgents(x => { return x.name.Contains(name); }, typeof(Graphicfader), 2), true);
-            text.text = token.effect.GetDescription();
+
+            Delinker += () => { SetInteractable(false); };
         }
 
         protected override void ProcessInput()

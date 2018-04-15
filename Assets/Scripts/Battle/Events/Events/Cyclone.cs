@@ -32,7 +32,7 @@ namespace Gameplay.Effects
 
             for (int i = 0; i < artilleryAttacks.Length; i++) //Attacks which are too close together will be randomly dispersed into a square defined by the dispersion radius
             {
-                if (minimumDistances[i] < maximumTileSpacingToTakeEffect)
+                if (minimumDistances[i] <= maximumTileSpacingToTakeEffect)
                 {
                     ArtilleryAttack attack = artilleryAttacks[i] as ArtilleryAttack;
                     Vector2Int pos = attack.target.coordinates;
@@ -52,7 +52,7 @@ namespace Gameplay.Effects
 
         public override string GetDescription()
         {
-            return "Cyclone - Gun attacks clustered too close together don't always hit their mark. Lasts for " + duration + (duration == 1 ? " turn" : " turns") + ".";
+            return "Cyclone - Any gun attack within " + maximumTileSpacingToTakeEffect + " tiles of another will hit an adjacent tile. Lasts for " + duration + (duration == 1 ? " turn" : " turns") + ".";
         }
     }
 }

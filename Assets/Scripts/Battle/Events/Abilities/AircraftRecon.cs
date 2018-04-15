@@ -27,7 +27,7 @@ namespace Gameplay.Effects
             bool lineVertical = target < linePosition;
 
             float closestTileDistance = Mathf.Infinity;
-            foreach (Ship ship in Battle.main.defender.board.ships)
+            foreach (Ship ship in affectedPlayer.board.ships)
             {
                 if (ship.health > 0)
                 {
@@ -45,12 +45,13 @@ namespace Gameplay.Effects
                 }
             }
 
+            editable = false;
             base.OnTurnEnd();
         }
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
             int max = Battle.main.attackerCapabilities.maximumAircraftCount;
-            int existing = Effect.GetEffectsInQueue(null, typeof(AircraftRecon), int.MaxValue).Length;
+            int existing = Effect.GetEffectsInQueue(x => { return x.visibleTo == Battle.main.attacker; }, typeof(AircraftRecon), int.MaxValue).Length;
             int baseAllowed = base.GetAdditionalAllowed(ignoreObjectValues);
             return Mathf.Clamp(max - existing, 0, baseAllowed);
         }
@@ -67,6 +68,22 @@ namespace Gameplay.Effects
             }
 
             return true;
+        }
+
+        public override string GetDescription()
+        {
+            if (target != -1)
+            {
+                string desc = "Shows an arrow pointing to the ship, that is closest to this line.";
+                if (!editable)
+                {
+                    desc += " Lasts for " + duration + (duration == 1 ? " turn" : " turns") + ".";
+                }
+
+                return desc;
+            }
+
+            return "Launches aircraft to point you in the direction of enemy ships. Pickup and drag into highlighted areas to select target line.";
         }
     }
 }

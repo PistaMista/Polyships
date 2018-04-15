@@ -25,22 +25,21 @@ namespace Gameplay.Effects
         public override void OnTurnResume()
         {
             base.OnTurnResume();
-            if (Battle.main.attacker == affectedPlayer) Battle.main.attackerCapabilities.maximumArtilleryCount -= artilleryAttackDecrease;
-        }
 
-        public override void OnTurnEnd()
-        {
             if (Battle.main.attacker == affectedPlayer)
             {
                 artilleryAttackDecrease = Mathf.Clamp(artilleryAttackDecrease, 0, Battle.main.attackerCapabilities.maximumArtilleryCount - 1);
                 if (artilleryAttackDecrease == 0)
                 {
-                    duration = 1;
+                    Effect.RemoveFromQueue(this);
+                }
+                else
+                {
+                    Battle.main.attackerCapabilities.maximumArtilleryCount -= artilleryAttackDecrease;
                 }
             }
-
-            base.OnTurnEnd();
         }
+
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
             if (ignoreObjectValues)
