@@ -30,6 +30,14 @@ namespace BattleUIAgents.Agents
             if (!linked)
             {
                 Board managedBoard = player.board;
+                Delinker += () =>
+                {
+                    foreach (Ship ship in managedBoard.ships)
+                    {
+                        ship.gameObject.SetActive(false);
+                    }
+                };
+
                 Gridline[] gridLines = Array.ConvertAll(CreateAndLinkAgents<Gridline>("", managedBoard.tiles.GetLength(0) + managedBoard.tiles.GetLength(1) - 2), (item) => { return (Gridline)item; });
 
                 float lineWidth = 1.00f - MiscellaneousVariables.it.boardTileSideLength;
@@ -121,6 +129,9 @@ namespace BattleUIAgents.Agents
                 Ship ship = player.board.ships[i];
                 if ((undamagedShips && ship.health == ship.maxHealth) || (damagedShips && ship.health < ship.maxHealth && ship.health > 0) || (destroyedShips && ship.health == 0))
                 {
+                    ship.transform.position = ship.placementInfo.boardPosition + ship.parentBoard.transform.position + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+                    ship.transform.rotation = ship.placementInfo.boardRotation;
+
                     ship.gameObject.SetActive(true);
                     foreach (Gameplay.Tile tile in ship.tiles)
                     {

@@ -60,7 +60,7 @@ namespace Gameplay.Effects
         {
             if (!base.ConflictsWith(effect))
             {
-                if (effect is AircraftRecon && ((AircraftRecon)effect).target == target)
+                if (effect is AircraftRecon && ((AircraftRecon)effect).target == target && effect.affectedPlayer == affectedPlayer)
                 {
                     return true;
                 }

@@ -9,6 +9,7 @@ public enum ShipType
 {
     BATTLESHIP,
     CRUISER,
+    GUNBOAT,
     DESTROYER,
     CARRIER,
     PATROLBOAT

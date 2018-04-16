@@ -9,7 +9,7 @@ using Gameplay.Effects;
 
 namespace BattleUIAgents.Tokens
 {
-    public class AircraftToken : Token
+    public class TorpedoToken : Token
     {
         public Material linesMaterial;
         Agents.Grid grid;
@@ -41,16 +41,16 @@ namespace BattleUIAgents.Tokens
             areaMarkerNodes[3] = areaMarkerNodes[0] + Vector3.back;
             areaMarkerNodes[4] = areaMarkerNodes[0];
 
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 4; i++)
             {
+                for (int x = 0; x < areaMarkerNodes.Length; x++)
+                {
+                    Vector3 initialPosition = areaMarkerNodes[x];
+                    areaMarkerNodes[x] = new Vector3(-initialPosition.z, 0, initialPosition.x);
+                }
+
                 Vector3[] finalNodes = new Vector3[5];
                 System.Array.Copy(areaMarkerNodes, finalNodes, finalNodes.Length);
-
-                if (i == 1) for (int x = 0; x < areaMarkerNodes.Length; x++)
-                    {
-                        Vector3 initialPosition = finalNodes[x];
-                        finalNodes[x] = new Vector3(initialPosition.z, 0, initialPosition.x);
-                    }
 
                 for (int x = 0; x < finalNodes.Length; x++)
                 {
@@ -71,29 +71,31 @@ namespace BattleUIAgents.Tokens
         public override void ProcessExternalInputWhileHeld(Vector3 inputPosition)
         {
             base.ProcessExternalInputWhileHeld(inputPosition);
-            int targetLine = -1;
+            Gameplay.Tile torpedoDrop = null;
+            Vector2Int torpedoHeading = Vector2Int.zero;
+
+            Board board = Battle.main.defender.board;
             Vector3Int flatTileCoordinate = grid.GetFlatTileCoordinateAtPosition(inputPosition);
-            if (Mathf.Sign(flatTileCoordinate.x) != Mathf.Sign(flatTileCoordinate.z) && flatTileCoordinate.x < Battle.main.defender.board.tiles.GetLength(0) - 1 && flatTileCoordinate.z < Battle.main.defender.board.tiles.GetLength(1) - 1)
+
+            if (!grid.GetTileAtPosition(inputPosition))
             {
-                if (flatTileCoordinate.x >= 0)
+                if (flatTileCoordinate.x >= 0 && flatTileCoordinate.x < board.tiles.GetLength(0))
                 {
-                    targetLine = flatTileCoordinate.x;
+                    torpedoDrop = board.tiles[flatTileCoordinate.x, flatTileCoordinate.z > 0 ? board.tiles.GetLength(1) - 1 : 0];
+                    torpedoHeading = Vector2Int.up * (flatTileCoordinate.z > 0 ? -1 : 1);
                 }
-                else
+                else if (flatTileCoordinate.z >= 0 && flatTileCoordinate.z < board.tiles.GetLength(1))
                 {
-                    targetLine = flatTileCoordinate.z + (Battle.main.defender.board.tiles.GetLength(0) - 1);
+                    torpedoDrop = board.tiles[flatTileCoordinate.x > 0 ? board.tiles.GetLength(0) - 1 : 0, flatTileCoordinate.z];
+                    torpedoHeading = Vector2Int.right * (flatTileCoordinate.x > 0 ? -1 : 1);
                 }
-            }
-            else
-            {
-                targetLine = -1;
             }
 
             if (effect == null)
             {
-                if (targetLine >= 0)
+                if (torpedoDrop != null && torpedoHeading != Vector2Int.zero)
                 {
-                    effect = Effect.CreateEffect(typeof(AircraftRecon));
+                    effect = Effect.CreateEffect(typeof(TorpedoAttack));
                     effect.visibleTo = Battle.main.attacker;
                     effect.affectedPlayer = Battle.main.defender;
                 }
@@ -105,42 +107,41 @@ namespace BattleUIAgents.Tokens
 
             if (effect != null)
             {
-                AircraftRecon recon = effect as AircraftRecon;
-                if (targetLine >= 0)
+                TorpedoAttack attack = effect as TorpedoAttack;
+                if (torpedoDrop != null && torpedoHeading != Vector2Int.zero)
                 {
-                    if (targetLine != recon.target)
+                    if (torpedoDrop != attack.torpedoDropPoint || torpedoHeading != attack.torpedoHeading)
                     {
-                        recon.target = targetLine;
+                        attack.torpedoDropPoint = torpedoDrop;
+                        attack.torpedoHeading = torpedoHeading;
                         RefreshEffectRepresentation();
                     }
                 }
                 else
                 {
-                    Destroy(recon.gameObject);
+                    Destroy(attack.gameObject);
                     effect = null;
                 }
             }
         }
 
+
         protected override void RefreshEffectRepresentation()
         {
             base.RefreshEffectRepresentation();
-            AircraftRecon recon = effect as AircraftRecon;
-            int actualPosition = recon.target % (Battle.main.defender.board.tiles.GetLength(0) - 1);
-            bool lineVertical = recon.target == actualPosition;
-
+            TorpedoAttack attack = effect as TorpedoAttack;
             if (indicator == null)
             {
-                indicator = RequestLineMarker(50, true, new Vector3[] { Vector3.zero, Vector3.forward * 0.925f * Battle.main.defender.board.tiles.GetLength(0), Vector3.forward * 1.025f * Battle.main.defender.board.tiles.GetLength(0) + Vector3.right * (lineVertical ? recon.result : -recon.result) * 2, Vector3.forward * 1.125f * Battle.main.defender.board.tiles.GetLength(0), Vector3.forward * 2.05f * Battle.main.defender.board.tiles.GetLength(0) }, new int[][] { new int[] { 1 }, new int[] { 2 }, new int[] { 3 }, new int[] { 4 }, new int[0] }, 0, linesMaterial);
+                indicator = RequestLineMarker(1, false, new Vector3[] { Vector3.zero, Vector3.forward * Battle.main.defender.board.tiles.GetLength(0) * 2.05f }, new int[][] { new int[] { 1 }, new int[0] }, 0, linesMaterial);
                 indicator.Delinker += () => { indicator = null; };
                 indicator.transform.SetParent(transform, false);
             }
 
-            indicator.transform.rotation = Quaternion.Euler(0, lineVertical ? 0 : 90, 0);
+            bool horizontal = attack.torpedoHeading.x != 0;
+            bool directionPositive = attack.torpedoHeading.x + attack.torpedoHeading.y > 0;
 
-
-            Vector3 startingPosition = Battle.main.defender.board.tiles[0, 0].transform.position - new Vector3(1, 0, 1) * 1f + Vector3.up * (MiscellaneousVariables.it.boardUIRenderHeight + 0.005f);
-            hookedPosition = startingPosition + new Vector3(lineVertical ? 1 : 0, 0, lineVertical ? 0 : 1) * (actualPosition + 1.5f);
+            indicator.transform.rotation = Quaternion.Euler(0, horizontal ? (directionPositive ? 90 : 270) : (directionPositive ? 0 : 180), 0);
+            hookedPosition = attack.torpedoDropPoint.transform.position + new Vector3(-attack.torpedoHeading.x, MiscellaneousVariables.it.boardUIRenderHeight + height, -attack.torpedoHeading.y);
         }
     }
 }

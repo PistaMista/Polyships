@@ -419,7 +419,6 @@ namespace Gameplay
                 if (ship.type == ShipType.CARRIER)
                 {
                     Carrier carrier = (Carrier)ship;
-                    carrier.reconTargets = toAssign.GetRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count)).ToArray();
                     toAssign.RemoveRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count));
                 }
             }

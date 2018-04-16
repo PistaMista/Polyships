@@ -33,7 +33,7 @@ namespace BattleUIAgents.UI
 
         protected override Vector3 GetPosition()
         {
-            return base.GetPosition() + token.transform.position;
+            return base.GetPosition() + token.hookedPosition;
         }
     }
 }

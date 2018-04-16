@@ -7,24 +7,39 @@ namespace Gameplay.Effects
 {
     public class TorpedoAttack : Effect
     {
+        public Tile torpedoDropPoint;
+        public Vector2Int torpedoHeading;
+        protected override int[] GetMetadata()
+        {
+            return new int[] { torpedoDropPoint.coordinates.x, torpedoDropPoint.coordinates.y, torpedoHeading.x, torpedoHeading.y };
+        }
 
-        public int target;
+        public override void AssignReferences(EffectData data)
+        {
+            base.AssignReferences(data);
+            torpedoDropPoint = Battle.main.defender.board.tiles[data.metadata[0], data.metadata[1]];
+            torpedoHeading = new Vector2Int(data.metadata[2], data.metadata[3]);
+        }
         public override void OnTurnEnd()
         {
+            Board board = Battle.main.defender.board;
             Tile impact = null;
-            for (int y = Battle.main.defender.board.tiles.GetLength(1) - 1; y >= 0; y--)
+            Tile currentPosition = torpedoDropPoint;
+            while (currentPosition != null)
             {
-                Tile candidate = Battle.main.defender.board.tiles[target, y];
-                if (candidate.containedShip && candidate.containedShip.health > 0)
+                if (currentPosition.containedShip)
                 {
-                    impact = candidate;
+                    impact = currentPosition;
                     break;
                 }
                 else
                 {
-                    candidate.hit = true;
-                    Battle.main.attacker.hitTiles.Add(candidate);
+                    currentPosition.hit = true;
+                    Battle.main.attacker.hitTiles.Add(currentPosition);
                 }
+
+                Vector2Int newCoordinates = currentPosition.coordinates + torpedoHeading;
+                currentPosition = (newCoordinates.x >= 0 && newCoordinates.x < board.tiles.GetLength(0) && newCoordinates.y >= 0 && newCoordinates.y < board.tiles.GetLength(1)) ? board.tiles[newCoordinates.x, newCoordinates.y] : null;
             }
 
             List<Tile> damagedTiles = new List<Tile>();
@@ -70,22 +85,37 @@ namespace Gameplay.Effects
 
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
-            int modifier = ignoreObjectValues ? 1 : (Battle.main.attackerCapabilities.torpedoFiringArea[target] ? 1 : 0);
-            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumTorpedoCount - Effect.GetEffectsInQueue(null, typeof(TorpedoAttack), int.MaxValue).Length, 0, Mathf.Min(base.GetAdditionalAllowed(ignoreObjectValues), MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn)) * modifier;
+            int max = Battle.main.attackerCapabilities.maximumTorpedoCount;
+            int existing = Effect.GetEffectsInQueue(null, typeof(TorpedoAttack), int.MaxValue).Length;
+            int baseAllowed = base.GetAdditionalAllowed(ignoreObjectValues);
+            return Mathf.Clamp(max - existing, 0, Mathf.Min(baseAllowed, MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn));
         }
 
         protected override bool ConflictsWith(Effect effect)
         {
             if (!base.ConflictsWith(effect))
             {
-                if (effect is TorpedoAttack && ((TorpedoAttack)effect).target == target)
+                if (effect is TorpedoAttack)
                 {
-                    return true;
+                    TorpedoAttack attack = effect as TorpedoAttack;
+                    return attack.torpedoDropPoint == torpedoDropPoint && attack.torpedoHeading == torpedoHeading;
                 }
                 return false;
             }
 
             return true;
+        }
+
+        public override string GetDescription()
+        {
+            if (torpedoDropPoint == null)
+            {
+                return "Fires torpedoes down a line of tiles. Pickup and drag into highlighted areas to select target line and direction.";
+            }
+            else
+            {
+                return "Fires a torpedo down this line of tiles, hitting any ship on the way.";
+            }
         }
     }
 }
