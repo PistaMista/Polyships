@@ -52,6 +52,8 @@ namespace Gameplay
         {
             affectedPlayer = data.affectingAll ? null : data.affectingAttacker ? Battle.main.attacker : Battle.main.defender;
             visibleTo = data.visibleToAll ? null : data.visibleToAttacker ? Battle.main.attacker : Battle.main.defender;
+
+            transform.SetParent(affectedPlayer != null ? affectedPlayer.transform : Battle.main.transform);
         }
 
         protected virtual int[] GetMetadata()
@@ -59,10 +61,17 @@ namespace Gameplay
             return new int[0];
         }
 
-        public Effect[] conflictingEffects;
         public Player affectedPlayer;
         public Player visibleTo;
         public int duration; //The amount of turns this effect lasts
+        public string FormattedDuration
+        {
+            get
+            {
+                int displayDuration = Mathf.CeilToInt(duration / 2.0f);
+                return displayDuration + " " + (displayDuration > 1 ? "turns" : "turn");
+            }
+        }
         public int priority; //The priority this effect takes over others
         public bool editable;
         public int prefabIndex;
@@ -122,41 +131,41 @@ namespace Gameplay
         /// <returns>Whether the effect conflicts.</returns>
         protected virtual bool ConflictsWith(Effect effect)
         {
-            return ConflictsWithType(effect.GetType());
-        }
-
-        /// <summary>
-        /// Checks if this effect type conflicts with another.
-        /// </summary>
-        /// <param name="type">Potential conflictor effect type.</param>
-        /// <returns>Whether the effect type conflicts.</returns>
-        protected bool ConflictsWithType(Type type)
-        {
-            for (int i = 0; i < conflictingEffects.Length; i++)
-            {
-                if (conflictingEffects[i].GetType() == type)
-                {
-                    return true;
-                }
-            }
-
             return false;
         }
 
+        // /// <summary>
+        // /// Checks if this effect type conflicts with another.
+        // /// </summary>
+        // /// <param name="type">Potential conflictor effect type.</param>
+        // /// <returns>Whether the effect type conflicts.</returns>
+        // protected bool ConflictsWithType(Type type)
+        // {
+        //     for (int i = 0; i < conflictingEffects.Length; i++)
+        //     {
+        //         if (conflictingEffects[i].GetType() == type)
+        //         {
+        //             return true;
+        //         }
+        //     }
+
+        //     return false;
+        // }
+
         /// <summary>
-        /// Executes when another effect is added.
+        /// Executes when any effect is added.
         /// </summary>
         /// <param name="addedEffect">Effect that was added.</param>
-        public virtual void OnOtherEffectAdd(Effect addedEffect)
+        public virtual void OnAnyEffectAdd(Effect addedEffect)
         {
 
         }
 
         /// <summary>
-        /// Executes when another effect is removed.
+        /// Executes when any effect is removed.
         /// </summary>
         /// <param name="removedEffect">Effect that was removed.</param>
-        public virtual void OnOtherEffectRemove(Effect removedEffect)
+        public virtual void OnAnyEffectRemove(Effect removedEffect)
         {
 
         }
@@ -226,13 +235,10 @@ namespace Gameplay
             Battle.main.effects.Insert(insertionIndex, effect);
             foreach (Effect affected in Battle.main.effects)
             {
-                if (affected != effect)
-                {
-                    affected.OnOtherEffectAdd(effect);
-                }
+                affected.OnAnyEffectAdd(effect);
             }
 
-            effect.transform.SetParent(Battle.main.transform);
+            effect.transform.SetParent(effect.affectedPlayer != null ? effect.affectedPlayer.transform : Battle.main.transform);
             return true;
         }
 
@@ -242,11 +248,12 @@ namespace Gameplay
         /// <param name="effect">Effect to remove.</param>
         public static void RemoveFromQueue(Effect effect)
         {
-            Battle.main.effects.Remove(effect);
             foreach (Effect affected in Battle.main.effects)
             {
-                affected.OnOtherEffectRemove(effect);
+                affected.OnAnyEffectRemove(effect);
             }
+
+            Battle.main.effects.Remove(effect);
 
             Destroy(effect.gameObject);
         }

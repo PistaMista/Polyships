@@ -57,21 +57,12 @@ namespace Gameplay.Effects
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
             int modifier = ignoreObjectValues ? 1 : (target.hit ? 0 : 1);
-            return Mathf.Clamp(Battle.main.attackerCapabilities.maximumArtilleryCount - Effect.GetEffectsInQueue(null, typeof(ArtilleryAttack), int.MaxValue).Length, 0, base.GetAdditionalAllowed(ignoreObjectValues)) * modifier;
+            return Mathf.Clamp(Battle.main.attacker.arsenal.guns - Effect.GetEffectsInQueue(null, typeof(ArtilleryAttack), int.MaxValue).Length, 0, base.GetAdditionalAllowed(ignoreObjectValues)) * modifier;
         }
 
         protected override bool ConflictsWith(Effect effect)
         {
-            if (!base.ConflictsWith(effect))
-            {
-                if (effect is ArtilleryAttack && ((ArtilleryAttack)effect).target == target)
-                {
-                    return true;
-                }
-                return false;
-            }
-
-            return true;
+            return effect is ArtilleryAttack && (effect as ArtilleryAttack).target == target;
         }
 
         public override string GetDescription()

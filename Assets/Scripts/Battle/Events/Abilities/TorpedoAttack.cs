@@ -65,27 +65,17 @@ namespace Gameplay.Effects
                 }
             }
 
-            //Consume a torpedo from the destroyers
-            for (int i = 0; i < Battle.main.attacker.board.ships.Length; i++)
-            {
-                Ship ship = Battle.main.attacker.board.ships[i];
-                if (ship.health > 0 && ship.type == ShipType.DESTROYER)
-                {
-                    Destroyer destroyer = (Destroyer)ship;
-                    if (destroyer.torpedoCount > 0)
-                    {
-                        destroyer.torpedoCount--;
-                        break;
-                    }
-                }
-            }
+            //Consume a torpedo 
+            Battle.main.attacker.arsenal.torpedoes--;
+            Battle.main.attacker.arsenal.loadedTorpedoes--;
+            Battle.main.attacker.arsenal.torpedoesFiredLastTurn++;
 
             base.OnTurnEnd();
         }
 
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
-            int max = Battle.main.attackerCapabilities.maximumTorpedoCount;
+            int max = Battle.main.attacker.arsenal.loadedTorpedoes;
             int existing = Effect.GetEffectsInQueue(null, typeof(TorpedoAttack), int.MaxValue).Length;
             int baseAllowed = base.GetAdditionalAllowed(ignoreObjectValues);
             return Mathf.Clamp(max - existing, 0, Mathf.Min(baseAllowed, MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn));
@@ -93,17 +83,7 @@ namespace Gameplay.Effects
 
         protected override bool ConflictsWith(Effect effect)
         {
-            if (!base.ConflictsWith(effect))
-            {
-                if (effect is TorpedoAttack)
-                {
-                    TorpedoAttack attack = effect as TorpedoAttack;
-                    return attack.torpedoDropPoint == torpedoDropPoint && attack.torpedoHeading == torpedoHeading;
-                }
-                return false;
-            }
-
-            return true;
+            return effect is TorpedoCooldown || (effect is TorpedoAttack && (effect as TorpedoAttack).torpedoDropPoint == torpedoDropPoint && (effect as TorpedoAttack).torpedoHeading == torpedoHeading);
         }
 
         public override string GetDescription()

@@ -11,32 +11,36 @@ namespace Gameplay.Effects
         public int triggerLiveShipCountThreshold;
         public int artilleryAttackIncrease;
 
-        public override void OnTurnStart()
-        {
-            base.OnTurnStart();
-            OnTurnResume();
-        }
-
-        public override void OnTurnResume()
-        {
-            base.OnTurnResume();
-            if (Battle.main.attacker == affectedPlayer)
-            {
-                Battle.main.attackerCapabilities.maximumArtilleryCount += artilleryAttackIncrease;
-            }
-        }
-
         protected override void OnSummon()
         {
             affectedPlayer = Battle.main.attacker;
         }
+
+        public override void OnAnyEffectAdd(Effect addedEffect)
+        {
+            base.OnAnyEffectAdd(addedEffect);
+            if (addedEffect == this)
+            {
+                affectedPlayer.arsenal.guns += artilleryAttackIncrease;
+            }
+        }
+
+        public override void OnAnyEffectRemove(Effect removedEffect)
+        {
+            base.OnAnyEffectAdd(removedEffect);
+            if (removedEffect == this)
+            {
+                affectedPlayer.arsenal.guns -= artilleryAttackIncrease;
+            }
+        }
         protected override bool GetSummoningRoll()
         {
-            return base.GetSummoningRoll() && (Battle.main.attackerCapabilities.maximumArtilleryCount <= triggerGunCountThreshold && Battle.main.attackerCapabilities.torpedoFiringAreaSize <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
+            return base.GetSummoningRoll() && (Battle.main.attacker.arsenal.guns <= triggerGunCountThreshold && Battle.main.attacker.arsenal.torpedoes <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
         }
-        public override int GetAdditionalAllowed(bool ignoreObjectValues)
+
+        protected override bool ConflictsWith(Effect effect)
         {
-            return (GetEffectsInQueue(null, typeof(LastStand), 1).Length == 0) ? 1 : 0;
+            return effect is LastStand;
         }
 
         public override string GetDescription()

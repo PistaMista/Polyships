@@ -4,6 +4,8 @@ using UnityEngine;
 using System;
 using BattleUIAgents.Base;
 
+using Gameplay.Effects;
+
 namespace Gameplay
 {
     public class Player : BattleBehaviour
@@ -53,6 +55,14 @@ namespace Gameplay
         public bool aiEnabled;
         public Color[,] flag;
         public List<Tile> hitTiles;
+        public AmmoRegistry arsenal
+        {
+            get
+            {
+                return Effect.GetEffectsInQueue(x => { return x.affectedPlayer == this; }, typeof(AmmoRegistry), 1)[0] as AmmoRegistry;
+            }
+        }
+
 
         public AIModule aiModule;
         public void Initialize(PlayerData data)

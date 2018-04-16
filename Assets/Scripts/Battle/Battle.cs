@@ -5,6 +5,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
 using Gameplay.Ships;
+using Gameplay.Effects;
 
 namespace Gameplay
 {
@@ -242,11 +243,6 @@ namespace Gameplay
             attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
             defender.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
 
-            if (attacker.board.ships != null)
-            {
-                CollectAttackerCapabilities();
-            }
-
             attacker.OnTurnResume();
             foreach (Effect effect in effects)
             {
@@ -298,7 +294,6 @@ namespace Gameplay
             if (fighting)
             {
                 log.Insert(0, new TurnInfo(1));
-                CollectAttackerCapabilities();
                 Event.RandomEventsRoll();
             }
 
@@ -335,64 +330,6 @@ namespace Gameplay
             }
 
             Effect.RemoveExpiredEffectsFromQueue();
-        }
-
-        public struct AttackerCapabilities
-        {
-            public int maximumArtilleryCount;
-            public int maximumTorpedoCount;
-            public int maximumAircraftCount;
-            public bool[] torpedoFiringArea;
-            public int torpedoFiringAreaSize;
-            public int[,] airReconResults;
-        }
-        public AttackerCapabilities attackerCapabilities;
-        void CollectAttackerCapabilities()
-        {
-            AttackerCapabilities gathered = new AttackerCapabilities();
-            gathered.maximumArtilleryCount = 1;
-            gathered.torpedoFiringArea = new bool[attacker.board.tiles.GetLength(0)];
-
-            List<int[]> airReconResults = new List<int[]>();
-            for (int i = 0; i < attacker.board.ships.Length; i++)
-            {
-                Ship ship = attacker.board.ships[i];
-                if (ship.health > 0)
-                {
-                    switch (ship.type)
-                    {
-                        case ShipType.BATTLESHIP:
-                            gathered.maximumArtilleryCount += ((Battleship)ship).artilleryBonus;
-                            break;
-                        case ShipType.DESTROYER:
-                            Destroyer destroyer = (Destroyer)ship;
-                            gathered.maximumTorpedoCount += destroyer.torpedoCount;
-                            for (int x = 0; x < destroyer.firingAreaBlockages.Length; x++)
-                            {
-                                if (destroyer.firingAreaBlockages[x] < 0)
-                                {
-                                    gathered.torpedoFiringArea[x] = true;
-                                    gathered.torpedoFiringAreaSize++;
-                                }
-                            }
-                            break;
-                        case ShipType.CARRIER:
-                            Carrier carrier = (Carrier)ship;
-                            gathered.maximumAircraftCount += carrier.aircraftCount;
-                            break;
-                    }
-                }
-            }
-
-            gathered.airReconResults = new int[airReconResults.Count, 2];
-
-            for (int i = 0; i < airReconResults.Count; i++)
-            {
-                gathered.airReconResults[i, 0] = airReconResults[i][0];
-                gathered.airReconResults[i, 1] = airReconResults[i][1];
-            }
-
-            attackerCapabilities = gathered;
         }
 
         //Inserts an effect into the queue based on its priority if it doesnt conflict with any other effect present
@@ -659,6 +596,17 @@ namespace Gameplay
             Battle battle = new GameObject("Battle").AddComponent<Battle>();
             battle.Initialize(data);
             battle.AssignReferences(data);
+            if (battle.effects.Count == 0)
+            {
+                Effect attackerAmmo = Effect.CreateEffect(typeof(AmmoRegistry));
+                Effect defenderAmmo = Effect.CreateEffect(typeof(AmmoRegistry));
+
+                attackerAmmo.affectedPlayer = battle.attacker;
+                defenderAmmo.affectedPlayer = battle.defender;
+
+                Effect.AddToQueue(attackerAmmo);
+                Effect.AddToQueue(defenderAmmo);
+            }
             return battle;
         }
 

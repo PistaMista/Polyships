@@ -52,7 +52,7 @@ namespace Gameplay.Effects
 
         public override string GetDescription()
         {
-            return "Cyclone - Any gun attack within " + maximumTileSpacingToTakeEffect + " tiles of another will hit an adjacent tile. Lasts for " + duration + (duration == 1 ? " turn" : " turns") + ".";
+            return "Cyclone - Any gun attack within " + maximumTileSpacingToTakeEffect + " tiles of another will hit an adjacent tile. Lasts for " + FormattedDuration + ".";
         }
     }
 }

@@ -20,23 +20,27 @@ namespace Gameplay.Effects
         public override void OnTurnStart()
         {
             base.OnTurnStart();
-            OnTurnResume();
-        }
-        public override void OnTurnResume()
-        {
-            base.OnTurnResume();
-
-            if (Battle.main.attacker == affectedPlayer)
+            if (affectedPlayer.arsenal.guns <= 0)
             {
-                artilleryAttackDecrease = Mathf.Clamp(artilleryAttackDecrease, 0, Battle.main.attackerCapabilities.maximumArtilleryCount - 1);
-                if (artilleryAttackDecrease == 0)
-                {
-                    Effect.RemoveFromQueue(this);
-                }
-                else
-                {
-                    Battle.main.attackerCapabilities.maximumArtilleryCount -= artilleryAttackDecrease;
-                }
+                duration = 1;
+            }
+        }
+
+        public override void OnAnyEffectAdd(Effect addedEffect)
+        {
+            base.OnAnyEffectAdd(addedEffect);
+            if (addedEffect == this)
+            {
+                affectedPlayer.arsenal.guns -= artilleryAttackDecrease;
+            }
+        }
+
+        public override void OnAnyEffectRemove(Effect removedEffect)
+        {
+            base.OnAnyEffectAdd(removedEffect);
+            if (removedEffect == this)
+            {
+                affectedPlayer.arsenal.guns += artilleryAttackDecrease;
             }
         }
 
@@ -44,10 +48,10 @@ namespace Gameplay.Effects
         {
             if (ignoreObjectValues)
             {
-                return (GetEffectsInQueue(null, typeof(GunMaintenance), 1).Length == 0 && Battle.main.attackerCapabilities.maximumArtilleryCount > artilleryAttackDecrease) ? 1 : 0;
+                return (GetEffectsInQueue(null, typeof(GunMaintenance), 1).Length == 0 && Battle.main.attacker.arsenal.guns > artilleryAttackDecrease) ? 1 : 0;
             }
 
-            return (GetEffectsInQueue(x => { return x.affectedPlayer == Battle.main.attacker; }, typeof(GunMaintenance), 1).Length == 0 && Battle.main.attackerCapabilities.maximumArtilleryCount > artilleryAttackDecrease) ? 1 : 0;
+            return (GetEffectsInQueue(x => { return x.affectedPlayer == Battle.main.attacker; }, typeof(GunMaintenance), 1).Length == 0 && Battle.main.attacker.arsenal.guns > artilleryAttackDecrease) ? 1 : 0;
         }
 
         protected override void OnSummon()
@@ -58,7 +62,7 @@ namespace Gameplay.Effects
 
         public override string GetDescription()
         {
-            return "Gun Maintenance - Number of your gun attacks is decreased by " + artilleryAttackDecrease + " for " + duration + (duration == 1 ? " turn" : " turns") + ".";
+            return "Gun Maintenance - Number of your gun attacks is decreased by " + artilleryAttackDecrease + " for " + FormattedDuration + ".";
         }
     }
 }

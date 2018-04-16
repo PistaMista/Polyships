@@ -50,7 +50,7 @@ namespace Gameplay.Effects
         }
         public override int GetAdditionalAllowed(bool ignoreObjectValues)
         {
-            int max = Battle.main.attackerCapabilities.maximumAircraftCount;
+            int max = Battle.main.attacker.arsenal.aircraft;
             int existing = Effect.GetEffectsInQueue(x => { return x.visibleTo == Battle.main.attacker; }, typeof(AircraftRecon), int.MaxValue).Length;
             int baseAllowed = base.GetAdditionalAllowed(ignoreObjectValues);
             return Mathf.Clamp(max - existing, 0, baseAllowed);
@@ -58,16 +58,7 @@ namespace Gameplay.Effects
 
         protected override bool ConflictsWith(Effect effect)
         {
-            if (!base.ConflictsWith(effect))
-            {
-                if (effect is AircraftRecon && ((AircraftRecon)effect).target == target && effect.affectedPlayer == affectedPlayer)
-                {
-                    return true;
-                }
-                return false;
-            }
-
-            return true;
+            return effect is AircraftRecon && (effect as AircraftRecon).target == target && effect.affectedPlayer == affectedPlayer;
         }
 
         public override string GetDescription()
@@ -77,7 +68,7 @@ namespace Gameplay.Effects
                 string desc = "Shows an arrow pointing to the ship, that is closest to this line.";
                 if (!editable)
                 {
-                    desc += " Lasts for " + duration + (duration == 1 ? " turn" : " turns") + ".";
+                    desc += " Lasts for " + FormattedDuration + ".";
                 }
 
                 return desc;
