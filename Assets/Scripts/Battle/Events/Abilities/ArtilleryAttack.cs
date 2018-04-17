@@ -54,15 +54,19 @@ namespace Gameplay.Effects
             target = Battle.main.defender.board.tiles[data.metadata[0], data.metadata[1]];
         }
 
-        public override int GetAdditionalAllowed(bool ignoreObjectValues)
+        public override int GetTheoreticalMaximumAddableAmount()
         {
-            int modifier = ignoreObjectValues ? 1 : (target.hit ? 0 : 1);
-            return Mathf.Clamp(Battle.main.attacker.arsenal.guns - Effect.GetEffectsInQueue(null, typeof(ArtilleryAttack), int.MaxValue).Length, 0, base.GetAdditionalAllowed(ignoreObjectValues)) * modifier;
+            return Mathf.Clamp(Battle.main.attacker.arsenal.guns - Effect.GetEffectsInQueue(null, typeof(ArtilleryAttack), int.MaxValue).Length, 0, int.MaxValue);
         }
 
-        protected override bool ConflictsWith(Effect effect)
+        protected override bool CheckGameplayRulesForAddition()
         {
-            return effect is ArtilleryAttack && (effect as ArtilleryAttack).target == target;
+            return target != null && !target.hit; //Target tile is required. Targeted tile has to not be hit. 
+        }
+
+        protected override bool IsConflictingWithEffect(Effect effect)
+        {
+            return ((effect is TorpedoAttack) || (effect is ArtilleryAttack && (effect as ArtilleryAttack).target == target)) && effect.targetedPlayer == targetedPlayer; //Conflicts with any artillery attacks targeted at the same tile as this one or also with torpedo attacks.
         }
 
         public override string GetDescription()

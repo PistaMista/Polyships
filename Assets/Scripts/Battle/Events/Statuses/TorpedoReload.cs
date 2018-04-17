@@ -9,7 +9,7 @@ namespace Gameplay.Effects
         public override void OnTurnStart()
         {
             base.OnTurnStart();
-            if (affectedPlayer.arsenal.torpedoes <= 0)
+            if (targetedPlayer.arsenal.torpedoes <= 0)
             {
                 duration = 1;
             }
@@ -20,25 +20,35 @@ namespace Gameplay.Effects
             base.OnTurnEnd();
             if (duration == 0)
             {
-                affectedPlayer.arsenal.loadedTorpedoes++;
+                targetedPlayer.arsenal.loadedTorpedoes++;
             }
         }
 
-        protected override bool GetSummoningRoll()
+        protected override bool IsTriggered()
         {
             AmmoRegistry arsenal = Battle.main.attacker.arsenal;
             return arsenal.loadedTorpedoes < arsenal.loadedTorpedoCap && arsenal.torpedoes > 0;
         }
 
-        protected override void OnSummon()
+        protected override void SetupEvent()
         {
-            base.OnSummon();
-            affectedPlayer = Battle.main.attacker;
+            base.SetupEvent();
+            targetedPlayer = Battle.main.attacker;
         }
 
-        protected override bool ConflictsWith(Effect effect)
+        public override int GetTheoreticalMaximumAddableAmount()
         {
-            return effect.affectedPlayer == Battle.main.attacker && (effect is TorpedoReload || effect is TorpedoCooldown);
+            return 2;
+        }
+
+        protected override bool CheckGameplayRulesForAddition()
+        {
+            return IsTriggered();
+        }
+
+        protected override bool IsConflictingWithEffect(Effect effect)
+        {
+            return effect.targetedPlayer == targetedPlayer && (effect is TorpedoReload || effect is TorpedoCooldown);
         }
 
         public override string GetDescription()

@@ -27,7 +27,7 @@ namespace Gameplay.Effects
             bool lineVertical = target < linePosition;
 
             float closestTileDistance = Mathf.Infinity;
-            foreach (Ship ship in affectedPlayer.board.ships)
+            foreach (Ship ship in targetedPlayer.board.ships)
             {
                 if (ship.health > 0)
                 {
@@ -48,17 +48,19 @@ namespace Gameplay.Effects
             editable = false;
             base.OnTurnEnd();
         }
-        public override int GetAdditionalAllowed(bool ignoreObjectValues)
+        public override int GetTheoreticalMaximumAddableAmount()
         {
-            int max = Battle.main.attacker.arsenal.aircraft;
-            int existing = Effect.GetEffectsInQueue(x => { return x.visibleTo == Battle.main.attacker; }, typeof(AircraftRecon), int.MaxValue).Length;
-            int baseAllowed = base.GetAdditionalAllowed(ignoreObjectValues);
-            return Mathf.Clamp(max - existing, 0, baseAllowed);
+            return Battle.main.attacker.arsenal.aircraft - Effect.GetEffectsInQueue(x => { return x.visibleTo == Battle.main.attacker; }, typeof(AircraftRecon), int.MaxValue).Length;
         }
 
-        protected override bool ConflictsWith(Effect effect)
+        protected override bool CheckGameplayRulesForAddition()
         {
-            return effect is AircraftRecon && (effect as AircraftRecon).target == target && effect.affectedPlayer == affectedPlayer;
+            return target >= 0 && target < (Battle.main.defender.board.tiles.GetLength(0) * 2 - 2); //Has to have a targeted line.
+        }
+
+        protected override bool IsConflictingWithEffect(Effect effect)
+        {
+            return effect is AircraftRecon && (effect as AircraftRecon).target == target && effect.targetedPlayer == targetedPlayer; //Conflicts with aircraft recon targeted at the same line and at the same player.
         }
 
         public override string GetDescription()

@@ -11,36 +11,46 @@ namespace Gameplay.Effects
         public int triggerLiveShipCountThreshold;
         public int artilleryAttackIncrease;
 
-        protected override void OnSummon()
+        protected override void SetupEvent()
         {
-            affectedPlayer = Battle.main.attacker;
+            targetedPlayer = Battle.main.attacker;
         }
 
-        public override void OnAnyEffectAdd(Effect addedEffect)
+        public override void OnEffectAdd(Effect addedEffect)
         {
-            base.OnAnyEffectAdd(addedEffect);
+            base.OnEffectAdd(addedEffect);
             if (addedEffect == this)
             {
-                affectedPlayer.arsenal.guns += artilleryAttackIncrease;
+                targetedPlayer.arsenal.guns += artilleryAttackIncrease;
             }
         }
 
-        public override void OnAnyEffectRemove(Effect removedEffect)
+        public override void OnEffectRemove(Effect removedEffect)
         {
-            base.OnAnyEffectAdd(removedEffect);
+            base.OnEffectAdd(removedEffect);
             if (removedEffect == this)
             {
-                affectedPlayer.arsenal.guns -= artilleryAttackIncrease;
+                targetedPlayer.arsenal.guns -= artilleryAttackIncrease;
             }
         }
-        protected override bool GetSummoningRoll()
+        protected override bool IsTriggered()
         {
-            return base.GetSummoningRoll() && (Battle.main.attacker.arsenal.guns <= triggerGunCountThreshold && Battle.main.attacker.arsenal.torpedoes <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
+            return base.IsTriggered() && (Battle.main.attacker.arsenal.guns <= triggerGunCountThreshold && Battle.main.attacker.arsenal.torpedoes <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
         }
 
-        protected override bool ConflictsWith(Effect effect)
+        public override int GetTheoreticalMaximumAddableAmount()
+        {
+            return 1;
+        }
+
+        protected override bool IsConflictingWithEffect(Effect effect)
         {
             return effect is LastStand;
+        }
+
+        protected override bool CheckGameplayRulesForAddition()
+        {
+            return true;
         }
 
         public override string GetDescription()

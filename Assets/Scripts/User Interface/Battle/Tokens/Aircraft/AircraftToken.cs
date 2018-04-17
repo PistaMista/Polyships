@@ -95,7 +95,7 @@ namespace BattleUIAgents.Tokens
                 {
                     effect = Effect.CreateEffect(typeof(AircraftRecon));
                     effect.visibleTo = Battle.main.attacker;
-                    effect.affectedPlayer = Battle.main.defender;
+                    effect.targetedPlayer = Battle.main.defender;
                 }
                 else
                 {

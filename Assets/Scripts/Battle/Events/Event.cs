@@ -8,29 +8,29 @@ namespace Gameplay
     {
         [Range(0.00f, 1.00f)]
         public float baseSummoningChance = 0.5f;
-        protected virtual bool GetSummoningRoll()
+        protected virtual bool IsTriggered()
         {
             return Random.Range(0.00f, 1.00f) <= baseSummoningChance;
         }
 
-        protected virtual void OnSummon()
+        protected virtual void SetupEvent()
         {
 
         }
 
-        public static void RandomEventsRoll()
+        public static void ConsiderEvents()
         {
             foreach (Effect effectPrefab in MiscellaneousVariables.it.effectPrefabs)
             {
                 if (effectPrefab is Event)
                 {
                     Event eventPrefab = effectPrefab as Event;
-                    if (eventPrefab.GetSummoningRoll())
+                    if (eventPrefab.IsTriggered())
                     {
                         Event createdEvent = Effect.CreateEffect(eventPrefab.GetType()) as Event;
-                        createdEvent.OnSummon();
+                        createdEvent.SetupEvent();
 
-                        if (createdEvent.GetAdditionalAllowed(false) > 0)
+                        if (createdEvent.CanBeAddedIntoQueue())
                         {
                             Effect.AddToQueue(createdEvent);
                         }

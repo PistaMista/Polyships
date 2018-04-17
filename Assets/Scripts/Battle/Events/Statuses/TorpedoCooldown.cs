@@ -10,25 +10,25 @@ namespace Gameplay.Effects
         public override void OnTurnStart()
         {
             base.OnTurnStart();
-            if (affectedPlayer.arsenal.torpedoes <= 0)
+            if (targetedPlayer.arsenal.torpedoes <= 0)
             {
                 duration = 1;
             }
         }
 
-        protected override bool GetSummoningRoll()
+        protected override bool IsTriggered()
         {
             int last = Battle.main.attacker.arsenal.torpedoesFiredLastTurn;
             return last > 0;
         }
 
-        protected override void OnSummon()
+        protected override void SetupEvent()
         {
-            base.OnSummon();
-            affectedPlayer = Battle.main.attacker;
-            duration = durations[affectedPlayer.arsenal.torpedoesFiredLastTurn];
+            base.SetupEvent();
+            targetedPlayer = Battle.main.attacker;
+            duration = durations[targetedPlayer.arsenal.torpedoesFiredLastTurn];
 
-            Effect[] candidate = GetEffectsInQueue(x => { return x.affectedPlayer == affectedPlayer; }, typeof(TorpedoReload), 1);
+            Effect[] candidate = GetEffectsInQueue(x => { return x.targetedPlayer == targetedPlayer; }, typeof(TorpedoReload), 1);
             if (candidate.Length > 0)
             {
                 RemoveFromQueue(candidate[0]);

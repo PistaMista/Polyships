@@ -20,43 +20,48 @@ namespace Gameplay.Effects
         public override void OnTurnStart()
         {
             base.OnTurnStart();
-            if (affectedPlayer.arsenal.guns <= 0)
+            if (targetedPlayer.arsenal.guns <= 0)
             {
                 duration = 1;
             }
         }
 
-        public override void OnAnyEffectAdd(Effect addedEffect)
+        public override void OnEffectAdd(Effect addedEffect)
         {
-            base.OnAnyEffectAdd(addedEffect);
+            base.OnEffectAdd(addedEffect);
             if (addedEffect == this)
             {
-                affectedPlayer.arsenal.guns -= artilleryAttackDecrease;
+                targetedPlayer.arsenal.guns -= artilleryAttackDecrease;
             }
         }
 
-        public override void OnAnyEffectRemove(Effect removedEffect)
+        public override void OnEffectRemove(Effect removedEffect)
         {
-            base.OnAnyEffectAdd(removedEffect);
+            base.OnEffectAdd(removedEffect);
             if (removedEffect == this)
             {
-                affectedPlayer.arsenal.guns += artilleryAttackDecrease;
+                targetedPlayer.arsenal.guns += artilleryAttackDecrease;
             }
         }
 
-        public override int GetAdditionalAllowed(bool ignoreObjectValues)
+        public override int GetTheoreticalMaximumAddableAmount()
         {
-            if (ignoreObjectValues)
-            {
-                return (GetEffectsInQueue(null, typeof(GunMaintenance), 1).Length == 0 && Battle.main.attacker.arsenal.guns > artilleryAttackDecrease) ? 1 : 0;
-            }
-
-            return (GetEffectsInQueue(x => { return x.affectedPlayer == Battle.main.attacker; }, typeof(GunMaintenance), 1).Length == 0 && Battle.main.attacker.arsenal.guns > artilleryAttackDecrease) ? 1 : 0;
+            return 2;
         }
 
-        protected override void OnSummon()
+        protected override bool IsConflictingWithEffect(Effect effect)
         {
-            affectedPlayer = Battle.main.attacker;
+            return effect is GunMaintenance && effect.targetedPlayer == targetedPlayer;
+        }
+
+        protected override bool CheckGameplayRulesForAddition()
+        {
+            return targetedPlayer.arsenal.guns > artilleryAttackDecrease;
+        }
+
+        protected override void SetupEvent()
+        {
+            targetedPlayer = Battle.main.attacker;
         }
 
 

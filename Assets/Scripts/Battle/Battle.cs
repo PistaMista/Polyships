@@ -294,7 +294,7 @@ namespace Gameplay
             if (fighting)
             {
                 log.Insert(0, new TurnInfo(1));
-                Event.RandomEventsRoll();
+                Event.ConsiderEvents();
             }
 
             attacker.OnTurnStart();
@@ -601,8 +601,8 @@ namespace Gameplay
                 Effect attackerAmmo = Effect.CreateEffect(typeof(AmmoRegistry));
                 Effect defenderAmmo = Effect.CreateEffect(typeof(AmmoRegistry));
 
-                attackerAmmo.affectedPlayer = battle.attacker;
-                defenderAmmo.affectedPlayer = battle.defender;
+                attackerAmmo.targetedPlayer = battle.attacker;
+                defenderAmmo.targetedPlayer = battle.defender;
 
                 Effect.AddToQueue(attackerAmmo);
                 Effect.AddToQueue(defenderAmmo);

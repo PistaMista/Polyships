@@ -23,8 +23,8 @@ namespace Gameplay
             {
                 EffectData result;
 
-                result.affectingAttacker = effect.affectedPlayer == Battle.main.attacker;
-                result.affectingAll = effect.affectedPlayer == null;
+                result.affectingAttacker = effect.targetedPlayer == Battle.main.attacker;
+                result.affectingAll = effect.targetedPlayer == null;
 
                 result.visibleToAttacker = effect.visibleTo == Battle.main.attacker;
                 result.visibleToAll = effect.visibleTo == null;
@@ -50,10 +50,10 @@ namespace Gameplay
 
         public virtual void AssignReferences(EffectData data)
         {
-            affectedPlayer = data.affectingAll ? null : data.affectingAttacker ? Battle.main.attacker : Battle.main.defender;
+            targetedPlayer = data.affectingAll ? null : data.affectingAttacker ? Battle.main.attacker : Battle.main.defender;
             visibleTo = data.visibleToAll ? null : data.visibleToAttacker ? Battle.main.attacker : Battle.main.defender;
 
-            transform.SetParent(affectedPlayer != null ? affectedPlayer.transform : Battle.main.transform);
+            transform.SetParent(targetedPlayer != null ? targetedPlayer.transform : Battle.main.transform);
         }
 
         protected virtual int[] GetMetadata()
@@ -61,7 +61,7 @@ namespace Gameplay
             return new int[0];
         }
 
-        public Player affectedPlayer;
+        public Player targetedPlayer;
         public Player visibleTo;
         public int duration; //The amount of turns this effect lasts
         public string FormattedDuration
@@ -75,6 +75,15 @@ namespace Gameplay
         public int priority; //The priority this effect takes over others
         public bool editable;
         public int prefabIndex;
+
+        /// <summary>
+        /// Gets the description for what the effect does.
+        /// </summary>
+        /// <returns>Short detailed description for player's eyes.</returns>
+        public virtual string GetDescription()
+        {
+            return "";
+        }
 
         /// <summary>
         /// Executes every time a new turn starts.
@@ -106,57 +115,10 @@ namespace Gameplay
         }
 
         /// <summary>
-        /// Gets the amount of this effect that can be applied.
-        /// </summary>
-        /// <param name="ignoreObjectValues">Ignores any data this object carries and uses the type as a whole instead.</param>
-        /// <returns>How many of these effects can we add.</returns>
-        public virtual int GetAdditionalAllowed(bool ignoreObjectValues)
-        {
-            foreach (Effect potentialConflictor in Battle.main.effects)
-            {
-                if (ConflictsWith(potentialConflictor))
-                {
-                    return 0;
-                }
-            }
-
-            return 8;
-        }
-
-
-        /// <summary>
-        /// Checks if this effect conflicts with another.
-        /// </summary>
-        /// <param name="effect">Potential conflictor effect.</param>
-        /// <returns>Whether the effect conflicts.</returns>
-        protected virtual bool ConflictsWith(Effect effect)
-        {
-            return false;
-        }
-
-        // /// <summary>
-        // /// Checks if this effect type conflicts with another.
-        // /// </summary>
-        // /// <param name="type">Potential conflictor effect type.</param>
-        // /// <returns>Whether the effect type conflicts.</returns>
-        // protected bool ConflictsWithType(Type type)
-        // {
-        //     for (int i = 0; i < conflictingEffects.Length; i++)
-        //     {
-        //         if (conflictingEffects[i].GetType() == type)
-        //         {
-        //             return true;
-        //         }
-        //     }
-
-        //     return false;
-        // }
-
-        /// <summary>
         /// Executes when any effect is added.
         /// </summary>
         /// <param name="addedEffect">Effect that was added.</param>
-        public virtual void OnAnyEffectAdd(Effect addedEffect)
+        public virtual void OnEffectAdd(Effect addedEffect)
         {
 
         }
@@ -165,10 +127,56 @@ namespace Gameplay
         /// Executes when any effect is removed.
         /// </summary>
         /// <param name="removedEffect">Effect that was removed.</param>
-        public virtual void OnAnyEffectRemove(Effect removedEffect)
+        public virtual void OnEffectRemove(Effect removedEffect)
         {
 
         }
+
+        //ADDABILITY CHECKS------------------------------------------------------------------------------------------------------------------------------
+        /// <summary>
+        /// Gets how many effects of this type are possible to add. Effects themselves may not be added if they conflict with present ones.
+        /// </summary>
+        /// <returns>Default addable amount of this effect type.</returns>
+        public virtual int GetTheoreticalMaximumAddableAmount()
+        {
+            throw new Exception("No max addition calculations for " + name + ". Please add.");
+        }
+        /// <summary>
+        /// Checks if this effect instance has valid data for addition into the queue.
+        /// </summary>
+        /// <returns>Addable to queue.</returns>
+        public bool CanBeAddedIntoQueue()
+        {
+            foreach (Effect effect in Battle.main.effects)
+            {
+                if (IsConflictingWithEffect(effect))
+                {
+                    return false;
+                }
+            }
+
+            return CheckGameplayRulesForAddition();
+        }
+        /// <summary>
+        /// Checks this effect's stored data against the rules of the game to see if it is valid to add.
+        /// </summary>
+        /// <returns></returns>
+        protected virtual bool CheckGameplayRulesForAddition()
+        {
+            throw new Exception("No rule check for " + name + ". Please add rule check.");
+        }
+        /// <summary>
+        /// Checks if this effect conflicts with another given effect.
+        /// </summary>
+        /// <param name="effect">Potentially conflicting effect.</param>
+        /// <returns>Whether the effect conflicts.</returns>
+        protected virtual bool IsConflictingWithEffect(Effect effect)
+        {
+            return false;
+        }
+        //ADDABILITY CHECKS------------------------------------------------------------------------------------------------------------------------------
+
+
 
         /// <summary>
         /// Creates an effect object.
@@ -214,10 +222,7 @@ namespace Gameplay
         /// <returns>Whether the effect was added.</returns>
         public static bool AddToQueue(Effect effect)
         {
-            if (effect.GetAdditionalAllowed(false) <= 0)
-            {
-                return false;
-            }
+            if (!effect.CanBeAddedIntoQueue()) return false;
 
             int insertionIndex = 0;
             foreach (Effect measure in Battle.main.effects)
@@ -235,10 +240,10 @@ namespace Gameplay
             Battle.main.effects.Insert(insertionIndex, effect);
             foreach (Effect affected in Battle.main.effects)
             {
-                affected.OnAnyEffectAdd(effect);
+                affected.OnEffectAdd(effect);
             }
 
-            effect.transform.SetParent(effect.affectedPlayer != null ? effect.affectedPlayer.transform : Battle.main.transform);
+            effect.transform.SetParent(effect.targetedPlayer != null ? effect.targetedPlayer.transform : Battle.main.transform);
             return true;
         }
 
@@ -250,7 +255,7 @@ namespace Gameplay
         {
             foreach (Effect affected in Battle.main.effects)
             {
-                affected.OnAnyEffectRemove(effect);
+                affected.OnEffectRemove(effect);
             }
 
             Battle.main.effects.Remove(effect);
@@ -295,13 +300,6 @@ namespace Gameplay
             return matches.ToArray();
         }
 
-        /// <summary>
-        /// Gets the description for what the effect does.
-        /// </summary>
-        /// <returns>Short detailed description for player's eyes.</returns>
-        public virtual string GetDescription()
-        {
-            return "";
-        }
+
     }
 }

@@ -59,7 +59,7 @@ namespace Gameplay
         {
             get
             {
-                return Effect.GetEffectsInQueue(x => { return x.affectedPlayer == this; }, typeof(AmmoRegistry), 1)[0] as AmmoRegistry;
+                return Effect.GetEffectsInQueue(x => { return x.targetedPlayer == this; }, typeof(AmmoRegistry), 1)[0] as AmmoRegistry;
             }
         }
 

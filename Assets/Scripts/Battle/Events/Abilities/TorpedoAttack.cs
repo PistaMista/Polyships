@@ -7,6 +7,14 @@ namespace Gameplay.Effects
 {
     public class TorpedoAttack : Effect
     {
+        public float boardCoverage;
+        public int range
+        {
+            get
+            {
+                return Mathf.CeilToInt(Battle.main.defender.board.tiles.GetLength(1) * boardCoverage);
+            }
+        }
         public Tile torpedoDropPoint;
         public Vector2Int torpedoHeading;
         protected override int[] GetMetadata()
@@ -24,7 +32,9 @@ namespace Gameplay.Effects
         {
             Board board = Battle.main.defender.board;
             Tile impact = null;
+
             Tile currentPosition = torpedoDropPoint;
+            int traveledDistance = 0;
             while (currentPosition != null)
             {
                 if (currentPosition.containedShip)
@@ -40,6 +50,12 @@ namespace Gameplay.Effects
 
                 Vector2Int newCoordinates = currentPosition.coordinates + torpedoHeading;
                 currentPosition = (newCoordinates.x >= 0 && newCoordinates.x < board.tiles.GetLength(0) && newCoordinates.y >= 0 && newCoordinates.y < board.tiles.GetLength(1)) ? board.tiles[newCoordinates.x, newCoordinates.y] : null;
+                traveledDistance++;
+
+                if (traveledDistance >= range)
+                {
+                    break;
+                }
             }
 
             List<Tile> damagedTiles = new List<Tile>();
@@ -73,17 +89,20 @@ namespace Gameplay.Effects
             base.OnTurnEnd();
         }
 
-        public override int GetAdditionalAllowed(bool ignoreObjectValues)
+        public override int GetTheoreticalMaximumAddableAmount()
         {
-            int max = Battle.main.attacker.arsenal.loadedTorpedoes;
-            int existing = Effect.GetEffectsInQueue(null, typeof(TorpedoAttack), int.MaxValue).Length;
-            int baseAllowed = base.GetAdditionalAllowed(ignoreObjectValues);
-            return Mathf.Clamp(max - existing, 0, Mathf.Min(baseAllowed, MiscellaneousVariables.it.maximumTorpedoAttacksPerTurn));
+            return Battle.main.attacker.arsenal.loadedTorpedoes - Effect.GetEffectsInQueue(null, typeof(TorpedoAttack), int.MaxValue).Length;
         }
 
-        protected override bool ConflictsWith(Effect effect)
+        protected override bool CheckGameplayRulesForAddition()
         {
-            return effect is TorpedoCooldown || (effect is TorpedoAttack && (effect as TorpedoAttack).torpedoDropPoint == torpedoDropPoint && (effect as TorpedoAttack).torpedoHeading == torpedoHeading);
+            return torpedoDropPoint != null && torpedoHeading != Vector2Int.zero; //Has to have a target.
+        }
+
+        protected override bool IsConflictingWithEffect(Effect effect)
+        {
+            //Conflicts with this player's torpedo cooldowns(but not reloads), artillery attacks and any other torpedo attacks with the same target player, line and direction.
+            return (effect is TorpedoCooldown && effect.targetedPlayer == visibleTo) || (effect.targetedPlayer == targetedPlayer && (effect is ArtilleryAttack || (effect is TorpedoAttack && (effect as TorpedoAttack).torpedoDropPoint == torpedoDropPoint && (effect as TorpedoAttack).torpedoHeading == torpedoHeading)));
         }
 
         public override string GetDescription()

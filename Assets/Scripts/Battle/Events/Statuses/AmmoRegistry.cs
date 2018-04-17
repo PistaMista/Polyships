@@ -15,11 +15,11 @@ namespace Gameplay.Effects
         public override void OnTurnStart()
         {
             base.OnTurnStart();
-            if (Battle.main.attacker == affectedPlayer) torpedoesFiredLastTurn = 0;
+            if (Battle.main.attacker == targetedPlayer) torpedoesFiredLastTurn = 0;
         }
         protected override int[] GetMetadata()
         {
-            return Battle.main.fighting ? new int[] { guns, torpedoes, loadedTorpedoes, aircraft } : new int[4];
+            return Battle.main.fighting ? new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, torpedoesFiredLastTurn, aircraft } : new int[6];
         }
         public override void Initialize(EffectData data)
         {
@@ -27,11 +27,28 @@ namespace Gameplay.Effects
             guns = data.metadata[0];
             torpedoes = data.metadata[1];
             loadedTorpedoes = data.metadata[2];
-            aircraft = data.metadata[3];
+            loadedTorpedoCap = data.metadata[3];
+            torpedoesFiredLastTurn = data.metadata[4];
+            aircraft = data.metadata[5];
         }
         public override string GetDescription()
         {
             return "Munitions - Torpedo x" + torpedoes;
+        }
+
+        public override int GetTheoreticalMaximumAddableAmount()
+        {
+            return 2;
+        }
+
+        protected override bool IsConflictingWithEffect(Effect effect)
+        {
+            return effect is AmmoRegistry && effect.targetedPlayer == targetedPlayer;
+        }
+
+        protected override bool CheckGameplayRulesForAddition()
+        {
+            return true;
         }
     }
 }

@@ -45,9 +45,19 @@ namespace Gameplay.Effects
             base.OnTurnEnd();
         }
 
-        public override int GetAdditionalAllowed(bool ignoreObjectValues)
+        public override int GetTheoreticalMaximumAddableAmount()
         {
-            return (GetEffectsInQueue(null, typeof(Cyclone), 1).Length == 0) ? 1 : 0;
+            return 1;
+        }
+
+        protected override bool IsConflictingWithEffect(Effect effect)
+        {
+            return effect is Cyclone;
+        }
+
+        protected override bool CheckGameplayRulesForAddition()
+        {
+            return true;
         }
 
         public override string GetDescription()

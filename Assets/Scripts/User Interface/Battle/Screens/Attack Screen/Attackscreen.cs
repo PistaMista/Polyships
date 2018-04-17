@@ -154,7 +154,7 @@ namespace BattleUIAgents.UI
             for (int i = 0; i < abilityTokenTypes.Length; i++)
             {
                 int currentTokenCount = Token.FindTokens(true, false, abilityTokenTypes[i].GetType(), int.MaxValue).Length;
-                int extraTokens = currentTokenCount - abilityTokenTypes[i].GetAdditionalAllowed(true);
+                int extraTokens = currentTokenCount - abilityTokenTypes[i].GetTheoreticalMaximumAddableAmount();
                 if (extraTokens > 0)
                 {
                     Array.ForEach(Token.FindTokens(true, false, abilityTokenTypes[i].GetType(), extraTokens), x => { x.Delinker(); });
