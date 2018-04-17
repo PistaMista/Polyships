@@ -12,7 +12,7 @@ namespace Gameplay.Effects
             base.OnTurnStart();
             if (targetedPlayer.arsenal.torpedoes <= 0)
             {
-                duration = 1;
+                expiredEffects.Add(this);
             }
         }
 
@@ -33,6 +33,21 @@ namespace Gameplay.Effects
             {
                 RemoveFromQueue(candidate[0]);
             }
+        }
+
+        public override int GetTheoreticalMaximumAddableAmount()
+        {
+            return 2;
+        }
+
+        protected override bool CheckGameplayRulesForAddition()
+        {
+            return true;
+        }
+
+        protected override bool IsConflictingWithEffect(Effect effect)
+        {
+            return effect.targetedPlayer == targetedPlayer && effect is TorpedoCooldown;
         }
 
         public override string GetDescription()

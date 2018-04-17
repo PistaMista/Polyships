@@ -22,7 +22,7 @@ namespace Gameplay.Effects
             base.OnTurnStart();
             if (targetedPlayer.arsenal.guns <= 0)
             {
-                duration = 1;
+                expiredEffects.Add(this);
             }
         }
 

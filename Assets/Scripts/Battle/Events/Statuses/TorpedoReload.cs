@@ -11,14 +11,14 @@ namespace Gameplay.Effects
             base.OnTurnStart();
             if (targetedPlayer.arsenal.torpedoes <= 0)
             {
-                duration = 1;
+                expiredEffects.Add(this);
             }
         }
 
         public override void OnTurnEnd()
         {
             base.OnTurnEnd();
-            if (duration == 0)
+            if (duration == 0 && targetedPlayer.arsenal.torpedoes > 0)
             {
                 targetedPlayer.arsenal.loadedTorpedoes++;
             }

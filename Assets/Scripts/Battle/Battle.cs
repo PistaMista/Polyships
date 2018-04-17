@@ -302,6 +302,8 @@ namespace Gameplay
             {
                 effect.OnTurnStart();
             }
+
+            Effect.RemoveExpiredEffectsFromQueue();
         }
 
         /// <summary>
@@ -314,6 +316,16 @@ namespace Gameplay
             foreach (Effect effect in effects)
             {
                 effect.OnTurnResume();
+            }
+
+            for (int i = 0; i < effects.Count; i++)
+            {
+                Effect effect = effects[i];
+                effect.OnTurnResume();
+                if (effect == null)
+                {
+
+                }
             }
         }
 

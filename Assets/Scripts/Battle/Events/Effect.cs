@@ -263,7 +263,7 @@ namespace Gameplay
             Destroy(effect.gameObject);
         }
 
-        static List<Effect> expiredEffects = new List<Effect>();
+        public static List<Effect> expiredEffects = new List<Effect>();
         /// <summary>
         /// Removes expired effects from the queue.
         /// </summary>
