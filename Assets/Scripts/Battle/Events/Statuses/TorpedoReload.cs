@@ -18,7 +18,7 @@ namespace Gameplay.Effects
         public override void OnTurnEnd()
         {
             base.OnTurnEnd();
-            if (duration == 0 && targetedPlayer.arsenal.torpedoes > 0)
+            if (duration == 0 && targetedPlayer.arsenal.torpedoes - targetedPlayer.arsenal.loadedTorpedoes > 0)
             {
                 targetedPlayer.arsenal.loadedTorpedoes++;
             }

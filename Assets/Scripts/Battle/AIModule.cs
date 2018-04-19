@@ -278,6 +278,15 @@ namespace Gameplay
             }
         }
 
+        struct Situation
+        {
+            public float advantage;
+            public Heatmap status;
+            public Tile[] artilleryTargets;
+            public Tile[] torpedoDroppoints;
+            public Vector2Int[] torpedoHeadings;
+        }
+
 
 
         public Heatmap situation;
@@ -288,156 +297,156 @@ namespace Gameplay
         public float reconResultWeight; //How much will the AI use the recon results
         void Attack()
         {
-            Board target = Battle.main.defender.board;
+            // Board target = Battle.main.defender.board;
 
-            //Construct a situation heatmap
-            situation = new Heatmap(target.tiles.GetLength(0), target.tiles.GetLength(1));
+            // //Construct a situation heatmap
+            // situation = new Heatmap(target.tiles.GetLength(0), target.tiles.GetLength(1));
 
-            //Add heat for hit tiles
-            foreach (Tile hit in owner.hitTiles)
-            {
-                if (hit.containedShip != null)
-                {
-                    if (hit.containedShip.health > 0)
-                    {
-                        situation.Heat(hit.coordinates, 12.0f, 1.0f - recklessness);
-                    }
-                }
-                else
-                {
-                    situation.Heat(hit.coordinates, -2.0f, 1.0f - recklessness);
-                }
-            }
-
-            //Use the air recon results to enhance chances of hitting
-            // int[,] reconResults = Battle.main.attackerCapabilities.airReconResults;
-            // for (int i = 0; i < reconResults.GetLength(0); i++)
+            // //Add heat for hit tiles
+            // foreach (Tile hit in owner.hitTiles)
             // {
-            //     int lineIndex = reconResults[i, 0];
-            //     int result = reconResults[i, 1];
-
-            //     int linePosition = (lineIndex % (Battle.main.defender.board.tiles.GetLength(0) - 1));
-            //     bool lineVertical = lineIndex == linePosition;
-
-            //     for (int x = lineVertical ? (result == 1 ? linePosition + 1 : 0) : 0; x < (lineVertical ? (result != 1 ? linePosition + 1 : situation.tiles.GetLength(0)) : situation.tiles.GetLength(0)); x++)
+            //     if (hit.containedShip != null)
             //     {
-            //         for (int y = !lineVertical ? (result == 1 ? linePosition + 1 : 0) : 0; y < (lineVertical ? (result != 1 ? linePosition + 1 : situation.tiles.GetLength(1)) : situation.tiles.GetLength(1)); y++)
+            //         if (hit.containedShip.health > 0)
             //         {
-            //             airReconMap.Heat(new Vector2Int(x, y), 1.0f / (0.2f + reconResultMemory), 1);
+            //             situation.Heat(hit.coordinates, 12.0f, 1.0f - recklessness);
             //         }
             //     }
-            // }
-
-            //Blur the map
-            situation = situation.GetBlurredMap(agressivity);
-
-            airReconMap = airReconMap.GetNormalizedMap();
-            situation += airReconMap * reconResultWeight;
-
-            //Cool the tiles which cannot be targeted
-            foreach (Tile tile in owner.hitTiles)
-            {
-                situation.Heat(tile.coordinates, -20f, 1);
-            }
-
-            //Normalize the map
-            situation = situation.GetNormalizedMap();
-
-
-            // //Evaluate torpedo possibility
-            // float[] verticalLines = situation.verticalLines;
-            // for (int i = 0; i < verticalLines.Length; i++)
-            // {
-            //     if (!Battle.main.attackerCapabilities.torpedoFiringArea[i])
+            //     else
             //     {
-            //         verticalLines[i] = Mathf.NegativeInfinity;
+            //         situation.Heat(hit.coordinates, -2.0f, 1.0f - recklessness);
             //     }
             // }
 
-            // int[] torpedoCandidates = Utilities.GetExtremeArrayElements(verticalLines, Battle.main.attackerCapabilities.maximumTorpedoCount, false, Mathf.Infinity);
-            // float torpedoHeat = 0;
-            // float[] gridLanes = situation.verticalLines;
-            // for (int i = 0; i < torpedoCandidates.Length; i++)
+            // //Use the air recon results to enhance chances of hitting
+            // // int[,] reconResults = Battle.main.attackerCapabilities.airReconResults;
+            // // for (int i = 0; i < reconResults.GetLength(0); i++)
+            // // {
+            // //     int lineIndex = reconResults[i, 0];
+            // //     int result = reconResults[i, 1];
+
+            // //     int linePosition = (lineIndex % (Battle.main.defender.board.tiles.GetLength(0) - 1));
+            // //     bool lineVertical = lineIndex == linePosition;
+
+            // //     for (int x = lineVertical ? (result == 1 ? linePosition + 1 : 0) : 0; x < (lineVertical ? (result != 1 ? linePosition + 1 : situation.tiles.GetLength(0)) : situation.tiles.GetLength(0)); x++)
+            // //     {
+            // //         for (int y = !lineVertical ? (result == 1 ? linePosition + 1 : 0) : 0; y < (lineVertical ? (result != 1 ? linePosition + 1 : situation.tiles.GetLength(1)) : situation.tiles.GetLength(1)); y++)
+            // //         {
+            // //             airReconMap.Heat(new Vector2Int(x, y), 1.0f / (0.2f + reconResultMemory), 1);
+            // //         }
+            // //     }
+            // // }
+
+            // //Blur the map
+            // situation = situation.GetBlurredMap(agressivity);
+
+            // airReconMap = airReconMap.GetNormalizedMap();
+            // situation += airReconMap * reconResultWeight;
+
+            // //Cool the tiles which cannot be targeted
+            // foreach (Tile tile in owner.hitTiles)
             // {
-            //     torpedoHeat += gridLanes[torpedoCandidates[i]];
+            //     situation.Heat(tile.coordinates, -20f, 1);
             // }
 
-            // torpedoHeat /= Battle.main.attackerCapabilities.maximumArtilleryCount;
-
-            //Evaluate artillery possibility
-            Vector2Int[] artilleryCandidates = situation.GetExtremeTiles(Battle.main.attacker.arsenal.guns, Mathf.Infinity, false);
-            float artilleryHeat = 0;
-            foreach (Vector2Int coord in artilleryCandidates)
-            {
-                artilleryHeat += situation.tiles[coord.x, coord.y];
-            }
+            // //Normalize the map
+            // situation = situation.GetNormalizedMap();
 
 
-            //REDIRECT PLANES
-            float[] gridLines = situation.gridLines;
-            float worstLine = gridLines[Utilities.GetExtremeArrayElements(gridLines, 1, true, Mathf.NegativeInfinity)[0]];
-            for (int i = 0; i < gridLines.Length; i++)
-            {
-                gridLines[i] -= worstLine;
-            }
+            // // //Evaluate torpedo possibility
+            // // float[] verticalLines = situation.verticalLines;
+            // // for (int i = 0; i < verticalLines.Length; i++)
+            // // {
+            // //     if (!Battle.main.attackerCapabilities.torpedoFiringArea[i])
+            // //     {
+            // //         verticalLines[i] = Mathf.NegativeInfinity;
+            // //     }
+            // // }
 
-            float[] targetProbabilities = new float[gridLines.Length];
-            float probabilityConstructorSum = 0;
-            for (int i = 0; i < gridLines.Length; i++)
-            {
-                float value = gridLines[i];
-                probabilityConstructorSum += value + 1.00f;
+            // // int[] torpedoCandidates = Utilities.GetExtremeArrayElements(verticalLines, Battle.main.attackerCapabilities.maximumTorpedoCount, false, Mathf.Infinity);
+            // // float torpedoHeat = 0;
+            // // float[] gridLanes = situation.verticalLines;
+            // // for (int i = 0; i < torpedoCandidates.Length; i++)
+            // // {
+            // //     torpedoHeat += gridLanes[torpedoCandidates[i]];
+            // // }
 
-                targetProbabilities[i] = probabilityConstructorSum;
-            }
+            // // torpedoHeat /= Battle.main.attackerCapabilities.maximumArtilleryCount;
 
-            int[] planeTargets = new int[Battle.main.attacker.arsenal.aircraft];
-            for (int i = 0; i < planeTargets.Length; i++)
-            {
-                float roll = UnityEngine.Random.Range(0.00f, targetProbabilities[targetProbabilities.Length - 1]);
-                int selectedLine = -1;
-
-                for (int x = 0; x < targetProbabilities.Length; x++)
-                {
-                    if (roll < targetProbabilities[x])
-                    {
-                        if (selectedLine == -1)
-                        {
-                            selectedLine = x;
-                        }
-
-                        targetProbabilities[x] -= gridLines[selectedLine];
-                    }
-                }
-
-                planeTargets[i] = selectedLine;
-            }
-
-            // List<int> toAssign = new List<int>(planeTargets);
-            // foreach (Ship ship in owner.board.ships)
+            // //Evaluate artillery possibility
+            // Vector2Int[] artilleryCandidates = situation.GetExtremeTiles(Battle.main.attacker.arsenal.guns, Mathf.Infinity, false);
+            // float artilleryHeat = 0;
+            // foreach (Vector2Int coord in artilleryCandidates)
             // {
-            //     if (ship.type == ShipType.CARRIER)
+            //     artilleryHeat += situation.tiles[coord.x, coord.y];
+            // }
+
+
+            // //REDIRECT PLANES
+            // float[] gridLines = situation.gridLines;
+            // float worstLine = gridLines[Utilities.GetExtremeArrayElements(gridLines, 1, true, Mathf.NegativeInfinity)[0]];
+            // for (int i = 0; i < gridLines.Length; i++)
+            // {
+            //     gridLines[i] -= worstLine;
+            // }
+
+            // float[] targetProbabilities = new float[gridLines.Length];
+            // float probabilityConstructorSum = 0;
+            // for (int i = 0; i < gridLines.Length; i++)
+            // {
+            //     float value = gridLines[i];
+            //     probabilityConstructorSum += value + 1.00f;
+
+            //     targetProbabilities[i] = probabilityConstructorSum;
+            // }
+
+            // int[] planeTargets = new int[Battle.main.attacker.arsenal.aircraft];
+            // for (int i = 0; i < planeTargets.Length; i++)
+            // {
+            //     float roll = UnityEngine.Random.Range(0.00f, targetProbabilities[targetProbabilities.Length - 1]);
+            //     int selectedLine = -1;
+
+            //     for (int x = 0; x < targetProbabilities.Length; x++)
             //     {
-            //         Carrier carrier = (Carrier)ship;
-            //         toAssign.RemoveRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count));
+            //         if (roll < targetProbabilities[x])
+            //         {
+            //             if (selectedLine == -1)
+            //             {
+            //                 selectedLine = x;
+            //             }
+
+            //             targetProbabilities[x] -= gridLines[selectedLine];
+            //         }
             //     }
+
+            //     planeTargets[i] = selectedLine;
             // }
 
-            //ATTACK
-            // if (torpedoHeat > artilleryHeat)
+            // // List<int> toAssign = new List<int>(planeTargets);
+            // // foreach (Ship ship in owner.board.ships)
+            // // {
+            // //     if (ship.type == ShipType.CARRIER)
+            // //     {
+            // //         Carrier carrier = (Carrier)ship;
+            // //         toAssign.RemoveRange(0, Mathf.Clamp(carrier.aircraftCount, 0, toAssign.Count));
+            // //     }
+            // // }
+
+            // //ATTACK
+            // // if (torpedoHeat > artilleryHeat)
+            // // {
+            // //     //Battle.main.ExecuteTorpedoAttack(torpedoCandidates);
+            // // }
+            // // else
+            // // {
+            // Tile[] targets = new Tile[artilleryCandidates.Length];
+            // for (int i = 0; i < artilleryCandidates.Length; i++)
             // {
-            //     //Battle.main.ExecuteTorpedoAttack(torpedoCandidates);
+            //     Vector2Int coord = artilleryCandidates[i];
+            //     targets[i] = target.tiles[coord.x, coord.y];
             // }
-            // else
-            // {
-            Tile[] targets = new Tile[artilleryCandidates.Length];
-            for (int i = 0; i < artilleryCandidates.Length; i++)
-            {
-                Vector2Int coord = artilleryCandidates[i];
-                targets[i] = target.tiles[coord.x, coord.y];
-            }
-            //Battle.main.ExecuteArtilleryAttack(targets);
-            // }
+            // //Battle.main.ExecuteArtilleryAttack(targets);
+            // // }
         }
 
 
@@ -466,19 +475,19 @@ namespace Gameplay
                 shipLocationHeatmaps[i].Heat(new Vector2Int(UnityEngine.Random.Range(0, owner.board.tiles.GetLength(0)), UnityEngine.Random.Range(0, owner.board.tiles.GetLength(1))), 8.0f * dispersionValue, 0.15f);
             }
 
-            //2.Tactic - Destroyer location
-            float agressivityValue = 1.0f - (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 2);
-            float discretionValue = 1.0f + (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 5);
+            // //2.Tactic - Destroyer location
+            // float agressivityValue = 1.0f - (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 2);
+            // float discretionValue = 1.0f + (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 5);
 
-            for (int x = 0; x < owner.board.tiles.GetLength(0); x++)
-            {
-                for (int i = 0; i < owner.board.ships.Length; i++)
-                {
-                    float heat = owner.board.ships[i].type == ShipType.DESTROYER ? agressivityValue * 12.0f : -discretionValue * 9.0f;
-                    float dropoff = owner.board.ships[i].type == ShipType.DESTROYER ? 0.1f : 0.7f;
-                    shipLocationHeatmaps[i].Heat(new Vector2Int(x, owner.board.tiles.GetLength(1) - 1 - UnityEngine.Random.Range(0, 4)), heat, dropoff);
-                }
-            }
+            // for (int x = 0; x < owner.board.tiles.GetLength(0); x++)
+            // {
+            //     for (int i = 0; i < owner.board.ships.Length; i++)
+            //     {
+            //         float heat = owner.board.ships[i].type == ShipType.DESTROYER ? agressivityValue * 12.0f : -discretionValue * 9.0f;
+            //         float dropoff = owner.board.ships[i].type == ShipType.DESTROYER ? 0.1f : 0.7f;
+            //         shipLocationHeatmaps[i].Heat(new Vector2Int(x, owner.board.tiles.GetLength(1) - 1 - UnityEngine.Random.Range(0, 4)), heat, dropoff);
+            //     }
+            // }
 
             //3.Tactic - Camouflage
             float concealmentAccuracyValue = 1.0f - (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 4);
