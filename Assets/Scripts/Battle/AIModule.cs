@@ -282,6 +282,7 @@ namespace Gameplay
         {
             public int offset;
             public Heatmap heatmap;
+            public float pressure;
             public int guns;
             public int aircraft;
             public int totalTorpedoCount;
@@ -290,7 +291,7 @@ namespace Gameplay
 
         struct Plan
         {
-            public Situation situation;
+            public Situation reason;
             public Tile[] artilleryTargets;
             public Tile[] torpedoDroppoints;
             public Vector2Int[] torpedoHeadings;
@@ -391,13 +392,19 @@ namespace Gameplay
 
         }
 
+        /// <summary>
+        /// Rates a plan based on how effective it is and what can be done afterwards.
+        /// </summary>
+        /// <param name="plan">The plan to rate.</param>
+        /// <param name="planning">Planning - specifies number of options considered at each turn ahead.</param>
+        /// <returns>How effective a plan is.</returns>
         float RatePlan(Plan plan, int[] planning, int progress = 0)
         {
             Situation outcome = PredictResultingSituation(plan);
             float rating = 0;
             if (progress < planning.Length)
             {
-                Plan[] followups = PlanForSituation(outcome, planning[progress]);
+                Plan[] followups = PlanForSituation(outcome, planning[progress], 100f - outcome.pressure);
                 for (int i = 0; i < planning[progress]; i++)
                 {
                     rating += RatePlan(followups[i], planning, progress + 1);
@@ -407,14 +414,69 @@ namespace Gameplay
             return rating;
         }
 
-        Plan[] PlanForSituation(Situation situation, int possibilities)
+        /// <summary>
+        /// Creates plans to maximize damage done in a situation.
+        /// </summary>
+        /// <param name="situation">Source situation.</param>
+        /// <param name="planCount">Number of plans to create.</param>
+        /// <param name="experimentationChance">Chance that a plan will be created randomly.</param>
+        /// <returns>Plans.</returns>
+        Plan[] PlanForSituation(Situation situation, int planCount, float experimentationChance)
         {
+            Plan[] plans = new Plan[planCount];
 
+            for (int i = 0; i < plans.Length; i++)
+            {
+                bool experimental = UnityEngine.Random.Range(0, 100) < experimentationChance;
+                Situation reason = situation;
+                plans[i].artilleryTargets = GetArtilleryTargets(ref reason, experimental);
+
+
+
+                plans[i].reason = reason;
+            }
+
+            return plans;
         }
 
+        Tile[] GetArtilleryTargets(ref Situation situation, bool experimental)
+        {
+            Vector2Int[] possiblePositions = situation.heatmap.GetExtremeTiles(situation.guns * (experimental ? 4 : 1), 0, false);
+            List<Tile> possibleTargets = new List<Tile>();
+            for (int i = 0; i < possiblePositions.Length; i++)
+            {
+                possibleTargets.Add(Battle.main.defender.board.tiles[possiblePositions[i].x, possiblePositions[i].y]);
+            }
+
+
+            if (experimental)
+            {
+                List<Tile> actualTargets = new List<Tile>();
+                for (int i = 0; i < situation.guns; i++)
+                {
+                    Tile randomTarget = possibleTargets[UnityEngine.Random.Range(0, possibleTargets.Count)];
+                    actualTargets.Add(randomTarget);
+                    possibleTargets.Remove(randomTarget);
+                }
+
+                return actualTargets.ToArray();
+            }
+            else
+            {
+                return possibleTargets.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Predicts the results a plan will have.
+        /// </summary>
+        /// <param name="plan"></param>
+        /// <returns></returns>
         Situation PredictResultingSituation(Plan plan)
         {
+            Situation outcome = new Situation();
 
+            return outcome;
         }
 
 
