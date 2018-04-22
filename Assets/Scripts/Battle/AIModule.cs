@@ -84,6 +84,14 @@ public struct Heatmap
         }
     }
 
+    public float averageHeat
+    {
+        get
+        {
+            return totalHeat / (tiles.GetLength(0) * tiles.GetLength(1));
+        }
+    }
+
     public Heatmap(int dimX, int dimY)
     {
         tiles = new float[dimX, dimY];
@@ -291,6 +299,7 @@ namespace Gameplay
 
         struct Plan
         {
+            public Situation situation;
             public Situation reason;
             public Tile[] artilleryTargets;
             public Tile[] torpedoDroppoints;
@@ -402,6 +411,9 @@ namespace Gameplay
         {
             Situation outcome = PredictResultingSituation(plan);
             float rating = 0;
+
+            rating -= outcome.heatmap.averageHeat;
+
             if (progress < planning.Length)
             {
                 Plan[] followups = PlanForSituation(outcome, planning[progress], 100f - outcome.pressure);
@@ -427,6 +439,8 @@ namespace Gameplay
 
             for (int i = 0; i < plans.Length; i++)
             {
+                plans[i].situation = situation;
+
                 bool experimental = UnityEngine.Random.Range(0, 100) < experimentationChance;
                 Situation reason = situation;
                 plans[i].artilleryTargets = GetArtilleryTargets(ref reason, experimental);
@@ -474,8 +488,17 @@ namespace Gameplay
         /// <returns></returns>
         Situation PredictResultingSituation(Plan plan)
         {
-            Situation outcome = new Situation();
+            Situation outcome = plan.situation;
+            outcome.offset++;
+            outcome.loadedTorpedoCount -= plan.torpedoDroppoints.Length;
+            outcome.totalTorpedoCount -= plan.torpedoDroppoints.Length;
 
+            for (int i = 0; i < plan.artilleryTargets.Length; i++)
+            {
+                outcome.heatmap.Heat(plan.artilleryTargets[i].coordinates, -1.0f, 0.5f);
+            }
+
+            outcome.heatmap = outcome.heatmap.GetNormalizedMap();
             return outcome;
         }
 
