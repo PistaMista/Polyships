@@ -51,7 +51,7 @@ namespace BattleUIAgents.UI
             gameObject.SetActive(false);
             if (Battle.main.log.Count > 1)
             {
-
+                FindAgent(x => { return x.player != player; }, typeof(Damagereport)).gameObject.SetActive(true);
             }
             else
             {

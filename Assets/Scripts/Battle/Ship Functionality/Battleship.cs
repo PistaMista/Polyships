@@ -23,7 +23,7 @@ namespace Gameplay.Ships
         public override void Place(Tile[] location)
         {
             base.Place(location);
-            parentBoard.owner.arsenal.guns += artilleryBonus;
+            if (location != null && location.Length > 0) parentBoard.owner.arsenal.guns += artilleryBonus;
         }
 
         public override void Pickup()

@@ -12,13 +12,13 @@ namespace Gameplay.Ships
         public override void Place(Tile[] location)
         {
             base.Place(location);
-            parentBoard.owner.arsenal.torpedoes += torpedoBonus;
+            if (location != null && location.Length > 0) parentBoard.owner.arsenal.torpedoes += torpedoBonus;
         }
 
         public override void Pickup()
         {
-            base.Pickup();
             if (tiles != null && tiles.Length > 0) parentBoard.owner.arsenal.torpedoes -= torpedoBonus;
+            base.Pickup();
         }
 
         public override void Destroy()
