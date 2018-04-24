@@ -129,7 +129,7 @@ namespace BattleUIAgents.Agents
                 Ship ship = player.board.ships[i];
                 if ((undamagedShips && ship.health == ship.maxHealth) || (damagedShips && ship.health < ship.maxHealth && ship.health > 0) || (destroyedShips && ship.health == 0))
                 {
-                    ship.transform.position = ship.placementInfo.boardPosition + ship.parentBoard.transform.position + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
+                    ship.transform.position = ship.placementInfo.boardPosition + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight;
                     ship.transform.rotation = ship.placementInfo.boardRotation;
 
                     ship.gameObject.SetActive(true);

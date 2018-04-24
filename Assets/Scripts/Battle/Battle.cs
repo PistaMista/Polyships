@@ -206,6 +206,9 @@ namespace Gameplay
             defender.gameObject.transform.SetParent(transform);
             defender.Initialize(data.defender);
 
+            attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
+            defender.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
+
             //LOG - REF
 
             for (int i = 0; i < data.effects.Length; i++)
@@ -240,8 +243,7 @@ namespace Gameplay
                 effects[i].AssignReferences(data.effects[i]);
             }
 
-            attacker.transform.position = Vector3.left * MiscellaneousVariables.it.boardDistanceFromCenter;
-            defender.transform.position = Vector3.right * MiscellaneousVariables.it.boardDistanceFromCenter;
+
 
             attacker.OnTurnResume();
             foreach (Effect effect in effects)
