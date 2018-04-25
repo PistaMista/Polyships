@@ -15,25 +15,45 @@ namespace Gameplay.Effects
                 return Mathf.CeilToInt(Battle.main.defender.board.tiles.GetLength(1) * boardCoverage);
             }
         }
-        public Tile torpedoDropPoint;
-        public Vector2Int torpedoHeading;
+        public struct Target
+        {
+            public Tile torpedoDropPoint;
+            public Vector2Int torpedoHeading;
+            public Target(Tile droppoint = null, Vector2Int heading = default(Vector2Int))
+            {
+                torpedoDropPoint = droppoint;
+                torpedoHeading = heading;
+            }
+
+            public static bool operator ==(Target x, Target y)
+            {
+                return x.torpedoDropPoint == y.torpedoDropPoint && x.torpedoHeading == y.torpedoHeading;
+            }
+
+            public static bool operator !=(Target x, Target y)
+            {
+                return x.torpedoDropPoint != y.torpedoDropPoint || x.torpedoHeading != y.torpedoHeading;
+            }
+        }
+
+        public Target target;
         protected override int[] GetMetadata()
         {
-            return new int[] { torpedoDropPoint.coordinates.x, torpedoDropPoint.coordinates.y, torpedoHeading.x, torpedoHeading.y };
+            return new int[] { target.torpedoDropPoint.coordinates.x, target.torpedoDropPoint.coordinates.y, target.torpedoHeading.x, target.torpedoHeading.y };
         }
 
         public override void AssignReferences(EffectData data)
         {
             base.AssignReferences(data);
-            torpedoDropPoint = Battle.main.defender.board.tiles[data.metadata[0], data.metadata[1]];
-            torpedoHeading = new Vector2Int(data.metadata[2], data.metadata[3]);
+            target.torpedoDropPoint = Battle.main.defender.board.tiles[data.metadata[0], data.metadata[1]];
+            target.torpedoHeading = new Vector2Int(data.metadata[2], data.metadata[3]);
         }
         public override void OnTurnEnd()
         {
             Board board = Battle.main.defender.board;
             Tile impact = null;
 
-            Tile currentPosition = torpedoDropPoint;
+            Tile currentPosition = target.torpedoDropPoint;
             int traveledDistance = 0;
             while (currentPosition != null)
             {
@@ -48,7 +68,7 @@ namespace Gameplay.Effects
                     Battle.main.attacker.hitTiles.Add(currentPosition);
                 }
 
-                Vector2Int newCoordinates = currentPosition.coordinates + torpedoHeading;
+                Vector2Int newCoordinates = currentPosition.coordinates + target.torpedoHeading;
                 currentPosition = (newCoordinates.x >= 0 && newCoordinates.x < board.tiles.GetLength(0) && newCoordinates.y >= 0 && newCoordinates.y < board.tiles.GetLength(1)) ? board.tiles[newCoordinates.x, newCoordinates.y] : null;
                 traveledDistance++;
 
@@ -96,18 +116,18 @@ namespace Gameplay.Effects
 
         protected override bool CheckGameplayRulesForAddition()
         {
-            return torpedoDropPoint != null && torpedoHeading != Vector2Int.zero; //Has to have a target.
+            return target.torpedoDropPoint != null && target.torpedoHeading != Vector2Int.zero; //Has to have a target.
         }
 
         protected override bool IsConflictingWithEffect(Effect effect)
         {
             //Conflicts with this player's torpedo cooldowns(but not reloads), artillery attacks and any other torpedo attacks with the same target player, line and direction.
-            return (effect is TorpedoCooldown && effect.targetedPlayer == visibleTo) || (effect.targetedPlayer == targetedPlayer && (effect is ArtilleryAttack || (effect is TorpedoAttack && (effect as TorpedoAttack).torpedoDropPoint == torpedoDropPoint && (effect as TorpedoAttack).torpedoHeading == torpedoHeading)));
+            return (effect is TorpedoCooldown && effect.targetedPlayer == visibleTo) || (effect.targetedPlayer == targetedPlayer && (effect is ArtilleryAttack || (effect is TorpedoAttack && (effect as TorpedoAttack).target == target)));
         }
 
         public override string GetDescription()
         {
-            if (torpedoDropPoint == null)
+            if (target.torpedoDropPoint == null)
             {
                 return "Fires torpedoes down a line of tiles. Pickup and drag into highlighted areas to select target line and direction.";
             }

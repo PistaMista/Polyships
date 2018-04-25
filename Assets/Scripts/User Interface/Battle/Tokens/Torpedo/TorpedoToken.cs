@@ -71,8 +71,7 @@ namespace BattleUIAgents.Tokens
         public override void ProcessExternalInputWhileHeld(Vector3 inputPosition)
         {
             base.ProcessExternalInputWhileHeld(inputPosition);
-            Gameplay.Tile torpedoDrop = null;
-            Vector2Int torpedoHeading = Vector2Int.zero;
+            TorpedoAttack.Target target = new TorpedoAttack.Target();
 
             Board board = Battle.main.defender.board;
             Vector3Int flatTileCoordinate = grid.GetFlatTileCoordinateAtPosition(inputPosition);
@@ -81,19 +80,19 @@ namespace BattleUIAgents.Tokens
             {
                 if (flatTileCoordinate.x >= 0 && flatTileCoordinate.x < board.tiles.GetLength(0))
                 {
-                    torpedoDrop = board.tiles[flatTileCoordinate.x, flatTileCoordinate.z > 0 ? board.tiles.GetLength(1) - 1 : 0];
-                    torpedoHeading = Vector2Int.up * (flatTileCoordinate.z > 0 ? -1 : 1);
+                    target.torpedoDropPoint = board.tiles[flatTileCoordinate.x, flatTileCoordinate.z > 0 ? board.tiles.GetLength(1) - 1 : 0];
+                    target.torpedoHeading = Vector2Int.up * (flatTileCoordinate.z > 0 ? -1 : 1);
                 }
                 else if (flatTileCoordinate.z >= 0 && flatTileCoordinate.z < board.tiles.GetLength(1))
                 {
-                    torpedoDrop = board.tiles[flatTileCoordinate.x > 0 ? board.tiles.GetLength(0) - 1 : 0, flatTileCoordinate.z];
-                    torpedoHeading = Vector2Int.right * (flatTileCoordinate.x > 0 ? -1 : 1);
+                    target.torpedoDropPoint = board.tiles[flatTileCoordinate.x > 0 ? board.tiles.GetLength(0) - 1 : 0, flatTileCoordinate.z];
+                    target.torpedoHeading = Vector2Int.right * (flatTileCoordinate.x > 0 ? -1 : 1);
                 }
             }
 
             if (effect == null)
             {
-                if (torpedoDrop != null && torpedoHeading != Vector2Int.zero)
+                if (target.torpedoDropPoint != null && target.torpedoHeading != Vector2Int.zero)
                 {
                     effect = Effect.CreateEffect(typeof(TorpedoAttack));
                     effect.visibleTo = Battle.main.attacker;
@@ -108,12 +107,11 @@ namespace BattleUIAgents.Tokens
             if (effect != null)
             {
                 TorpedoAttack attack = effect as TorpedoAttack;
-                if (torpedoDrop != null && torpedoHeading != Vector2Int.zero)
+                if (target.torpedoDropPoint != null && target.torpedoHeading != Vector2Int.zero)
                 {
-                    if (torpedoDrop != attack.torpedoDropPoint || torpedoHeading != attack.torpedoHeading)
+                    if (target != attack.target)
                     {
-                        attack.torpedoDropPoint = torpedoDrop;
-                        attack.torpedoHeading = torpedoHeading;
+                        attack.target = target;
                         RefreshEffectRepresentation();
                     }
                 }
@@ -137,11 +135,11 @@ namespace BattleUIAgents.Tokens
                 indicator.transform.SetParent(transform, false);
             }
 
-            bool horizontal = attack.torpedoHeading.x != 0;
-            bool directionPositive = attack.torpedoHeading.x + attack.torpedoHeading.y > 0;
+            bool horizontal = attack.target.torpedoHeading.x != 0;
+            bool directionPositive = attack.target.torpedoHeading.x + attack.target.torpedoHeading.y > 0;
 
             indicator.transform.rotation = Quaternion.Euler(0, horizontal ? (directionPositive ? 90 : 270) : (directionPositive ? 0 : 180), 0);
-            hookedPosition = attack.torpedoDropPoint.transform.position + new Vector3(-attack.torpedoHeading.x, MiscellaneousVariables.it.boardUIRenderHeight + height, -attack.torpedoHeading.y);
+            hookedPosition = attack.target.torpedoDropPoint.transform.position + new Vector3(-attack.target.torpedoHeading.x, MiscellaneousVariables.it.boardUIRenderHeight + height, -attack.target.torpedoHeading.y);
         }
     }
 }

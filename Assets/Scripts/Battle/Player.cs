@@ -75,7 +75,7 @@ namespace Gameplay
             aiEnabled = data.aiEnabled;
             if (aiEnabled)
             {
-                aiModule = (AIModule)ScriptableObject.CreateInstance("AIModule");
+                aiModule = (AIModule)ScriptableObject.CreateInstance(typeof(AIModule));
                 aiModule.owner = this;
                 aiModule.Initialize(data.aIModuleData);
             }
