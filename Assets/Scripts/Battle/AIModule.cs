@@ -9,6 +9,7 @@ using Gameplay.Ships;
 [Serializable]
 public struct Heatmap
 {
+    public const float tileDiscardanceValue = -10000f;
     public float[,] tiles;
     public float[] verticalLanes
     {
@@ -92,7 +93,8 @@ public struct Heatmap
             {
                 for (int y = 0; y < tiles.GetLength(1); y++)
                 {
-                    result += tiles[x, y];
+                    float heat = tiles[x, y];
+                    if (heat > tileDiscardanceValue) result += heat;
                 }
             }
 
@@ -382,7 +384,7 @@ namespace Gameplay
             //Cool the tiles which cannot be targeted
             foreach (Tile tile in owner.hitTiles)
             {
-                currentSituation.damagePotentialHeatmap.tiles[tile.coordinates.x, tile.coordinates.y] = Mathf.NegativeInfinity;
+                currentSituation.damagePotentialHeatmap.tiles[tile.coordinates.x, tile.coordinates.y] = Heatmap.tileDiscardanceValue;
             }
 
             //Assign other data
@@ -460,6 +462,8 @@ namespace Gameplay
             {
                 ArtilleryAttack attack = Effect.CreateEffect(typeof(ArtilleryAttack)) as ArtilleryAttack;
                 attack.target = final.artilleryTargets[i];
+                attack.targetedPlayer = Battle.main.defender;
+                attack.visibleTo = owner;
 
                 if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
             }
@@ -468,6 +472,8 @@ namespace Gameplay
             {
                 TorpedoAttack attack = Effect.CreateEffect(typeof(TorpedoAttack)) as TorpedoAttack;
                 attack.target = final.torpedoTargets[i];
+                attack.targetedPlayer = Battle.main.defender;
+                attack.visibleTo = owner;
 
                 if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
             }
@@ -476,6 +482,8 @@ namespace Gameplay
             {
                 AircraftRecon r = Effect.CreateEffect(typeof(AircraftRecon)) as AircraftRecon;
                 r.target = final.aircraftTargets[i];
+                r.targetedPlayer = Battle.main.defender;
+                r.visibleTo = owner;
 
                 if (!Effect.AddToQueue(r)) Destroy(r.gameObject);
             }
@@ -576,7 +584,8 @@ namespace Gameplay
         TorpedoAttack.Target[] GetTorpedoTargets(Situation situation, bool experimental, int limit)
         {
             Board defenderBoard = Battle.main.defender.board;
-            int[] possibleLanes = situation.damagePotentialHeatmap.GetExtremeLanes(Mathf.Min(situation.loadedTorpedoCount, limit) * (experimental ? 3 : 1));
+            limit = Mathf.Min(situation.loadedTorpedoCount, limit);
+            int[] possibleLanes = situation.damagePotentialHeatmap.GetExtremeLanes(limit * (experimental ? 3 : 1));
             List<TorpedoAttack.Target> possibleTargets = new List<TorpedoAttack.Target>();
             for (int i = 0; i < possibleLanes.Length; i++)
             {
@@ -602,7 +611,7 @@ namespace Gameplay
             if (experimental)
             {
                 List<TorpedoAttack.Target> actualTargets = new List<TorpedoAttack.Target>();
-                for (int i = 0; i < possibleTargets.Count; i++)
+                for (int i = 0; i < limit; i++)
                 {
                     TorpedoAttack.Target randomTarget = possibleTargets[UnityEngine.Random.Range(0, possibleTargets.Count)];
                     actualTargets.Add(randomTarget);

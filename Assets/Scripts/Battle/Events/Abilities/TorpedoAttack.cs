@@ -121,8 +121,8 @@ namespace Gameplay.Effects
 
         protected override bool IsConflictingWithEffect(Effect effect)
         {
-            //Conflicts with this player's torpedo cooldowns(but not reloads), artillery attacks and any other torpedo attacks with the same target player, line and direction.
-            return (effect is TorpedoCooldown && effect.targetedPlayer == visibleTo) || (effect.targetedPlayer == targetedPlayer && (effect is ArtilleryAttack || (effect is TorpedoAttack && (effect as TorpedoAttack).target == target)));
+            //Conflicts with this player's torpedo cooldowns(but not reloads) and any other torpedo attacks with the same target player, line and direction.
+            return (effect is TorpedoCooldown && effect.targetedPlayer == visibleTo) || (effect.targetedPlayer == targetedPlayer && ((effect is TorpedoAttack && (effect as TorpedoAttack).target == target)));
         }
 
         public override string GetDescription()
