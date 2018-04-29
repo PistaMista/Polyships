@@ -281,7 +281,7 @@ namespace Gameplay
         /// Finds effects of one type in the queue.
         /// </summary>
         /// <returns>Found effects.</returns>
-        public static Effect[] GetEffectsInQueue(Predicate<Effect> predicate, Type type, uint limit)
+        public static Effect[] GetEffectsInQueue(Predicate<Effect> predicate, Type type, int limit)
         {
             if (predicate == null)
             {

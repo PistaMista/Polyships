@@ -459,7 +459,19 @@ namespace Gameplay
 
             //Assign other data
             currentSituation.totalArtilleryCount = owner.arsenal.guns;
-            currentSituation.totalAircraftCount = owner.arsenal.aircraft;
+
+            currentSituation.aircraftCooldowns = new int[owner.arsenal.aircraft];
+            AircraftRecon[] deployedPlanes = System.Array.ConvertAll(Effect.GetEffectsInQueue(x => x.visibleTo == owner, typeof(AircraftRecon), owner.arsenal.aircraft), x => x as AircraftRecon);
+            for (int i = 0; i < deployedPlanes.Length; i++)
+            {
+                currentSituation.aircraftCooldowns[i] = deployedPlanes[i].duration;
+            }
+
+            Effect torpedoCooldown = Effect.GetEffectsInQueue(x => x.visibleTo == owner, typeof(TorpedoCooldown), 1).FirstOrDefault();
+            currentSituation.torpedoCooldown = torpedoCooldown ? torpedoCooldown.duration : 0;
+            Effect torpedoReload = Effect.GetEffectsInQueue(x => x.visibleTo == owner, typeof(TorpedoReload), 1).FirstOrDefault();
+            currentSituation.torpedoReload = torpedoReload ? torpedoReload.duration : 0;
+
             currentSituation.totalTorpedoCount = owner.arsenal.torpedoes;
             currentSituation.loadedTorpedoCount = owner.arsenal.loadedTorpedoes;
             currentSituation.destroyerDamage = 0;
@@ -563,7 +575,6 @@ namespace Gameplay
         /// <returns>Plans.</returns>
         Plan[] PlanForSituation(Situation situation, int planCount, float experimentationChance)
         {
-            TacticizeSituation(ref situation);
             Plan[] plans = new Plan[planCount];
 
             for (int i = 0; i < plans.Length; i++)
@@ -572,8 +583,11 @@ namespace Gameplay
                 int torpedoAttackCount = i - Mathf.CeilToInt(plans.Length / 2.0f) + 1; //Half of the plans will include torpedo attacks.
                 plans[i].situation = situation;
 
+                ApplyAPTH(ref plans[i]);
+
                 plans[i].artilleryTargets = GetArtilleryTargets(situation, experimental);
                 plans[i].torpedoTargets = torpedoAttackCount > 0 && situation.torpedoCooldown == 0 ? GetTorpedoTargets(situation, experimental, torpedoAttackCount) : new TorpedoAttack.Target[0];
+                plans[i].aircraftTargets = new int[0];
 
                 if (!experimental) experimentationChance *= 1.25f;
             }
@@ -640,14 +654,83 @@ namespace Gameplay
         }
 
         /// <summary>
-        /// Applies additional tactics to a situation for planning - where are likely positions of important enemy ships and which to focus.
+        /// Applies advanced predictive tactical heatmapping to a plan.
         /// </summary>
-        /// <param name="situation">Situation to upgrade.</param>
-        void TacticizeSituation(ref Situation situation)
+        /// <param name="plan">Plan to upgrade.</param>
+        void ApplyAPTH(ref Plan plan)
         {
-            Situation result = situation;
+            Heatmap heatmap = plan.situation.damagePotentialHeatmap;
+            int[] expectedShipDamage = new int[Battle.main.defender.board.ships.Length];
 
-            situation = result;
+            //Decide what tiles to focus first
+            Vector2Int[] sampleGroup = heatmap.GetExtremeTiles(4);
+
+            for (int i = 0; i < sampleGroup.Length; i++)
+            {
+                Vector2Int target = sampleGroup[i];
+                Vector2Int estabilishedDirection = Vector2Int.zero;
+
+                //Determine which direction the ship being shot is pointing
+                for (int x = 0; x < 4; x++)
+                {
+                    Vector2Int direction = new Vector2Int(x < 2 ? (x == 0 ? 1 : -1) : 0, x < 2 ? 0 : (x == 2 ? 1 : -1));
+                    Vector2Int candidate = target + direction;
+
+                    if (candidate.x >= 0 && candidate.y >= 0 && candidate.x < heatmap.tiles.GetLength(0) && candidate.y < heatmap.tiles.GetLength(1))
+                    {
+                        if (heatmap.IsTileHit(candidate))
+                        {
+                            estabilishedDirection = direction;
+                            break;
+                        }
+                    }
+                }
+
+                //Determine how long the ship being shot can be
+                int maximumShipLength = 0;
+                for (int directional = (estabilishedDirection.y == 0 ? 0 : 1); directional < (estabilishedDirection.x == 0 ? 2 : 1); directional++)
+                {
+                    int directionLength = 0;
+                    bool pastTarget = false;
+
+                    for (int d = 0; d < heatmap.tiles.GetLength(directional); d++)
+                    {
+                        Vector2Int examined = new Vector2Int(directional == 0 ? d : target.x, directional == 0 ? target.y : d);
+
+                        if (examined == target) pastTarget = true;
+
+                        if (heatmap.tiles[examined.x, examined.y] <= Heatmap.missConstant)
+                        {
+                            if (pastTarget) break;
+                            else directionLength = 0;
+                        }
+                        else directionLength++;
+                    }
+
+                    if (directionLength > maximumShipLength) maximumShipLength = directionLength;
+                }
+
+                //Determine what ship will probably get damaged by the shot
+                Ship receiver = null;
+                int receiverID = 0;
+
+                for (int shipID = 0; shipID < plan.situation.expectedEnemyShipHealth.Length; shipID++)
+                {
+                    int health = plan.situation.expectedEnemyShipHealth[shipID];
+                    if (health > 0)
+                    {
+                        Ship candidate = Battle.main.defender.board.ships[shipID];
+                        if (candidate.maxHealth > (receiver != null ? receiver.maxHealth : 0) && candidate.maxHealth <= maximumShipLength)
+                        {
+                            receiver = candidate;
+                            receiverID = shipID;
+                        }
+                    }
+                }
+
+
+
+            }
         }
 
         Tile[] GetArtilleryTargets(Situation situation, bool experimental)
@@ -828,9 +911,9 @@ namespace Gameplay
                     owner.board.SelectTileForPlacement(bestChoice);
                 }
 
-                if (ship.type == ShipType.CRUISER)
+                if (ship is Cruiser)
                 {
-                    ((Cruiser)ship).ConcealAlreadyPlacedShipsInConcealmentArea();
+                    (ship as Cruiser).ConcealAlreadyPlacedShipsInConcealmentArea();
                 }
 
                 if (owner.board.placementInfo.selectableTiles.Count == 0)
