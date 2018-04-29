@@ -52,7 +52,7 @@ namespace BattleUIAgents.Agents
                     continue;
                 }
 
-                if (toAdd[0].type == ship.type && forceIdenticalShipTypesToGroupTogether)
+                if (toAdd[0].GetType() == ship.GetType() && forceIdenticalShipTypesToGroupTogether)
                 {
                     toAdd.Add(ship);
                 }

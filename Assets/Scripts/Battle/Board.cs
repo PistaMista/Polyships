@@ -72,7 +72,7 @@ namespace Gameplay
                 ships = new Ship[data.ships.Length];
                 for (int i = 0; i < data.ships.Length; i++)
                 {
-                    Ship ship = Instantiate(MiscellaneousVariables.it.shipPrefabs[(int)data.ships[i].type]).GetComponent<Ship>();
+                    Ship ship = Instantiate(MiscellaneousVariables.it.shipPrefabs[data.ships[i].prefabIndex]).GetComponent<Ship>();
                     ship.transform.SetParent(transform);
                     ship.Initialize(data.ships[i]);
                     ships[i] = ship;

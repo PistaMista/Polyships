@@ -5,16 +5,6 @@ using System;
 using Gameplay.Ships;
 using BattleUIAgents.Base;
 
-public enum ShipType
-{
-    BATTLESHIP,
-    CRUISER,
-    GUNBOAT,
-    DESTROYER,
-    CARRIER,
-    PATROLBOAT
-}
-
 namespace Gameplay
 {
     public class Ship : BattleBehaviour
@@ -27,7 +17,7 @@ namespace Gameplay
             public int[,] tiles;
             public int health;
             public int concealedBy;
-            public ShipType type;
+            public int prefabIndex;
             public int[] metadata;
 
             public static implicit operator ShipData(Ship ship)
@@ -44,7 +34,7 @@ namespace Gameplay
 
                 result.health = ship.health;
                 result.concealedBy = ship.concealedBy ? ship.concealedBy.index : -1;
-                result.type = ship.type;
+                result.prefabIndex = ship.prefabIndex;
                 result.metadata = ship.GetMetadata();
                 return result;
             }
@@ -56,7 +46,7 @@ namespace Gameplay
         public int health;
         public int maxHealth;
         public Cruiser concealedBy;
-        public ShipType type;
+        public int prefabIndex;
         [Range(0, 5)]
         public int concealmentAIValue;
 
@@ -67,7 +57,7 @@ namespace Gameplay
             //tiles - REF
             health = data.health;
             //concealedBy - REF
-            type = data.type;
+            prefabIndex = data.prefabIndex;
         }
 
         public virtual void AssignReferences(ShipData data)

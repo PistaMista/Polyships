@@ -146,9 +146,9 @@ namespace BattleUIAgents.UI
             //CONCEALMENT
             foreach (Ship ship in player.board.placementInfo.placedShips)
             {
-                if (ship.type == ShipType.CRUISER)
+                if (ship is Cruiser)
                 {
-                    Cruiser cruiser = (Cruiser)ship;
+                    Cruiser cruiser = ship as Cruiser;
                     foreach (Gameplay.Tile tile in cruiser.concealmentArea)
                     {
                         if (!player.board.placementInfo.occupiedTiles.Contains(tile) && !player.board.placementInfo.invalidTiles.Contains(tile) && !player.board.placementInfo.selectedTiles.Contains(tile))
