@@ -16,7 +16,7 @@ namespace Gameplay
             public int index;
             public Board.BoardData board;
             public bool aiEnabled;
-            public AIModule.AIModuleData aIModuleData;
+            public AI.AIModuleData aIModuleData;
             public float[,,] flag;
             public int[,] hitTiles;
             public static implicit operator PlayerData(Player player)
@@ -25,7 +25,7 @@ namespace Gameplay
                 result.index = player.index;
                 result.board = player.board;
                 result.aiEnabled = player.aiEnabled;
-                result.aIModuleData = player.aiEnabled ? player.aiModule : new AIModule.AIModuleData();
+                result.aIModuleData = player.aiEnabled ? player.aiModule : new AI.AIModuleData();
                 result.flag = new float[player.flag.GetLength(0), player.flag.GetLength(1), 3];
                 for (int x = 0; x < player.flag.GetLength(0); x++)
                 {
@@ -64,7 +64,7 @@ namespace Gameplay
         }
 
 
-        public AIModule aiModule;
+        public AI aiModule;
         public void Initialize(PlayerData data)
         {
             index = data.index;
@@ -75,7 +75,7 @@ namespace Gameplay
             aiEnabled = data.aiEnabled;
             if (aiEnabled)
             {
-                aiModule = (AIModule)ScriptableObject.CreateInstance(typeof(AIModule));
+                aiModule = (AI)ScriptableObject.CreateInstance(typeof(AI));
                 aiModule.owner = this;
                 aiModule.Initialize(data.aIModuleData);
             }

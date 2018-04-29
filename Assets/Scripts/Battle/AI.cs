@@ -9,7 +9,8 @@ using Gameplay.Ships;
 [Serializable]
 public struct Heatmap
 {
-    public const float tileDiscardanceValue = -10000f;
+    public const float hitValue = -10000;
+    public const float missValue = -12000;
     public float[,] tiles;
     public float[] verticalLanes
     {
@@ -94,7 +95,7 @@ public struct Heatmap
                 for (int y = 0; y < tiles.GetLength(1); y++)
                 {
                     float heat = tiles[x, y];
-                    if (heat > tileDiscardanceValue) result += heat;
+                    if (heat > hitValue) result += heat;
                 }
             }
 
@@ -226,6 +227,16 @@ public struct Heatmap
         return result;
     }
 
+    public bool IsTileHit(Vector2Int coordinates)
+    {
+        return IsTileHit(tiles[coordinates.x, coordinates.y]);
+    }
+
+    public bool IsTileHit(float tileHeat)
+    {
+        return tileHeat > missValue && tileHeat <= hitValue;
+    }
+
     public Vector2Int[] GetExtremeTiles(int count = int.MaxValue, float threshold = float.MaxValue, bool coldest = false)
     {
         return Utilities.GetExtremeArrayElements(tiles, count, coldest, threshold);
@@ -244,7 +255,7 @@ public struct Heatmap
 
 namespace Gameplay
 {
-    public class AIModule : ScriptableObject
+    public class AI : ScriptableObject
     {
         [Serializable]
         public struct AIModuleData
@@ -254,7 +265,7 @@ namespace Gameplay
             public float agressivity;
             public float reconResultWeight;
             public float reconResultMemory;
-            public static implicit operator AIModuleData(AIModule module)
+            public static implicit operator AIModuleData(AI module)
             {
                 AIModuleData result;
                 result.airReconMap = module.airReconMap;
@@ -384,7 +395,7 @@ namespace Gameplay
             //Cool the tiles which cannot be targeted
             foreach (Tile tile in owner.hitTiles)
             {
-                currentSituation.damagePotentialHeatmap.tiles[tile.coordinates.x, tile.coordinates.y] = Heatmap.tileDiscardanceValue;
+                currentSituation.damagePotentialHeatmap.tiles[tile.coordinates.x, tile.coordinates.y] = tile.hit ? Heatmap.hitValue : Heatmap.missValue;
             }
 
             //Assign other data
@@ -627,7 +638,7 @@ namespace Gameplay
         }
 
         /// <summary>
-        /// Predicts the results a plan will have - what ships will be destroyed/hit, how much ammo is consumed, reloads etc.
+        /// Predicts the results an action will have - what ships will be destroyed/hit, how much ammo is consumed, reloads etc.
         /// </summary>
         /// <param name="plan"></param>
         /// <returns></returns>
