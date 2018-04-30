@@ -317,8 +317,59 @@ namespace Gameplay
         struct Situation
         {
             public int time;
-            public Heatmap damagePotentialHeatmap;
+            public Heatmap theoreticalDamageMap;
+            public bool[,,] actualDamageMap;
+            public int[] enemyShipImportance;
             public int[] expectedEnemyShipHealth;
+            public void ConstructTheoreticalDamageMap()
+            {
+                //Add heat for hit tiles
+                foreach (Tile hit in owner.hitTiles)
+                {
+                    if (hit.containedShip != null)
+                    {
+                        if (hit.containedShip.health > 0)
+                        {
+                            currentSituation.theoreticalDamageMap.Heat(hit.coordinates, 10.0f, 1.0f - recklessness);
+                        }
+                    }
+                    else
+                    {
+                        currentSituation.theoreticalDamageMap.Heat(hit.coordinates, -2.0f, 1.0f - recklessness);
+                    }
+                }
+
+                //Use the air recon results to enhance chances of hitting
+                AircraftRecon[] recon = Array.ConvertAll(Effect.GetEffectsInQueue(x => { return x.targetedPlayer != owner; }, typeof(AircraftRecon), int.MaxValue), x => { return x as AircraftRecon; });
+
+                for (int i = 0; i < recon.GetLength(0); i++)
+                {
+                    AircraftRecon line = recon[i];
+
+                    int linePosition = (line.target % (Battle.main.defender.board.tiles.GetLength(0) - 1));
+                    bool lineVertical = line.target == linePosition;
+
+                    for (int x = lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; x < (lineVertical ? (line.result != 1 ? linePosition + 1 : currentSituation.theoreticalDamageMap.tiles.GetLength(0)) : currentSituation.theoreticalDamageMap.tiles.GetLength(0)); x++)
+                    {
+                        for (int y = !lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; y < (lineVertical ? (line.result != 1 ? linePosition + 1 : currentSituation.theoreticalDamageMap.tiles.GetLength(1)) : currentSituation.theoreticalDamageMap.tiles.GetLength(1)); y++)
+                        {
+                            airReconMap.Heat(new Vector2Int(x, y), 1.0f / (0.2f + reconResultMemory), 1);
+                        }
+                    }
+                }
+
+                airReconMap = airReconMap.GetNormalizedMap();
+
+                //Blur the map
+                currentSituation.theoreticalDamageMap = currentSituation.theoreticalDamageMap.GetBlurredMap(agressivity);
+                currentSituation.theoreticalDamageMap += airReconMap * reconResultWeight;
+
+                //Cool the tiles which cannot be targeted
+                foreach (Tile tile in owner.hitTiles)
+                {
+                    currentSituation.theoreticalDamageMap.tiles[tile.coordinates.x, tile.coordinates.y] = tile.hit ? Heatmap.hitConstant : Heatmap.missConstant;
+                }
+            }
 
 
             public float pressure;
@@ -405,54 +456,13 @@ namespace Gameplay
             //Construct current situation heatmap
             Board target = Battle.main.defender.board;
 
-            //Construct a situation heatmap
-            currentSituation.damagePotentialHeatmap = new Heatmap(target.tiles.GetLength(0), target.tiles.GetLength(1));
+            //Construct a situation damage map
+            currentSituation.theoreticalDamageMap = new Heatmap();
+            currentSituation.actualDamageMap = new bool[2, target.tiles.GetLength(0), target.tiles.GetLength(1)];
 
-            //Add heat for hit tiles
-            foreach (Tile hit in owner.hitTiles)
-            {
-                if (hit.containedShip != null)
-                {
-                    if (hit.containedShip.health > 0)
-                    {
-                        currentSituation.damagePotentialHeatmap.Heat(hit.coordinates, 10.0f, 1.0f - recklessness);
-                    }
-                }
-                else
-                {
-                    currentSituation.damagePotentialHeatmap.Heat(hit.coordinates, -2.0f, 1.0f - recklessness);
-                }
-            }
-
-            //Use the air recon results to enhance chances of hitting
-            AircraftRecon[] recon = Array.ConvertAll(Effect.GetEffectsInQueue(x => { return x.targetedPlayer != owner; }, typeof(AircraftRecon), int.MaxValue), x => { return x as AircraftRecon; });
-
-            for (int i = 0; i < recon.GetLength(0); i++)
-            {
-                AircraftRecon line = recon[i];
-
-                int linePosition = (line.target % (Battle.main.defender.board.tiles.GetLength(0) - 1));
-                bool lineVertical = line.target == linePosition;
-
-                for (int x = lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; x < (lineVertical ? (line.result != 1 ? linePosition + 1 : currentSituation.damagePotentialHeatmap.tiles.GetLength(0)) : currentSituation.damagePotentialHeatmap.tiles.GetLength(0)); x++)
-                {
-                    for (int y = !lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; y < (lineVertical ? (line.result != 1 ? linePosition + 1 : currentSituation.damagePotentialHeatmap.tiles.GetLength(1)) : currentSituation.damagePotentialHeatmap.tiles.GetLength(1)); y++)
-                    {
-                        airReconMap.Heat(new Vector2Int(x, y), 1.0f / (0.2f + reconResultMemory), 1);
-                    }
-                }
-            }
-
-            airReconMap = airReconMap.GetNormalizedMap();
-
-            //Blur the map
-            currentSituation.damagePotentialHeatmap = currentSituation.damagePotentialHeatmap.GetBlurredMap(agressivity);
-            currentSituation.damagePotentialHeatmap += airReconMap * reconResultWeight;
-
-            //Cool the tiles which cannot be targeted
             foreach (Tile tile in owner.hitTiles)
             {
-                currentSituation.damagePotentialHeatmap.tiles[tile.coordinates.x, tile.coordinates.y] = tile.hit ? Heatmap.hitConstant : Heatmap.missConstant;
+                currentSituation.actualDamageMap[tile.containedShip != null ? 1 : 0, tile.coordinates.x, tile.coordinates.y] = true;
             }
 
             //Assign other data
@@ -529,7 +539,7 @@ namespace Gameplay
             Situation outcome = PredictSituation(plan);
             float rating = 0;
 
-            rating -= outcome.damagePotentialHeatmap.averageHeat;
+            rating -= outcome.theoreticalDamageMap.averageHeat;
             rating -= outcome.torpedoCooldown + outcome.torpedoReload;
 
             if (progress < planning.Length)
@@ -553,6 +563,7 @@ namespace Gameplay
         /// <returns>Plans.</returns>
         Plan[] PlanForSituation(Situation situation, int planCount, float experimentationChance)
         {
+            situation.ConstructTheoreticalDamageMap();
             Plan[] plans = new Plan[planCount];
 
             for (int i = 0; i < plans.Length; i++)
@@ -615,17 +626,15 @@ namespace Gameplay
             }
 
             //Predict ship hits
-            for (int i = 0; i < plan.expectedShipDamage.Length; i++)
-            {
-                outcome.expectedEnemyShipHealth[i] -= plan.expectedShipDamage[i];
-            }
+            // for (int i = 0; i < plan.expectedShipDamage.Length; i++)
+            // {
+            //     outcome.expectedEnemyShipHealth[i] -= plan.expectedShipDamage[i];
+            // }
 
-            for (int i = 0; i < plan.artilleryTargets.Length; i++)
-            {
-                outcome.damagePotentialHeatmap.Heat(plan.artilleryTargets[i].coordinates, -1.0f, 0.5f);
-            }
-
-            outcome.damagePotentialHeatmap = outcome.damagePotentialHeatmap.GetNormalizedMap();
+            // for (int i = 0; i < plan.artilleryTargets.Length; i++)
+            // {
+            //     outcome.theoreticalDamageMap.Heat(plan.artilleryTargets[i].coordinates, -1.0f, 0.5f);
+            // }
 
             return outcome;
         }
@@ -636,7 +645,7 @@ namespace Gameplay
         /// <param name="plan">Plan to upgrade.</param>
         void ApplyAPTH(ref Plan plan)
         {
-            Heatmap heatmap = plan.situation.damagePotentialHeatmap;
+            Heatmap heatmap = plan.situation.theoreticalDamageMap;
             int[] expectedShipDamage = new int[Battle.main.defender.board.ships.Length];
 
             //Decide what tiles to focus first
@@ -712,7 +721,7 @@ namespace Gameplay
 
         Tile[] GetArtilleryTargets(Situation situation, bool experimental)
         {
-            Vector2Int[] possiblePositions = situation.damagePotentialHeatmap.GetExtremeTiles(situation.totalArtilleryCount * (experimental ? 4 : 1));
+            Vector2Int[] possiblePositions = situation.theoreticalDamageMap.GetExtremeTiles(situation.totalArtilleryCount * (experimental ? 4 : 1));
             List<Tile> possibleTargets = new List<Tile>();
             for (int i = 0; i < possiblePositions.Length; i++)
             {
@@ -742,7 +751,7 @@ namespace Gameplay
         {
             Board defenderBoard = Battle.main.defender.board;
             limit = Mathf.Min(situation.loadedTorpedoCount, limit);
-            int[] possibleLanes = situation.damagePotentialHeatmap.GetExtremeLanes(limit * (experimental ? 3 : 1));
+            int[] possibleLanes = situation.theoreticalDamageMap.GetExtremeLanes(limit * (experimental ? 3 : 1));
             List<TorpedoAttack.Target> possibleTargets = new List<TorpedoAttack.Target>();
             for (int i = 0; i < possibleLanes.Length; i++)
             {
@@ -750,7 +759,7 @@ namespace Gameplay
                 int lane = possibleLanes[i];
                 if (lane != -1)
                 {
-                    int position = lane % situation.damagePotentialHeatmap.tiles.GetLength(0);
+                    int position = lane % situation.theoreticalDamageMap.tiles.GetLength(0);
 
                     bool horizontal = position < lane;
                     bool reverse = UnityEngine.Random.Range(0, 2) == 0;
