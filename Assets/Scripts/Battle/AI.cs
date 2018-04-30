@@ -330,7 +330,6 @@ namespace Gameplay
             public int torpedoReload;
             public int torpedoCooldown;
             public int destroyerDamage;
-
         }
 
         struct Plan
@@ -340,8 +339,6 @@ namespace Gameplay
             public Tile[] artilleryTargets;
             public TorpedoAttack.Target[] torpedoTargets;
             public int[] aircraftTargets;
-
-            public int[] expectedShipDamage;
         }
 
         public Heatmap airReconMap;
@@ -445,6 +442,7 @@ namespace Gameplay
                     }
                 }
             }
+
             airReconMap = airReconMap.GetNormalizedMap();
 
             //Blur the map
@@ -532,27 +530,7 @@ namespace Gameplay
             float rating = 0;
 
             rating -= outcome.damagePotentialHeatmap.averageHeat;
-
-            for (int i = 0; i < plan.expectedShipDamage.Length; i++)
-            {
-                int damageDone = plan.expectedShipDamage[i];
-                if (damageDone > 0)
-                {
-                    Ship damagedShip = Battle.main.defender.board.ships[i];
-                    float multiplier = 1.0f;
-
-                    if (damagedShip is Destroyer || damagedShip is Carrier)
-                    {
-                        multiplier = 3.0f;
-                    }
-                    else if (damagedShip is Battleship || damagedShip is Cruiser)
-                    {
-                        multiplier = 2.0f;
-                    }
-
-                    rating += damageDone * multiplier;
-                }
-            }
+            rating -= outcome.torpedoCooldown + outcome.torpedoReload;
 
             if (progress < planning.Length)
             {
@@ -582,8 +560,6 @@ namespace Gameplay
                 bool experimental = UnityEngine.Random.Range(0, 100) < experimentationChance;
                 int torpedoAttackCount = i - Mathf.CeilToInt(plans.Length / 2.0f) + 1; //Half of the plans will include torpedo attacks.
                 plans[i].situation = situation;
-
-                ApplyAPTH(ref plans[i]);
 
                 plans[i].artilleryTargets = GetArtilleryTargets(situation, experimental);
                 plans[i].torpedoTargets = torpedoAttackCount > 0 && situation.torpedoCooldown == 0 ? GetTorpedoTargets(situation, experimental, torpedoAttackCount) : new TorpedoAttack.Target[0];
@@ -650,6 +626,7 @@ namespace Gameplay
             }
 
             outcome.damagePotentialHeatmap = outcome.damagePotentialHeatmap.GetNormalizedMap();
+
             return outcome;
         }
 
@@ -663,7 +640,7 @@ namespace Gameplay
             int[] expectedShipDamage = new int[Battle.main.defender.board.ships.Length];
 
             //Decide what tiles to focus first
-            Vector2Int[] sampleGroup = heatmap.GetExtremeTiles(4);
+            Vector2Int[] sampleGroup = heatmap.GetExtremeTiles();
 
             for (int i = 0; i < sampleGroup.Length; i++)
             {
