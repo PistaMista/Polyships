@@ -308,68 +308,32 @@ namespace Gameplay
         struct Situation
         {
             public int time;
-            public Heatmap theoreticalDamageMap;
+
+            public bool[,,] certaintyMap;
+            public Heatmap[] shipPositionMaps;
             public Heatmap reconMap;
-            public bool[,,] actualDamageMap;
-            public int[,] shipPositionMap;
-            public int[] enemyShipImportance;
+            public Heatmap priorityMap
+            {
+                get
+                {
+
+                }
+            }
+
+            public float rating
+            {
+                get
+                {
+                    float result = 0.0f;
+
+                    result += shipPositionMaps.Average(x => x.averageHeat);
+                    result -= torpedoCooldown + torpedoReload;
+
+                    return result;
+                }
+            }
+
             public int[] expectedEnemyShipHealth;
-            public void ConstructTheoreticalDamageMap(Player owner, float recklessness, float agression, float reconValue, float reconMemory)
-            {
-                //Add heat for hit tiles
-                for (int hit = 0; hit < 2; hit++)
-                {
-                    for (int x = 0; x < actualDamageMap.GetLength(1); x++)
-                    {
-                        for (int y = 0; y < actualDamageMap.GetLength(2); y++)
-                        {
-                            if (actualDamageMap[hit, x, y] && (shipPositionMap[x, y] >= 0 && expectedEnemyShipHealth[shipPositionMap[x, y]] > 0))
-                            {
-                                theoreticalDamageMap.Heat(new Vector2Int(x, y), hit == 1 ? hitTileHeat : missedTileHeat, 1.00f - recklessness);
-                            }
-                        }
-                    }
-                }
-
-                //Use the air recon results to enhance chances of hitting
-                AircraftRecon[] recon = Array.ConvertAll(Effect.GetEffectsInQueue(x => { return x.targetedPlayer != owner; }, typeof(AircraftRecon), int.MaxValue), x => { return x as AircraftRecon; });
-
-                for (int i = 0; i < recon.GetLength(0); i++)
-                {
-                    AircraftRecon line = recon[i];
-
-                    int linePosition = (line.target % (Battle.main.defender.board.tiles.GetLength(0) - 1));
-                    bool lineVertical = line.target == linePosition;
-
-                    for (int x = lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; x < (lineVertical ? (line.result != 1 ? linePosition + 1 : theoreticalDamageMap.tiles.GetLength(0)) : theoreticalDamageMap.tiles.GetLength(0)); x++)
-                    {
-                        for (int y = !lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; y < (lineVertical ? (line.result != 1 ? linePosition + 1 : theoreticalDamageMap.tiles.GetLength(1)) : theoreticalDamageMap.tiles.GetLength(1)); y++)
-                        {
-                            reconMap.Heat(new Vector2Int(x, y), 1.0f / (0.2f + reconMemory), 1);
-                        }
-                    }
-                }
-
-                reconMap = reconMap.GetNormalizedMap();
-
-                //Blur the map
-                theoreticalDamageMap = theoreticalDamageMap.GetBlurredMap(agression);
-                theoreticalDamageMap += reconMap * reconValue;
-
-                //Cool the tiles which cannot be targeted
-                for (int x = 0; x < actualDamageMap.GetLength(1); x++)
-                {
-                    for (int y = 0; y < actualDamageMap.GetLength(2); y++)
-                    {
-                        if (actualDamageMap[0, x, y]) theoreticalDamageMap.tiles[x, y] = Heatmap.invalidTileHeat;
-                    }
-                }
-            }
-
-            public void CalculateShipImportance()
-            {
-                enemyShipImportance = new int[Battle.main.defender.board.ships.Length];
-            }
 
 
             public float pressure;
@@ -385,23 +349,80 @@ namespace Gameplay
 
         struct Plan
         {
-            public Situation situation;
+            public static Plan[] GetSituationStrategy(Situation situation, int[] sequence)
+            {
+                Plan[] results = new Plan[sequence[0]];
+
+                sequence = sequence.Skip(1).ToArray();
+
+                for (int i = 0; i < results.Length; i++)
+                {
+                    float torpedoPart = Mathf.Clamp01((i - results.Length / 2.0f) / (results.Length / 2.0f));
+                    results[i] = new Plan(situation, Mathf.CeilToInt(torpedoPart * situation.loadedTorpedoCount), i, sequence);
+                }
+
+                return results;
+            }
+
+            Plan(Situation situation, int maximumTorpedoCount, int variability, int[] sequence)
+            {
+                this = new Plan();
+
+                pre_situation = situation;
+                TargetArtillery();
+                TargetTorpedoes();
+                TargetAircraft();
+
+                PredictOutcome();
+
+                if (successives.Length > 0) successives = GetSituationStrategy(post_situation, sequence); else successives = new Plan[0];
+            }
+            void TargetArtillery()
+            {
+
+            }
+
+            void TargetTorpedoes()
+            {
+
+            }
+
+            void TargetAircraft()
+            {
+
+            }
+
+            void PredictOutcome()
+            {
+
+            }
+            public Situation pre_situation;
+            public Situation post_situation;
+            public Plan[] successives;
+            public float rating
+            {
+                get
+                {
+                    float result = post_situation.rating;
+                    for (int i = 0; i < successives.Length; i++)
+                    {
+                        result += successives[i].rating;
+                    }
+
+                    return result;
+                }
+            }
 
             public Tile[] artilleryTargets;
             public TorpedoAttack.Target[] torpedoTargets;
             public int[] aircraftTargets;
         }
 
-        public Heatmap airReconMap;
-        public float recklessness;
-        public float agressivity;
-        public float reconMemory; //The air recon heatmap will be multiplied by this every turn
-        public float reconValue; //How much will the AI use the recon results
         void Attack()
         {
             Situation currentSituation = ReconstructCurrentSituation(); //1. Reconstruct the current situation map
-            Plan[] plans = PlanForSituation(currentSituation, 6, 100f - currentSituation.pressure); //2. Make several plans
-            ExecutePlan(plans.OrderByDescending(x => RatePlan(x, new int[] { 2, 2, 2 })).First()); //3. Execute the best plan
+            Plan[] plans = Plan.GetSituationStrategy(currentSituation, new int[] { 6, 2, 2, 2 });
+            ExecutePlan(plans.OrderByDescending(x => x.rating).First()); //3. Execute the best plan
         }
 
         /// <summary>
@@ -458,17 +479,17 @@ namespace Gameplay
 
             //Construct the base maps
             Vector2Int boardDimensions = new Vector2Int(target.tiles.GetLength(0), target.tiles.GetLength(1));
-            currentSituation.theoreticalDamageMap = new Heatmap(boardDimensions.x, boardDimensions.y);
+            currentSituation.probabilityMap = new Heatmap(boardDimensions.x, boardDimensions.y);
             currentSituation.reconMap = new Heatmap(boardDimensions.x, boardDimensions.y);
 
-            currentSituation.actualDamageMap = new bool[2, boardDimensions.x, boardDimensions.y];
+            currentSituation.certaintyMap = new bool[2, boardDimensions.x, boardDimensions.y];
             currentSituation.destroyedTileMap = new bool[boardDimensions.x, boardDimensions.y];
 
             currentSituation.enemyShipImportance = new int[Battle.main.defender.board.ships.Length];
 
             foreach (Tile tile in owner.hitTiles)
             {
-                currentSituation.actualDamageMap[tile.containedShip != null ? 1 : 0, tile.coordinates.x, tile.coordinates.y] = true;
+                currentSituation.certaintyMap[tile.containedShip != null ? 1 : 0, tile.coordinates.x, tile.coordinates.y] = true;
             }
 
             //Assign other data
@@ -532,272 +553,6 @@ namespace Gameplay
             currentSituation.pressure += currentSituation.destroyerDamage * 20;
 
             return currentSituation;
-        }
-
-        /// <summary>
-        /// Rates a plan based on how effective it is and what can be done afterwards.
-        /// </summary>
-        /// <param name="plan">The plan to rate.</param>
-        /// <param name="planning">Planning - specifies number of options considered at each turn ahead.</param>
-        /// <returns>How effective a plan is.</returns>
-        float RatePlan(Plan plan, int[] planning, int progress = 0)
-        {
-            Situation outcome = PredictSituation(plan);
-            float rating = 0;
-
-            rating -= outcome.theoreticalDamageMap.averageHeat;
-            rating -= outcome.torpedoCooldown + outcome.torpedoReload;
-
-            if (progress < planning.Length)
-            {
-                Plan[] followups = PlanForSituation(outcome, planning[progress], 100f - outcome.pressure);
-                for (int i = 0; i < planning[progress]; i++)
-                {
-                    rating += RatePlan(followups[i], planning, progress + 1);
-                }
-            }
-
-            return rating;
-        }
-
-        /// <summary>
-        /// Creates several plans - the sole purpose is to cause as much damage as possible using only guns and both guns and torpedoes.
-        /// </summary>
-        /// <param name="situation">Source situation.</param>
-        /// <param name="planCount">Number of plans to create.</param>
-        /// <param name="experimentationChance">Chance that a plan will be created randomly.</param>
-        /// <returns>Plans.</returns>
-        Plan[] PlanForSituation(Situation situation, int planCount, float experimentationChance)
-        {
-            situation.CalculateShipImportance();
-            situation.ConstructTheoreticalDamageMap(owner, recklessness, agressivity, reconValue, reconMemory);
-
-            Plan[] plans = new Plan[planCount];
-
-            for (int i = 0; i < plans.Length; i++)
-            {
-                bool experimental = UnityEngine.Random.Range(0, 100) < experimentationChance;
-                int torpedoAttackCount = i - Mathf.CeilToInt(plans.Length / 2.0f) + 1; //Half of the plans will include torpedo attacks.
-                plans[i].situation = situation;
-
-                plans[i].artilleryTargets = GetArtilleryTargets(situation, experimental);
-                plans[i].torpedoTargets = torpedoAttackCount > 0 && situation.torpedoCooldown == 0 ? GetTorpedoTargets(situation, experimental, torpedoAttackCount) : new TorpedoAttack.Target[0];
-                plans[i].aircraftTargets = new int[0];
-
-                if (!experimental) experimentationChance *= 1.25f;
-            }
-
-            return plans;
-        }
-
-        /// <summary>
-        /// Predicts the results an action will have - what ships will be destroyed/hit, how much ammo is consumed, reloads etc.
-        /// </summary>
-        /// <param name="plan"></param>
-        /// <returns></returns>
-        Situation PredictSituation(Plan plan)
-        {
-            Situation outcome = plan.situation;
-
-            //Calculate basic data
-            outcome.time++;
-            int firedTorpedoes = plan.torpedoTargets.Length;
-            if (firedTorpedoes > 0)
-            {
-                outcome.loadedTorpedoCount -= firedTorpedoes;
-                outcome.totalTorpedoCount -= firedTorpedoes;
-
-                outcome.torpedoReload = Effect.RetrieveEffectPrefab(typeof(TorpedoReload)).duration;
-                outcome.torpedoCooldown = (Effect.RetrieveEffectPrefab(typeof(TorpedoCooldown)) as TorpedoCooldown).durations[firedTorpedoes];
-            }
-            else
-            {
-                if (outcome.torpedoCooldown > 0) outcome.torpedoCooldown--;
-                else
-                {
-                    outcome.torpedoReload--;
-                    if (outcome.torpedoReload == 0)
-                    {
-                        outcome.loadedTorpedoCount = Mathf.Clamp(outcome.loadedTorpedoCount + 1, 0, outcome.totalTorpedoCount);
-                        outcome.torpedoReload = Effect.RetrieveEffectPrefab(typeof(TorpedoReload)).duration;
-                    }
-                }
-            }
-
-            AircraftRecon aircraftPrefab = Effect.RetrieveEffectPrefab(typeof(AircraftRecon)) as AircraftRecon;
-            for (int i = 0; i < plan.aircraftTargets.Length; i++)
-            {
-                for (int x = 0; x < outcome.aircraftCooldowns.Length; x++)
-                {
-                    if (outcome.aircraftCooldowns[x] == 0) outcome.aircraftCooldowns[x] = aircraftPrefab.duration;
-                }
-            }
-
-            //Predict ship hits
-            // for (int i = 0; i < plan.expectedShipDamage.Length; i++)
-            // {
-            //     outcome.expectedEnemyShipHealth[i] -= plan.expectedShipDamage[i];
-            // }
-
-            // for (int i = 0; i < plan.artilleryTargets.Length; i++)
-            // {
-            //     outcome.theoreticalDamageMap.Heat(plan.artilleryTargets[i].coordinates, -1.0f, 0.5f);
-            // }
-
-            return outcome;
-        }
-
-        // / <summary>
-        // / Applies advanced predictive tactical heatmapping to a plan.
-        // / </summary>
-        // / <param name="plan">Plan to upgrade.</param>
-        // void ApplyAPTH(ref Plan plan)
-        // {
-        //     Heatmap heatmap = plan.situation.theoreticalDamageMap;
-        //     int[] expectedShipDamage = new int[Battle.main.defender.board.ships.Length];
-
-        //     //Decide what tiles to focus first
-        //     Vector2Int[] sampleGroup = heatmap.GetExtremeTiles();
-
-        //     for (int i = 0; i < sampleGroup.Length; i++)
-        //     {
-        //         Vector2Int target = sampleGroup[i];
-        //         Vector2Int estabilishedDirection = Vector2Int.zero;
-
-        //         //Determine which direction the ship being shot is pointing
-        //         for (int x = 0; x < 4; x++)
-        //         {
-        //             Vector2Int direction = new Vector2Int(x < 2 ? (x == 0 ? 1 : -1) : 0, x < 2 ? 0 : (x == 2 ? 1 : -1));
-        //             Vector2Int candidate = target + direction;
-
-        //             if (candidate.x >= 0 && candidate.y >= 0 && candidate.x < heatmap.tiles.GetLength(0) && candidate.y < heatmap.tiles.GetLength(1))
-        //             {
-        //                 if (heatmap.IsTileHit(candidate))
-        //                 {
-        //                     estabilishedDirection = direction;
-        //                     break;
-        //                 }
-        //             }
-        //         }
-
-        //         //Determine how long the ship being shot can be
-        //         int maximumShipLength = 0;
-        //         for (int directional = (estabilishedDirection.y == 0 ? 0 : 1); directional < (estabilishedDirection.x == 0 ? 2 : 1); directional++)
-        //         {
-        //             int directionLength = 0;
-        //             bool pastTarget = false;
-
-        //             for (int d = 0; d < heatmap.tiles.GetLength(directional); d++)
-        //             {
-        //                 Vector2Int examined = new Vector2Int(directional == 0 ? d : target.x, directional == 0 ? target.y : d);
-
-        //                 if (examined == target) pastTarget = true;
-
-        //                 if (heatmap.tiles[examined.x, examined.y] <= Heatmap.missConstant)
-        //                 {
-        //                     if (pastTarget) break;
-        //                     else directionLength = 0;
-        //                 }
-        //                 else directionLength++;
-        //             }
-
-        //             if (directionLength > maximumShipLength) maximumShipLength = directionLength;
-        //         }
-
-        //         //Determine what ship will probably get damaged by the shot
-        //         Ship receiver = null;
-        //         int receiverID = 0;
-
-        //         for (int shipID = 0; shipID < plan.situation.expectedEnemyShipHealth.Length; shipID++)
-        //         {
-        //             int health = plan.situation.expectedEnemyShipHealth[shipID];
-        //             if (health > 0)
-        //             {
-        //                 Ship candidate = Battle.main.defender.board.ships[shipID];
-        //                 if (candidate.maxHealth > (receiver != null ? receiver.maxHealth : 0) && candidate.maxHealth <= maximumShipLength)
-        //                 {
-        //                     receiver = candidate;
-        //                     receiverID = shipID;
-        //                 }
-        //             }
-        //         }
-
-
-
-        //     }
-        // }
-
-        Tile[] GetArtilleryTargets(Situation situation, bool experimental)
-        {
-            Vector2Int[] possiblePositions = situation.theoreticalDamageMap.GetExtremeTiles(situation.totalArtilleryCount * (experimental ? 4 : 1));
-            List<Tile> possibleTargets = new List<Tile>();
-            for (int i = 0; i < possiblePositions.Length; i++)
-            {
-                possibleTargets.Add(Battle.main.defender.board.tiles[possiblePositions[i].x, possiblePositions[i].y]);
-            }
-
-
-            if (experimental)
-            {
-                List<Tile> actualTargets = new List<Tile>();
-                for (int i = 0; i < situation.totalArtilleryCount; i++)
-                {
-                    Tile randomTarget = possibleTargets[UnityEngine.Random.Range(0, possibleTargets.Count)];
-                    actualTargets.Add(randomTarget);
-                    possibleTargets.Remove(randomTarget);
-                }
-
-                return actualTargets.ToArray();
-            }
-            else
-            {
-                return possibleTargets.ToArray();
-            }
-        }
-
-        TorpedoAttack.Target[] GetTorpedoTargets(Situation situation, bool experimental, int limit)
-        {
-            Board defenderBoard = Battle.main.defender.board;
-            limit = Mathf.Min(situation.loadedTorpedoCount, limit);
-            int[] possibleLanes = situation.theoreticalDamageMap.GetExtremeLanes(limit * (experimental ? 3 : 1));
-            List<TorpedoAttack.Target> possibleTargets = new List<TorpedoAttack.Target>();
-            for (int i = 0; i < possibleLanes.Length; i++)
-            {
-                TorpedoAttack.Target possibleTarget;
-                int lane = possibleLanes[i];
-                if (lane != -1)
-                {
-                    int position = lane % situation.theoreticalDamageMap.tiles.GetLength(0);
-
-                    bool horizontal = position < lane;
-                    bool reverse = UnityEngine.Random.Range(0, 2) == 0;
-
-                    possibleTarget.torpedoHeading = (horizontal ? Vector2Int.right : Vector2Int.up) * (reverse ? -1 : 1);
-
-                    Vector2Int dropoff = new Vector2Int(position, reverse ? defenderBoard.tiles.GetLength(1) - 1 : 0);
-                    if (horizontal) dropoff = new Vector2Int(dropoff.y, dropoff.x);
-                    possibleTarget.torpedoDropPoint = defenderBoard.tiles[dropoff.x, dropoff.y];
-
-                    possibleTargets.Add(possibleTarget);
-                }
-            }
-
-            if (experimental)
-            {
-                List<TorpedoAttack.Target> actualTargets = new List<TorpedoAttack.Target>();
-                for (int i = 0; i < limit; i++)
-                {
-                    TorpedoAttack.Target randomTarget = possibleTargets[UnityEngine.Random.Range(0, possibleTargets.Count)];
-                    actualTargets.Add(randomTarget);
-                    possibleTargets.Remove(randomTarget);
-                }
-
-                return actualTargets.ToArray();
-            }
-            else
-            {
-                return possibleTargets.ToArray();
-            }
         }
 
 
