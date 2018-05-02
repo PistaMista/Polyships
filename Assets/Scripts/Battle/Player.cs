@@ -54,7 +54,6 @@ namespace Gameplay
         public Board board;
         public bool aiEnabled;
         public Color[,] flag;
-        public List<Tile> hitTiles;
         public AmmoRegistry arsenal
         {
             get
