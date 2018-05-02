@@ -314,14 +314,9 @@ namespace Gameplay
                 Vector2Int boardDimensions = new Vector2Int(enemyBoard.tiles.GetLength(0), enemyBoard.tiles.GetLength(1));
 
                 reconMap = new Heatmap(boardDimensions.x, boardDimensions.y);
-
                 certaintyMap = new bool[2, boardDimensions.x, boardDimensions.y];
+                shipPositionMap = new int[boardDimensions.x, boardDimensions.y];
 
-                shipPositionMaps = new Heatmap[enemyBoard.ships.Length];
-                for (int i = 0; i < shipPositionMaps.Length; i++)
-                {
-                    shipPositionMaps[i] = new Heatmap(boardDimensions.x, boardDimensions.y);
-                }
 
                 for (int x = 0; x < boardDimensions.x; x++)
                 {
@@ -355,8 +350,8 @@ namespace Gameplay
             public int time;
 
             public bool[,,] certaintyMap;
-            public Heatmap[] shipPositionMaps;
             public Heatmap reconMap;
+            public int[] expectedEnemyShipHealth;
             public Heatmap targetingMap
             {
                 get
@@ -371,14 +366,13 @@ namespace Gameplay
                 {
                     float result = 0.0f;
 
-                    result += shipPositionMaps.Average(x => x.averageHeat);
+                    result -= targetingMap.averageHeat;
                     result -= torpedoCooldown + torpedoReload;
 
                     return result;
                 }
             }
 
-            public int[] expectedEnemyShipHealth;
 
             public int totalArtilleryCount;
             public int[] aircraftCooldowns;
@@ -418,7 +412,11 @@ namespace Gameplay
                 TargetTorpedoes(targetingMap, maximumTorpedoCount);
                 TargetAircraft(targetingMap);
 
-                PredictOutcome();
+                post_situation = situation;
+
+                PredictEventAdvancement();
+                PredictAmmoConsumption();
+                PredictTargetHits();
 
                 if (sequence.Length > 0) successives = post_situation.GetStrategy(sequence); else successives = new Plan[0];
             }
@@ -459,7 +457,15 @@ namespace Gameplay
 
             }
 
-            void PredictOutcome()
+            void PredictAmmoConsumption()
+            {
+
+            }
+            void PredictEventAdvancement()
+            {
+
+            }
+            void PredictTargetHits()
             {
 
             }
@@ -470,11 +476,19 @@ namespace Gameplay
             {
                 get
                 {
-                    float result = post_situation.rating;
-                    for (int i = 0; i < successives.Length; i++)
+                    float result = 0;
+                    if (successives.Length > 0)
                     {
-                        result += successives[i].rating;
+                        for (int i = 0; i < successives.Length; i++)
+                        {
+                            result += successives[i].rating;
+                        }
                     }
+                    else
+                    {
+                        result = post_situation.rating;
+                    }
+
 
                     return result;
                 }
