@@ -10,6 +10,7 @@ using Gameplay.Ships;
 [Serializable]
 public struct Heatmap
 {
+    public delegate void Heater(ref Heatmap map);
     public const float invalidTileHeat = -10000;
     public float[,] tiles;
     public float[] verticalLanes
@@ -304,6 +305,7 @@ namespace Gameplay
 
         public const float hitTileHeat = 10.0f;
         public const float missedTileHeat = -2.0f;
+        public const float hitMissHeatDropoff = 0.3f;
 
         struct Situation
         {
@@ -314,8 +316,9 @@ namespace Gameplay
                 Vector2Int boardDimensions = new Vector2Int(enemyBoard.tiles.GetLength(0), enemyBoard.tiles.GetLength(1));
 
                 reconMap = new Heatmap(boardDimensions.x, boardDimensions.y);
-                certaintyMap = new bool[2, boardDimensions.x, boardDimensions.y];
-                shipPositionMap = new int[boardDimensions.x, boardDimensions.y];
+                map = new Heatmap.Heater[boardDimensions.x, boardDimensions.y, 4];
+
+
 
 
                 for (int x = 0; x < boardDimensions.x; x++)
@@ -323,7 +326,11 @@ namespace Gameplay
                     for (int y = 0; y < boardDimensions.y; y++)
                     {
                         Tile tile = enemyBoard.tiles[x, y];
-                        if (tile.hit) certaintyMap[tile.containedShip != null ? 1 : 0, tile.coordinates.x, tile.coordinates.y] = true;
+                        if (tile.hit)
+                        {
+                            map[x, y, 3] = (ref Heatmap m) => { m.tiles[x, y] = Mathf.NegativeInfinity; };
+                            map[x, y, 2] = (ref Heatmap m) => { m.Heat(tile.coordinates, tile.containedShip != null ? hitTileHeat : missedTileHeat, hitMissHeatDropoff); };
+                        }
                     }
                 }
 
@@ -349,14 +356,30 @@ namespace Gameplay
             }
             public int time;
 
-            public bool[,,] certaintyMap;
+            /// <summary>
+            /// Map which consists of several layers to make up the final targeting map. Layer 3 - Nullification layer, 2 - Hit/Miss Heating layer, 1 - Ship predictor layer, 0 - Cyclone displacement layer.
+            /// </summary>
+            public Heatmap.Heater[,,] map;
             public Heatmap reconMap;
             public int[] expectedEnemyShipHealth;
             public Heatmap targetingMap
             {
                 get
                 {
+                    Heatmap result = new Heatmap(map.GetLength(0), map.GetLength(1));
+                    for (int x = 0; x < map.GetLength(0); x++)
+                    {
+                        for (int y = 0; y < map.GetLength(1); y++)
+                        {
+                            for (int z = 0; z < map.GetLength(2); z++)
+                            {
+                                Heatmap.Heater heater = map[x, y, z];
+                                if (heater != null) heater(ref result);
+                            }
+                        }
+                    }
 
+                    return result;
                 }
             }
 
@@ -366,7 +389,20 @@ namespace Gameplay
                 {
                     float result = 0.0f;
 
-                    result -= targetingMap.averageHeat;
+                    Heatmap evaluatorMap = new Heatmap(map.GetLength(0), map.GetLength(1));
+                    for (int x = 0; x < map.GetLength(0); x++)
+                    {
+                        for (int y = 0; y < map.GetLength(1); y++)
+                        {
+                            for (int z = 1; z < map.GetLength(2); z++)
+                            {
+                                Heatmap.Heater heater = map[x, y, z];
+                                if (heater != null) heater(ref evaluatorMap);
+                            }
+                        }
+                    }
+
+                    result -= evaluatorMap.averageHeat;
                     result -= torpedoCooldown + torpedoReload;
 
                     return result;
