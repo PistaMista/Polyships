@@ -18,7 +18,6 @@ namespace Gameplay
             public bool aiEnabled;
             public AI.AIModuleData aIModuleData;
             public float[,,] flag;
-            public int[,] hitTiles;
             public static implicit operator PlayerData(Player player)
             {
                 PlayerData result = new PlayerData();
@@ -38,13 +37,6 @@ namespace Gameplay
                     }
                 }
 
-                result.hitTiles = new int[player.hitTiles.Count, 2];
-                for (int i = 0; i < player.hitTiles.Count; i++)
-                {
-                    Tile tile = player.hitTiles[i];
-                    result.hitTiles[i, 0] = (int)tile.coordinates.x;
-                    result.hitTiles[i, 1] = (int)tile.coordinates.y;
-                }
 
 
                 return result;
@@ -98,14 +90,6 @@ namespace Gameplay
             board.AssignReferences(data.board);
 
             Board targetBoard = board == Battle.main.attacker.board ? Battle.main.defender.board : Battle.main.attacker.board;
-            hitTiles = new List<Tile>();
-            if (data.hitTiles != null)
-            {
-                for (int i = 0; i < data.hitTiles.GetLength(0); i++)
-                {
-                    hitTiles.Add(targetBoard.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
-                }
-            }
 
             if (aiEnabled)
             {

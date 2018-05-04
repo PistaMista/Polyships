@@ -143,11 +143,17 @@ namespace BattleUIAgents.Agents
 
             if (hitTiles)
             {
-                Player attacker = player != Battle.main.attacker ? Battle.main.attacker : Battle.main.defender;
-                foreach (Gameplay.Tile tile in attacker.hitTiles)
+                for (int x = 0; x < player.board.tiles.GetLength(0); x++)
                 {
-                    drawnTiles.Add(tile);
-                    SetTileGraphic(tile.coordinates, tile.containedShip != null ? TileGraphicMaterial.SHIP_DAMAGED : TileGraphicMaterial.TILE_HIT, Color.white);
+                    for (int y = 0; y < player.board.tiles.GetLength(1); y++)
+                    {
+                        Gameplay.Tile tile = player.board.tiles[x, y];
+                        if (tile.hit)
+                        {
+                            drawnTiles.Add(tile);
+                            SetTileGraphic(tile.coordinates, tile.containedShip != null ? TileGraphicMaterial.SHIP_DAMAGED : TileGraphicMaterial.TILE_HIT, Color.white);
+                        }
+                    }
                 }
             }
 

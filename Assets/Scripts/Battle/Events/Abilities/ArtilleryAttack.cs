@@ -32,7 +32,6 @@ namespace Gameplay.Effects
 
             if (!target.hit)
             {
-                Battle.main.attacker.hitTiles.Add(target);
                 target.hit = true;
 
                 if (target.containedShip)

@@ -65,7 +65,6 @@ namespace Gameplay.Effects
                 else
                 {
                     currentPosition.hit = true;
-                    Battle.main.attacker.hitTiles.Add(currentPosition);
                 }
 
                 Vector2Int newCoordinates = currentPosition.coordinates + target.torpedoHeading;
@@ -96,7 +95,6 @@ namespace Gameplay.Effects
                 if (!tile.hit && tile.containedShip.health > 0)
                 {
                     tile.hit = true;
-                    Battle.main.attacker.hitTiles.Add(tile);
                     tile.containedShip.Damage(1);
                 }
             }
