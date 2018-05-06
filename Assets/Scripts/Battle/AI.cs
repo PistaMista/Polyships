@@ -96,7 +96,7 @@ public struct Heatmap
                 for (int y = 0; y < tiles.GetLength(1); y++)
                 {
                     float heat = tiles[x, y];
-                    if (heat > float.MinValue) result += heat;
+                    result += heat;
                 }
             }
 
@@ -209,7 +209,7 @@ public struct Heatmap
         }
 
 
-        Vector2Int hottestTile = intermediate.GetExtremeTiles(1, Mathf.Infinity, false)[0];
+        Vector2Int hottestTile = intermediate.GetExtremeTiles(1)[0];
         float highestHeat = intermediate.tiles[hottestTile.x, hottestTile.y];
 
         if (highestHeat == 0)
@@ -328,7 +328,7 @@ namespace Gameplay
                         Tile tile = enemyBoard.tiles[x, y];
                         if (tile.hit)
                         {
-                            map[x, y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Mathf.NegativeInfinity; };
+                            map[x, y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = float.MinValue / 2.0f; };
                             bool hit = tile.containedShip != null;
                             map[x, y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? hitTileHeat : missedTileHeat, hitMissHeatDropoff); };
                         }
@@ -672,7 +672,7 @@ namespace Gameplay
 
                 foreach (Vector2Int hit in potentialHits)
                 {
-                    post_situation.map[hit.x, hit.y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Mathf.NegativeInfinity; };
+                    post_situation.map[hit.x, hit.y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = float.MinValue / 2.0f; };
                     bool a = hits.Contains(hit);
                     post_situation.map[hit.x, hit.y, a ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, a ? hitTileHeat : missedTileHeat, hitMissHeatDropoff); };
                 }
