@@ -309,7 +309,7 @@ namespace Gameplay
         public const float hitMissHeatDropoff = 0.3f;
         public const float reconResultMemory = 0.4f;
         public const float reconResultValue = 8.0f;
-        public const float hitConfidenceThreshold = 45.0f;
+        public const float hitConfidenceThreshold = 1.3f;
         public const float variabilitySpread = 3.5f;
 
         struct Situation
@@ -420,20 +420,8 @@ namespace Gameplay
                 {
                     float result = 0.0f;
 
-                    Heatmap evaluatorMap = new Heatmap(map.GetLength(0), map.GetLength(1));
-                    for (int x = 0; x < map.GetLength(0); x++)
-                    {
-                        for (int y = 0; y < map.GetLength(1); y++)
-                        {
-                            for (int z = 0; z < map.GetLength(2) - 1; z++)
-                            {
-                                Heatmap.Heater heater = map[x, y, z];
-                                if (heater != null) heater(ref evaluatorMap, new Vector2Int(x, y));
-                            }
-                        }
-                    }
-
-                    result -= evaluatorMap.averageHeat;
+                    Heatmap evaluator = targetingMap;
+                    result -= evaluator.averageHeat;
                     result -= torpedoCooldown + torpedoReload;
 
                     return result;
@@ -599,7 +587,9 @@ namespace Gameplay
                     }
                 }
 
-                List<Vector2Int> hits = potentialHits.FindAll(x => (targetingMap.tiles[x.x, x.y] - targetingMap.averageHeat) > hitConfidenceThreshold);
+                Heatmap normalizedTargeting = targetingMap.GetNormalizedMap();
+
+                List<Vector2Int> hits = potentialHits.FindAll(x => (normalizedTargeting.tiles[x.x, x.y] / normalizedTargeting.averageHeat) > hitConfidenceThreshold);
                 List<Vector2Int> misses = new List<Vector2Int>();
 
                 foreach (Vector2Int target in hits)
@@ -724,7 +714,7 @@ namespace Gameplay
 
         void Attack()
         {
-            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 8, 2, 2 });
+            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 8 });
 
             for (int i = 0; i < plans.Length; i++)
             {
