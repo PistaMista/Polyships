@@ -11,7 +11,7 @@ using Gameplay.Ships;
 public struct Heatmap
 {
     public delegate void Heater(ref Heatmap map, Vector2Int affectedCoordinates);
-    public const float invalidTileHeat = -10000;
+    public const float invalidTileHeat = -100;
     public float[,] tiles;
     public float[] verticalLanes
     {
@@ -304,11 +304,13 @@ namespace Gameplay
         }
 
         public const float hitTileHeat = 10.0f;
+        public const float destroyedTileHeat = 2.0f;
         public const float missedTileHeat = -2.0f;
         public const float hitMissHeatDropoff = 0.3f;
         public const float reconResultMemory = 0.4f;
         public const float reconResultValue = 8.0f;
-        public const float hitConfidenceThreshold = 1.6f;
+        public const float hitConfidenceThreshold = 45.0f;
+        public const float variabilitySpread = 3.5f;
 
         struct Situation
         {
@@ -328,9 +330,10 @@ namespace Gameplay
                         Tile tile = enemyBoard.tiles[x, y];
                         if (tile.hit)
                         {
-                            map[x, y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = float.MinValue / 2.0f; };
+                            map[x, y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Heatmap.invalidTileHeat; };
                             bool hit = tile.containedShip != null;
-                            map[x, y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? hitTileHeat : missedTileHeat, hitMissHeatDropoff); };
+                            bool destroyed = hit && tile.containedShip.health == 0;
+                            map[x, y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? (destroyed ? destroyedTileHeat : hitTileHeat) : missedTileHeat, hitMissHeatDropoff); };
                         }
                     }
                 }
@@ -387,11 +390,16 @@ namespace Gameplay
                 get
                 {
                     Heatmap result = new Heatmap(map.GetLength(0), map.GetLength(1));
-                    for (int x = 0; x < map.GetLength(0); x++)
+                    for (int z = 0; z < map.GetLength(2); z++)
                     {
-                        for (int y = 0; y < map.GetLength(1); y++)
+                        if (z == map.GetLength(2) - 1)
                         {
-                            for (int z = 0; z < map.GetLength(2); z++)
+                            result += reconMap;
+                        }
+
+                        for (int x = 0; x < map.GetLength(0); x++)
+                        {
+                            for (int y = 0; y < map.GetLength(1); y++)
                             {
                                 Heatmap.Heater heater = map[x, y, z];
                                 if (heater != null)
@@ -401,8 +409,6 @@ namespace Gameplay
                             }
                         }
                     }
-
-                    result += reconMap;
 
                     return result;
                 }
@@ -462,8 +468,10 @@ namespace Gameplay
 
                 for (int i = 0; i < results.Length; i++)
                 {
+                    int variation = Mathf.FloorToInt(i / (float)results.Length * variabilitySpread);
+
                     float torpedoPart = Mathf.Clamp01((i - results.Length / 2.0f) / (results.Length / 2.0f));
-                    results[i] = new Plan(this, Mathf.CeilToInt(torpedoPart * loadedTorpedoCount), i, sequence);
+                    results[i] = new Plan(this, Mathf.CeilToInt(torpedoPart * loadedTorpedoCount), variation, sequence);
                 }
 
                 return results;
@@ -472,16 +480,16 @@ namespace Gameplay
 
         struct Plan
         {
-            public Plan(Situation situation, int maximumTorpedoCount, int variability, int[] sequence)
+            public Plan(Situation situation, int maximumTorpedoCount, int variation, int[] sequence)
             {
                 this = new Plan();
 
                 pre_situation = situation;
 
                 Heatmap targetingMap = situation.targetingMap;
-                TargetArtillery(targetingMap);
-                TargetTorpedoes(targetingMap, maximumTorpedoCount);
-                TargetAircraft(targetingMap);
+                TargetArtillery(targetingMap, variation);
+                TargetTorpedoes(targetingMap, maximumTorpedoCount, variation);
+                TargetAircraft(targetingMap, variation);
 
                 post_situation = situation;
 
@@ -491,17 +499,23 @@ namespace Gameplay
 
                 if (sequence.Length > 0) successives = post_situation.GetStrategy(sequence); else successives = new Plan[0];
             }
-            void TargetArtillery(Heatmap targetingMap)
+            void TargetArtillery(Heatmap targetingMap, int variation)
             {
-                Vector2Int[] targets = targetingMap.GetExtremeTiles(pre_situation.totalArtilleryCount);
+                Vector2Int[] targets = targetingMap.GetExtremeTiles(pre_situation.totalArtilleryCount + variation);
+                targets.OrderByDescending(x => UnityEngine.Random.Range(0.0f, 100.0f));
+                targets = targets.Skip(variation).ToArray();
+
                 artilleryTargets = Array.ConvertAll(targets, x => Battle.main.defender.board.tiles[x.x, x.y]);
             }
 
-            void TargetTorpedoes(Heatmap targetingMap, int limit)
+            void TargetTorpedoes(Heatmap targetingMap, int limit, int variation)
             {
                 Board defenderBoard = Battle.main.defender.board;
                 limit = Mathf.Min(pre_situation.loadedTorpedoCount, limit);
-                int[] possibleLanes = targetingMap.GetExtremeLanes(limit);
+
+                int[] possibleLanes = targetingMap.GetExtremeLanes(limit + variation);
+                possibleLanes.OrderByDescending(x => UnityEngine.Random.Range(0.0f, 100.0f));
+                possibleLanes = possibleLanes.Skip(variation).ToArray();
 
                 torpedoTargets = Array.ConvertAll(possibleLanes, lane =>
                 {
@@ -523,7 +537,7 @@ namespace Gameplay
                 });
             }
 
-            void TargetAircraft(Heatmap targetingMap)
+            void TargetAircraft(Heatmap targetingMap, int variation)
             {
                 aircraftTargets = targetingMap.GetExtremeGridLines(pre_situation.aircraftCooldowns.Count(x => x == 0));
             }
@@ -585,7 +599,8 @@ namespace Gameplay
                     }
                 }
 
-                List<Vector2Int> hits = potentialHits.FindAll(x => targetingMap.tiles[x.x, x.y] / targetingMap.averageHeat > hitConfidenceThreshold);
+                List<Vector2Int> hits = potentialHits.FindAll(x => (targetingMap.tiles[x.x, x.y] - targetingMap.averageHeat) > hitConfidenceThreshold);
+                List<Vector2Int> misses = new List<Vector2Int>();
 
                 foreach (Vector2Int target in hits)
                 {
@@ -625,7 +640,7 @@ namespace Gameplay
 
                             if (examined == target) pastTarget = true;
 
-                            if (pre_situation.IsTileMiss(examined))
+                            if (pre_situation.IsTileMiss(examined) || pre_situation.IsTileShipHit(examined))
                             {
                                 if (pastTarget) break;
                                 else maximumDirectionLength = 0;
@@ -665,16 +680,16 @@ namespace Gameplay
                         }
                     }
 
-                    if (longestPossibleLurkingShipIndex >= 0) post_situation.expectedEnemyShipHealth[longestPossibleLurkingShipIndex]--;
+                    if (longestPossibleLurkingShipIndex >= 0) post_situation.expectedEnemyShipHealth[longestPossibleLurkingShipIndex]--; else misses.Add(target);
                 }
 
 
 
-                foreach (Vector2Int hit in potentialHits)
+                foreach (Vector2Int candidate in potentialHits)
                 {
-                    post_situation.map[hit.x, hit.y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = float.MinValue / 2.0f; };
-                    bool a = hits.Contains(hit);
-                    post_situation.map[hit.x, hit.y, a ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, a ? hitTileHeat : missedTileHeat, hitMissHeatDropoff); };
+                    post_situation.map[candidate.x, candidate.y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Heatmap.invalidTileHeat; };
+                    bool hit = hits.Contains(candidate) && !misses.Contains(candidate);
+                    post_situation.map[candidate.x, candidate.y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? hitTileHeat : missedTileHeat, hitMissHeatDropoff); };
                 }
             }
             public Situation pre_situation;
@@ -709,7 +724,26 @@ namespace Gameplay
 
         void Attack()
         {
-            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 6, 1, 1, 2 });
+            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 8, 2, 2 });
+
+            for (int i = 0; i < plans.Length; i++)
+            {
+                Plan plan = plans[i];
+                Debug.Log("Plan " + i + " rating " + plan.rating + " guns " + plan.artilleryTargets.Length + " torpedoes " + plan.torpedoTargets.Length);
+                Debug.Log("gun targets");
+                for (int x = 0; x < plan.artilleryTargets.Length; x++)
+                {
+                    Debug.Log("tile " + plan.artilleryTargets[x].coordinates);
+                }
+
+                Debug.Log("torpedo targets");
+                for (int x = 0; x < plan.torpedoTargets.Length; x++)
+                {
+                    Debug.Log("drop " + plan.torpedoTargets[x].torpedoDropPoint.coordinates);
+                    Debug.Log("heading " + plan.torpedoTargets[x].torpedoHeading);
+                }
+            }
+
             ExecutePlan(plans.OrderByDescending(x => x.rating).First()); //3. Execute the best plan
         }
 
