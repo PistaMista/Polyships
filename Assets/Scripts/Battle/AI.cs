@@ -304,7 +304,7 @@ namespace Gameplay
         }
 
         public const float hitTileHeat = 15.0f;
-        public const float destroyedTileHeat = 3.0f;
+        public const float destroyedTileHeat = 1.0f;
         public const float missedTileHeat = -2.0f;
         public const float hitMissHeatDropoff = 0.3f;
         public const float mapBlur = 0.6f;
@@ -359,7 +359,7 @@ namespace Gameplay
                     }
                 }
 
-                AircraftRecon[] recon = Array.ConvertAll(Effect.GetEffectsInQueue(x => { return x.targetedPlayer == enemyBoard.owner; }, typeof(AircraftRecon), int.MaxValue), x => { return x as AircraftRecon; });
+                AircraftRecon[] recon = Array.ConvertAll(Effect.GetEffectsInQueue(x => { return x.targetedPlayer == enemyBoard.owner; }, typeof(AircraftRecon), int.MaxValue), x => x as AircraftRecon);
 
                 for (int i = 0; i < recon.GetLength(0); i++)
                 {
@@ -382,10 +382,9 @@ namespace Gameplay
                 totalArtilleryCount = ammo.guns;
 
                 aircraftCooldowns = new int[ammo.aircraft];
-                AircraftRecon[] deployedPlanes = System.Array.ConvertAll(Effect.GetEffectsInQueue(x => x.targetedPlayer == enemyBoard.owner, typeof(AircraftRecon), ammo.aircraft), x => x as AircraftRecon);
-                for (int i = 0; i < deployedPlanes.Length; i++)
+                for (int i = 0; i < recon.Length && i < aircraftCooldowns.Length; i++)
                 {
-                    aircraftCooldowns[i] = deployedPlanes[i].duration;
+                    aircraftCooldowns[i] = recon[i].duration;
                 }
 
                 Effect torpedoCooldown = Effect.GetEffectsInQueue(x => x.visibleTo == ammo.targetedPlayer, typeof(TorpedoCooldown), 1).FirstOrDefault();
@@ -717,21 +716,7 @@ namespace Gameplay
             {
                 get
                 {
-                    float result = 0;
-                    if (successives.Length > 0)
-                    {
-                        for (int i = 0; i < successives.Length; i++)
-                        {
-                            result += successives[i].rating;
-                        }
-                    }
-                    else
-                    {
-                        result = post_situation.rating;
-                    }
-
-
-                    return result;
+                    return successives.Length > 0 ? successives.Max(x => x.rating) : post_situation.rating;
                 }
             }
 
@@ -742,7 +727,7 @@ namespace Gameplay
 
         void Attack()
         {
-            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 6, 3, 2 });
+            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 8, 2, 3 });
 
             Heatmap e = plans[0].post_situation.targetingMap;
 
