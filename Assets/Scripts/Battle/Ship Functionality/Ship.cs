@@ -49,6 +49,8 @@ namespace Gameplay
         public int prefabIndex;
         [Range(0, 5)]
         public int concealmentAIValue;
+        [Range(0, 10)]
+        public int importanceAIValue;
 
         public virtual void Initialize(ShipData data)
         {

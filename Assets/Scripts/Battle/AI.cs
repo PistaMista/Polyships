@@ -311,7 +311,7 @@ namespace Gameplay
         public const float reconResultMemory = 0.4f;
         public const float reconResultValue = 5.0f;
         public const float hitConfidenceThreshold = 1.3f;
-        public const float variabilitySpread = 4.5f;
+        public const float variationMultiplier = 1.5f;
 
         struct Situation : ICloneable
         {
@@ -415,6 +415,7 @@ namespace Gameplay
                         if (z == map.GetLength(2) - 1)
                         {
                             result += reconMap;
+                            result = result.GetBlurredMap(mapBlur);
                         }
 
                         for (int x = 0; x < map.GetLength(0); x++)
@@ -430,20 +431,27 @@ namespace Gameplay
                         }
                     }
 
-                    result = result.GetBlurredMap(mapBlur);
-
                     return result;
                 }
             }
 
+            const float maxHeatRating = 40.0f;
+            const float torpedoReloadRating = -5f;
             public float rating
             {
                 get
                 {
-                    float result = 0.0f;
+                    float result = 100.0f;
 
                     Heatmap evaluator = targetingMap;
-                    result -= evaluator.averageHeat;
+
+                    result += evaluator.averageHeat / Heatmap.invalidTileHeat * maxHeatRating;
+                    result += (torpedoCooldown + torpedoReload) * torpedoReloadRating;
+                    for (int i = 0; i < expectedEnemyShipHealth.Length; i++)
+                    {
+                        result -= expectedEnemyShipHealth[i] * Battle.main.defender.board.ships[i].importanceAIValue;
+                    }
+
 
                     return result;
                 }
@@ -475,7 +483,7 @@ namespace Gameplay
 
                 for (int i = 0; i < results.Length; i++)
                 {
-                    int variation = Mathf.FloorToInt(i / (float)results.Length * variabilitySpread);
+                    int variation = Mathf.FloorToInt(i * variationMultiplier);
 
                     float torpedoPart = Mathf.Clamp01((i - results.Length / 2.0f) / (results.Length / 2.0f));
                     results[i] = new Plan(this, Mathf.CeilToInt(torpedoPart * loadedTorpedoCount), variation, sequence);
@@ -734,7 +742,7 @@ namespace Gameplay
 
         void Attack()
         {
-            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 6, 2, 2, 2 });
+            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 6, 3, 2 });
 
             Heatmap e = plans[0].post_situation.targetingMap;
 
