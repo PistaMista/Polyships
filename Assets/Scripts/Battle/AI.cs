@@ -303,15 +303,15 @@ namespace Gameplay
             }
         }
 
-        public const float hitTileHeat = 10.0f;
-        public const float destroyedTileHeat = 2.0f;
+        public const float hitTileHeat = 15.0f;
+        public const float destroyedTileHeat = 3.0f;
         public const float missedTileHeat = -2.0f;
         public const float hitMissHeatDropoff = 0.3f;
-        public const float mapBlur = 0.3f;
+        public const float mapBlur = 0.6f;
         public const float reconResultMemory = 0.4f;
-        public const float reconResultValue = 8.0f;
+        public const float reconResultValue = 5.0f;
         public const float hitConfidenceThreshold = 1.3f;
-        public const float variabilitySpread = 3.5f;
+        public const float variabilitySpread = 4.5f;
 
         struct Situation : ICloneable
         {
