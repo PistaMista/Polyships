@@ -727,9 +727,13 @@ namespace Gameplay
 
         void Attack()
         {
-            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 8, 2, 3 });
+            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 3, 2, 2 });
 
             Heatmap e = plans[0].post_situation.targetingMap;
+
+            RenderDebugPlanTree(plans, Vector3.up * 20, 230f, 40f);
+
+            Debug.Log("--------------------------PLANS--------------------");
 
             for (int i = 0; i < plans.Length; i++)
             {
@@ -753,6 +757,52 @@ namespace Gameplay
             }
 
             ExecutePlan(plans.OrderByDescending(x => x.rating).First()); //3. Execute the best plan
+        }
+
+        void RenderDebugPlanTree(Plan[] plans, Vector3 linkPoint, float space, float layerSpacing)
+        {
+            float spacing = plans.Length > 1 ? space / (plans.Length - 1) : 0;
+            Vector3 startingPosition = linkPoint + new Vector3(layerSpacing, 0, space / 2.0f);
+
+            space /= (float)plans.Length * 1.2f;
+
+            for (int i = 0; i < plans.Length; i++)
+            {
+                Plan plan = plans[i];
+
+                Vector3 centerPosition = startingPosition + Vector3.back * i * spacing;
+                Vector3 boardCornerPosition = centerPosition - new Vector3(Battle.main.defender.board.tiles.GetLength(0), 0, Battle.main.defender.board.tiles.GetLength(1));
+                Situation renderedSituation = plan.post_situation;
+                Heatmap targetMap = renderedSituation.targetingMap;
+                Heatmap heatmap = targetMap.GetNormalizedMap();
+
+                Debug.DrawLine(linkPoint, boardCornerPosition, Color.blue, Mathf.Infinity, true);
+
+                for (int x = 0; x < renderedSituation.map.GetLength(0); x++)
+                {
+                    for (int y = 0; y < renderedSituation.map.GetLength(1); y++)
+                    {
+                        Vector3 lineBeginningPosition = boardCornerPosition + new Vector3(x, 0, y);
+                        float cubeHeight = heatmap.tiles[x, y] * 0.5f + 0.002f;
+                        // Debug.DrawLine(lineBeginningPosition, lineBeginningPosition + Vector3.up * cubeHeight, renderedSituation.map[x, y, 3] != null ? Color.red : Color.black, Mathf.Infinity, true);
+
+                        GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+
+                        cube.transform.position = lineBeginningPosition + Vector3.up * cubeHeight / 2.0f;
+                        cube.transform.localScale = new Vector3(1, cubeHeight, 1);
+
+                        Renderer r = cube.GetComponent<Renderer>();
+
+                        MaterialPropertyBlock block = new MaterialPropertyBlock();
+                        block.SetColor("_Color", renderedSituation.IsTileShipHit(new Vector2Int(x, y)) ? Color.red : (plan.artilleryTargets.Any(t => t.coordinates == new Vector2Int(x, y)) ? Color.blue : (renderedSituation.IsTileMiss(new Vector2Int(x, y)) ? Color.black : Color.white)));
+
+                        r.SetPropertyBlock(block);
+                    }
+                }
+
+                Vector3 lPoint = centerPosition + Vector3.right * Battle.main.defender.board.tiles.GetLength(0) * 1.1f;
+                if (plan.successives.Length > 0) RenderDebugPlanTree(plan.successives, lPoint, space, layerSpacing);
+            }
         }
 
         /// <summary>
