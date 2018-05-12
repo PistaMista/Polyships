@@ -303,14 +303,15 @@ namespace Gameplay
             }
         }
 
-        public const float hitTileHeat = 15.0f;
+        public const float theoreticalHitHeat = 5.0f;
+        public const float certainHitHeat = 35.0f;
         public const float destroyedTileHeat = 1.0f;
-        public const float missedTileHeat = -2.0f;
-        public const float hitMissHeatDropoff = 0.3f;
-        public const float mapBlur = 0.6f;
+        public const float missedTileHeat = -1.75f;
+        public const float hitMissHeatDropoff = 0.4f;
+        public const float mapBlur = 0.7f;
         public const float reconResultMemory = 0.4f;
         public const float reconResultValue = 5.0f;
-        public const float hitConfidenceThreshold = 1.3f;
+        public const float hitConfidenceThreshold = 1.8f;
         public const float variationMultiplier = 1.5f;
 
         struct Situation : ICloneable
@@ -354,7 +355,7 @@ namespace Gameplay
                             map[x, y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Heatmap.invalidTileHeat; };
                             bool hit = tile.containedShip != null;
                             bool destroyed = hit && tile.containedShip.health == 0;
-                            map[x, y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? (destroyed ? destroyedTileHeat : hitTileHeat) : missedTileHeat, hitMissHeatDropoff); };
+                            map[x, y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? (destroyed ? destroyedTileHeat : certainHitHeat) : missedTileHeat, hitMissHeatDropoff); };
                         }
                     }
                 }
@@ -435,16 +436,16 @@ namespace Gameplay
             }
 
             const float maxHeatRating = 40.0f;
-            const float torpedoReloadRating = -5f;
+            const float torpedoReloadRating = -3.5f;
             public float rating
             {
                 get
                 {
                     float result = 100.0f;
 
-                    Heatmap evaluator = targetingMap;
+                    Heatmap evaluator = targetingMap.GetNormalizedMap();
 
-                    result += evaluator.averageHeat / Heatmap.invalidTileHeat * maxHeatRating;
+                    result += evaluator.averageHeat * maxHeatRating;
                     result += (torpedoCooldown + torpedoReload) * torpedoReloadRating;
                     for (int i = 0; i < expectedEnemyShipHealth.Length; i++)
                     {
@@ -706,7 +707,7 @@ namespace Gameplay
                 {
                     post_situation.map[candidate.x, candidate.y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Heatmap.invalidTileHeat; };
                     bool hit = hits.Contains(candidate) && !misses.Contains(candidate);
-                    post_situation.map[candidate.x, candidate.y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? hitTileHeat : missedTileHeat, hitMissHeatDropoff); };
+                    post_situation.map[candidate.x, candidate.y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? theoreticalHitHeat : missedTileHeat, hitMissHeatDropoff); };
                 }
             }
             public Situation pre_situation;
@@ -727,11 +728,11 @@ namespace Gameplay
 
         void Attack()
         {
-            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 3, 2, 2 });
+            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 6, 1, 2 });
 
             Heatmap e = plans[0].post_situation.targetingMap;
 
-            RenderDebugPlanTree(plans, Vector3.up * 20, 230f, 40f);
+            //RenderDebugPlanTree(plans, Vector3.up * 20, 230f, 40f);
 
             Debug.Log("--------------------------PLANS--------------------");
 
@@ -739,21 +740,6 @@ namespace Gameplay
             {
                 Plan plan = plans[i];
                 Debug.Log("Plan " + i + " rating " + plan.rating + " guns " + plan.artilleryTargets.Length + " torpedoes " + plan.torpedoTargets.Length);
-                Debug.Log("gun targets");
-                for (int x = 0; x < plan.artilleryTargets.Length; x++)
-                {
-                    Debug.Log("tile " + plan.artilleryTargets[x].coordinates);
-                }
-
-                Debug.Log("torpedo targets");
-                for (int x = 0; x < plan.torpedoTargets.Length; x++)
-                {
-                    Debug.Log("drop " + plan.torpedoTargets[x].torpedoDropPoint.coordinates);
-                    Debug.Log("heading " + plan.torpedoTargets[x].torpedoHeading);
-                }
-
-                Debug.Log("pre heat " + plan.pre_situation.targetingMap.averageHeat);
-                Debug.Log("post heat " + plan.post_situation.targetingMap.averageHeat);
             }
 
             ExecutePlan(plans.OrderByDescending(x => x.rating).First()); //3. Execute the best plan
