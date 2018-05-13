@@ -35,7 +35,7 @@ namespace Gameplay.Effects
         }
         protected override bool IsTriggered()
         {
-            return base.IsTriggered() && (Battle.main.attacker.arsenal.guns <= triggerGunCountThreshold && Battle.main.attacker.arsenal.torpedoes <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
+            return base.IsTriggered() && (Battle.main.defender.arsenal.guns - Battle.main.attacker.arsenal.guns >= triggerGunCountThreshold && Battle.main.attacker.arsenal.torpedoes <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
         }
 
         public override int GetTheoreticalMaximumAddableAmount()
@@ -55,7 +55,7 @@ namespace Gameplay.Effects
 
         public override string GetDescription()
         {
-            return "We WILL NOT go down without a fight!";
+            return "Gain " + artilleryAttackIncrease + " gun attacks. Show them what we're really made of!";
         }
     }
 }

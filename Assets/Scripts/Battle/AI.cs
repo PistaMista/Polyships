@@ -11,7 +11,6 @@ using Gameplay.Ships;
 public struct Heatmap
 {
     public delegate void Heater(ref Heatmap map, Vector2Int affectedCoordinates);
-    public const float invalidTileHeat = -100;
     public float[,] tiles;
     public float[] verticalLanes
     {
@@ -24,7 +23,8 @@ public struct Heatmap
                 float sum = 0;
                 for (int y = 0; y < tiles.GetLength(1); y++)
                 {
-                    sum += tiles[x, y];
+                    float heat = tiles[x, y];
+                    if (heat > float.MinValue) sum += heat;
                 }
 
                 result[x] = sum;
@@ -44,7 +44,8 @@ public struct Heatmap
                 float sum = 0;
                 for (int x = 0; x < tiles.GetLength(0); x++)
                 {
-                    sum += tiles[x, y];
+                    float heat = tiles[x, y];
+                    if (heat > float.MinValue) sum += heat;
                 }
 
                 result[y] = sum;
@@ -96,7 +97,7 @@ public struct Heatmap
                 for (int y = 0; y < tiles.GetLength(1); y++)
                 {
                     float heat = tiles[x, y];
-                    result += heat;
+                    if (heat > float.MinValue) result += heat;
                 }
             }
 
@@ -108,7 +109,16 @@ public struct Heatmap
     {
         get
         {
-            return totalHeat / (tiles.GetLength(0) * tiles.GetLength(1));
+            int validTiles = 0;
+            for (int x = 0; x < tiles.GetLength(0); x++)
+            {
+                for (int y = 0; y < tiles.GetLength(1); y++)
+                {
+                    if (tiles[x, y] > float.MinValue) validTiles++;
+                }
+            }
+
+            return totalHeat / validTiles;
         }
     }
 
@@ -182,8 +192,11 @@ public struct Heatmap
                     {
                         Vector2Int coord = new Vector2Int(axis == 0 ? tile : column, axis == 0 ? column : tile);
                         storedHeat *= intensity;
-                        result.Heat(coord, storedHeat, 1);
-                        storedHeat += tiles[coord.x, coord.y];
+
+                        result.tiles[coord.x, coord.y] = storedHeat;
+
+                        float heat = tiles[coord.x, coord.y];
+                        storedHeat += heat;
                     }
                 }
             }
@@ -197,14 +210,15 @@ public struct Heatmap
         Heatmap result = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
 
         Heatmap intermediate = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
-        Vector2Int coldestTile = GetExtremeTiles(1, Mathf.NegativeInfinity, true)[0];
+        Vector2Int coldestTile = GetExtremeTiles(1, float.MinValue, true)[0];
         float lowestHeat = tiles[coldestTile.x, coldestTile.y];
 
         for (int x = 0; x < tiles.GetLength(0); x++)
         {
             for (int y = 0; y < tiles.GetLength(1); y++)
             {
-                intermediate.Heat(new Vector2Int(x, y), tiles[x, y] - lowestHeat, 1);
+                float heat = tiles[x, y];
+                intermediate.tiles[x, y] = heat < float.MinValue ? 0 : heat - lowestHeat;
             }
         }
 
@@ -221,7 +235,7 @@ public struct Heatmap
         {
             for (int y = 0; y < tiles.GetLength(1); y++)
             {
-                result.Heat(new Vector2Int(x, y), intermediate.tiles[x, y] / highestHeat, 1);
+                result.tiles[x, y] = intermediate.tiles[x, y] / highestHeat;
             }
         }
 
@@ -303,16 +317,16 @@ namespace Gameplay
             }
         }
 
-        public const float theoreticalHitHeat = 5.0f;
-        public const float certainHitHeat = 35.0f;
-        public const float destroyedTileHeat = 1.0f;
-        public const float missedTileHeat = -1.75f;
-        public const float hitMissHeatDropoff = 0.4f;
+        public const float theoreticalHitHeat = 12.0f;
+        public const float certainHitHeat = 120.0f;
+        public const float destroyedTileHeat = -2.0f;
+        public const float missedTileHeat = -4.5f;
+        public const float hitMissHeatDropoff = 0.2f;
         public const float mapBlur = 0.7f;
         public const float reconResultMemory = 0.4f;
         public const float reconResultValue = 5.0f;
         public const float hitConfidenceThreshold = 1.8f;
-        public const float variationMultiplier = 1.5f;
+        public const float variationMultiplier = 1.2f;
 
         struct Situation : ICloneable
         {
@@ -352,7 +366,7 @@ namespace Gameplay
                         Tile tile = enemyBoard.tiles[x, y];
                         if (tile.hit)
                         {
-                            map[x, y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Heatmap.invalidTileHeat; };
+                            map[x, y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Mathf.NegativeInfinity; };
                             bool hit = tile.containedShip != null;
                             bool destroyed = hit && tile.containedShip.health == 0;
                             map[x, y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? (destroyed ? destroyedTileHeat : certainHitHeat) : missedTileHeat, hitMissHeatDropoff); };
@@ -447,10 +461,10 @@ namespace Gameplay
 
                     result += evaluator.averageHeat * maxHeatRating;
                     result += (torpedoCooldown + torpedoReload) * torpedoReloadRating;
-                    for (int i = 0; i < expectedEnemyShipHealth.Length; i++)
-                    {
-                        result -= expectedEnemyShipHealth[i] * Battle.main.defender.board.ships[i].importanceAIValue;
-                    }
+                    // for (int i = 0; i < expectedEnemyShipHealth.Length; i++)
+                    // {
+                    //     result -= expectedEnemyShipHealth[i] * Battle.main.defender.board.ships[i].importanceAIValue;
+                    // }
 
 
                     return result;
@@ -705,7 +719,7 @@ namespace Gameplay
 
                 foreach (Vector2Int candidate in potentialHits)
                 {
-                    post_situation.map[candidate.x, candidate.y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Heatmap.invalidTileHeat; };
+                    post_situation.map[candidate.x, candidate.y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Mathf.NegativeInfinity; };
                     bool hit = hits.Contains(candidate) && !misses.Contains(candidate);
                     post_situation.map[candidate.x, candidate.y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? theoreticalHitHeat : missedTileHeat, hitMissHeatDropoff); };
                 }
@@ -732,7 +746,7 @@ namespace Gameplay
 
             Heatmap e = plans[0].post_situation.targetingMap;
 
-            //RenderDebugPlanTree(plans, Vector3.up * 20, 230f, 40f);
+            RenderDebugPlanTree(plans, Vector3.up * 20, 230f, 40f);
 
             Debug.Log("--------------------------PLANS--------------------");
 
@@ -759,7 +773,7 @@ namespace Gameplay
                 Vector3 centerPosition = startingPosition + Vector3.back * i * spacing;
                 Vector3 boardCornerPosition = centerPosition - new Vector3(Battle.main.defender.board.tiles.GetLength(0), 0, Battle.main.defender.board.tiles.GetLength(1));
                 Situation renderedSituation = plan.post_situation;
-                Heatmap targetMap = renderedSituation.targetingMap;
+                Heatmap targetMap = plan.pre_situation.targetingMap;
                 Heatmap heatmap = targetMap.GetNormalizedMap();
 
                 Debug.DrawLine(linkPoint, boardCornerPosition, Color.blue, Mathf.Infinity, true);
