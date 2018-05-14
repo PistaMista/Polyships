@@ -448,6 +448,9 @@ namespace Gameplay
 
         void Attack()
         {
+            Situation situation;
+
+            Plan[] plans = situation.GetStrategy(new int[] { 4, 2, 2 });
 
         }
 
