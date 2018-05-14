@@ -262,43 +262,33 @@ namespace Gameplay
 {
     public class AI : ScriptableObject
     {
-        [Serializable]
-        public struct AIModuleData
-        {
-            public Heatmap airReconMap;
-            public float recklessness;
-            public float agressivity;
-            public float reconResultWeight;
-            public float reconResultMemory;
-            public static implicit operator AIModuleData(AI module)
-            {
-                AIModuleData result = new AIModuleData();
-                // result.airReconMap = module.airReconMap;
-
-                // result.recklessness = module.recklessness;
-                // result.agressivity = module.agressivity;
-                // result.reconResultWeight = module.reconValue;
-                // result.reconResultMemory = module.reconMemory;
-                return result;
-            }
-        }
         public Player owner;
-
-        public virtual void Initialize(AIModuleData data)
-        {
-            // airReconMap = data.airReconMap;
-
-            // recklessness = data.recklessness;
-            // agressivity = data.agressivity;
-            // reconMemory = data.reconResultMemory;
-            // reconValue = data.reconResultWeight;
-        }
-
-        public virtual void AssignReferences(AIModuleData data)
-        {
-
-        }
-
+        /*
+            Transcript
+        Process
+        I. Package the current situation into its data structure.
+        II. Get several strategies for that situation.
+            1. Are there any unfinished plans?
+            YES:
+                1. Create a new plan.
+                    1.Copy the situation onto the plan to let it manipulate it freely.
+                    2.Pick the ideal target from the targeting map.
+                    3.Is it possible to blacklist?
+                    YES:
+                     4.Blacklist it and any other considered invalid tiles in the transmap - set their value to -infinity.
+                     5.Discard the target and start again.
+                    NO:
+                     4.Confirm the target.
+                     5.Apply contextual transmap heat - ranging from -1 to 1.
+                    6. Branch the plan further - get strategy for the resulting situation (II.)
+                2. Go to II. -> 1.
+            NO:
+                1. Rate each plan.
+        */
+        public const float missHeat = -1.0f;
+        public const float hitHeat = 1.0f;
+        public const float destructionHeat = 1.0f;
+        public const float heatDropoff = 0.4f;
         public void DoTurn()
         {
             if (owner.board.ships == null)
@@ -317,178 +307,68 @@ namespace Gameplay
             }
         }
 
-        public const float theoreticalHitHeat = 12.0f;
-        public const float certainHitHeat = 120.0f;
-        public const float destroyedTileHeat = -2.0f;
-        public const float missedTileHeat = -4.5f;
-        public const float hitMissHeatDropoff = 0.2f;
-        public const float mapBlur = 0.7f;
-        public const float reconResultMemory = 0.4f;
-        public const float reconResultValue = 5.0f;
-        public const float hitConfidenceThreshold = 1.8f;
-        public const float variationMultiplier = 1.2f;
-
-        struct Situation : ICloneable
+        struct Maptile
         {
-            public object Clone()
+            public Maptile(Maptile[,] parent, Vector2Int coordinates)
             {
-                Situation result;
-
-                result.map = map.Clone() as Heatmap.Heater[,,];
-                result.time = time;
-                result.torpedoReload = torpedoReload;
-                result.torpedoCooldown = torpedoCooldown;
-
-                result.reconMap = new Heatmap(reconMap.tiles.GetLength(0), reconMap.tiles.GetLength(1));
-                result.reconMap.tiles = reconMap.tiles.Clone() as float[,];
-
-                result.expectedEnemyShipHealth = expectedEnemyShipHealth.Clone() as int[];
-                result.totalArtilleryCount = totalArtilleryCount;
-                result.aircraftCooldowns = aircraftCooldowns.Clone() as int[];
-                result.totalTorpedoCount = totalTorpedoCount;
-                result.loadedTorpedoCount = loadedTorpedoCount;
-
-                return result;
+                this.parent = parent;
+                this.coordinates = coordinates;
+                hit = false;
+                containedShipID = -1;
             }
-            public Situation(Board enemyBoard, AmmoRegistry ammo)
-            {
-                this.time = 0;
+            Vector2Int coordinates;
+            Maptile[,] parent;
+            public bool hit;
+            public int containedShipID;
+        }
 
-                Vector2Int boardDimensions = new Vector2Int(enemyBoard.tiles.GetLength(0), enemyBoard.tiles.GetLength(1));
-
-                reconMap = new Heatmap(boardDimensions.x, boardDimensions.y);
-                map = new Heatmap.Heater[boardDimensions.x, boardDimensions.y, 5];
-
-                for (int x = 0; x < boardDimensions.x; x++)
-                {
-                    for (int y = 0; y < boardDimensions.y; y++)
-                    {
-                        Tile tile = enemyBoard.tiles[x, y];
-                        if (tile.hit)
-                        {
-                            map[x, y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Mathf.NegativeInfinity; };
-                            bool hit = tile.containedShip != null;
-                            bool destroyed = hit && tile.containedShip.health == 0;
-                            map[x, y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? (destroyed ? destroyedTileHeat : certainHitHeat) : missedTileHeat, hitMissHeatDropoff); };
-                        }
-                    }
-                }
-
-                AircraftRecon[] recon = Array.ConvertAll(Effect.GetEffectsInQueue(x => { return x.targetedPlayer == enemyBoard.owner; }, typeof(AircraftRecon), int.MaxValue), x => x as AircraftRecon);
-
-                for (int i = 0; i < recon.GetLength(0); i++)
-                {
-                    AircraftRecon line = recon[i];
-
-                    int linePosition = (line.target % (Battle.main.defender.board.tiles.GetLength(0) - 1));
-                    bool lineVertical = line.target == linePosition;
-
-                    for (int x = lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; x < (lineVertical ? (line.result != 1 ? linePosition + 1 : map.GetLength(0)) : map.GetLength(0)); x++)
-                    {
-                        for (int y = !lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; y < (lineVertical ? (line.result != 1 ? linePosition + 1 : map.GetLength(1)) : map.GetLength(1)); y++)
-                        {
-                            reconMap.Heat(new Vector2Int(x, y), 1.0f / (0.2f + reconResultMemory), 1);
-                        }
-                    }
-                }
-                reconMap = reconMap.GetNormalizedMap() * reconResultValue;
-
-                //Assign other data
-                totalArtilleryCount = ammo.guns;
-
-                aircraftCooldowns = new int[ammo.aircraft];
-                for (int i = 0; i < recon.Length && i < aircraftCooldowns.Length; i++)
-                {
-                    aircraftCooldowns[i] = recon[i].duration;
-                }
-
-                Effect torpedoCooldown = Effect.GetEffectsInQueue(x => x.visibleTo == ammo.targetedPlayer, typeof(TorpedoCooldown), 1).FirstOrDefault();
-                this.torpedoCooldown = torpedoCooldown ? torpedoCooldown.duration : 0;
-                Effect torpedoReload = Effect.GetEffectsInQueue(x => x.visibleTo == ammo.targetedPlayer, typeof(TorpedoReload), 1).FirstOrDefault();
-                this.torpedoReload = torpedoReload ? torpedoReload.duration : 0;
-
-                this.totalTorpedoCount = ammo.torpedoes;
-                this.loadedTorpedoCount = ammo.loadedTorpedoes;
-                this.expectedEnemyShipHealth = System.Array.ConvertAll(Battle.main.defender.board.ships, x => { return x.health == 0 ? 0 : x.maxHealth; });
-            }
-            public int time;
+        struct Situation
+        {
+            /// <summary>
+            /// Tracks the health of enemy ships.
+            /// </summary>
+            public int[] health;
+            /// <summary>
+            /// Used to determine heatmap - provides information about current board status.
+            /// </summary>
+            public Maptile[,] datamap;
+            /// <summary>
+            /// Used to determine targetmap - provides transitional information about tiles which cannot be targeted or shouldn't be targeted.
+            /// </summary>
+            public Heatmap transmap;
 
             /// <summary>
-            /// Map which consists of several layers to make up the final targeting map. Layer 4 - Nullification layer, 3 - Hit heating layer, 2 - Miss heating layer, 1 - Ship predictor layer, 0 - Cyclone displacement layer.
+            /// Used to determine targetmap - provides ABSOLUTE values about the likelyhood of a ship occupying any given tile. DOES NOT take placement rules into account. Shouldn't be modified by anything.
             /// </summary>
-            public Heatmap.Heater[,,] map;
-            public Heatmap reconMap;
-            public int[] expectedEnemyShipHealth;
-            public Heatmap targetingMap
+            public Heatmap heatmap;
+            public void ConstructHeatmap()
             {
-                get
+                heatmap = new Heatmap(datamap.GetLength(0), datamap.GetLength(1));
+                for (int x = 0; x < datamap.GetLength(0); x++)
                 {
-                    Heatmap result = new Heatmap(map.GetLength(0), map.GetLength(1));
-                    for (int z = 0; z < map.GetLength(2); z++)
+                    for (int y = 0; y < datamap.GetLength(1); y++)
                     {
-                        if (z == map.GetLength(2) - 1)
-                        {
-                            result += reconMap;
-                            result = result.GetBlurredMap(mapBlur);
-                        }
-
-                        for (int x = 0; x < map.GetLength(0); x++)
-                        {
-                            for (int y = 0; y < map.GetLength(1); y++)
-                            {
-                                Heatmap.Heater heater = map[x, y, z];
-                                if (heater != null)
-                                {
-                                    heater(ref result, new Vector2Int(x, y));
-                                }
-                            }
-                        }
+                        Maptile tile = datamap[x, y];
+                        if (tile.hit) heatmap.Heat(new Vector2Int(x, y), tile.containedShipID >= 0 ? (health[tile.containedShipID] <= 0 ? destructionHeat : hitHeat) : missHeat, heatDropoff);
                     }
-
-                    return result;
                 }
             }
-
-            const float maxHeatRating = 40.0f;
-            const float torpedoReloadRating = -3.5f;
-            public float rating
+            /// <summary>
+            /// Used to determine best attack options - provides NORMALIZED values about the likelyhood of a ship occupying any given tile. DOES take placement rules into account.
+            /// </summary>
+            public Heatmap targetmap;
+            public void ConstructTargetmap()
             {
-                get
-                {
-                    float result = 100.0f;
+                ConstructHeatmap();
 
-                    Heatmap evaluator = targetingMap.GetNormalizedMap();
+                //Combine maps
+                Heatmap normalizedHeatmap = heatmap.GetNormalizedMap();
+                targetmap = (normalizedHeatmap + transmap).GetNormalizedMap();
 
-                    result += evaluator.averageHeat * maxHeatRating;
-                    result += (torpedoCooldown + torpedoReload) * torpedoReloadRating;
-                    // for (int i = 0; i < expectedEnemyShipHealth.Length; i++)
-                    // {
-                    //     result -= expectedEnemyShipHealth[i] * Battle.main.defender.board.ships[i].importanceAIValue;
-                    // }
-
-
-                    return result;
-                }
-            }
-
-            public bool IsTileShipHit(Vector2Int tile)
-            {
-                return map[tile.x, tile.y, 3] != null;
-            }
-
-            public bool IsTileMiss(Vector2Int tile)
-            {
-                return map[tile.x, tile.y, 2] != null;
+                //Apply placement rules
             }
 
 
-            public int totalArtilleryCount;
-            public int[] aircraftCooldowns;
-            public int totalTorpedoCount;
-
-            public int loadedTorpedoCount;
-            public int torpedoReload;
-            public int torpedoCooldown;
             public Plan[] GetStrategy(int[] sequence)
             {
                 Plan[] results = new Plan[sequence[0]];
@@ -497,313 +377,125 @@ namespace Gameplay
 
                 for (int i = 0; i < results.Length; i++)
                 {
-                    int variation = Mathf.FloorToInt(i * variationMultiplier);
-
-                    float torpedoPart = Mathf.Clamp01((i - results.Length / 2.0f) / (results.Length / 2.0f));
-                    results[i] = new Plan(this, Mathf.CeilToInt(torpedoPart * loadedTorpedoCount), variation, sequence);
+                    results[i] = new Plan(this, ref transmap, sequence);
                 }
-
                 return results;
             }
         }
 
         struct Plan
         {
-            public Plan(Situation situation, int maximumTorpedoCount, int variation, int[] sequence)
+            Situation situation;
+            /// <summary>
+            /// Creates a new plan for a source situation.
+            /// </summary>
+            /// <param name="state">Situation to be planned on.</param>
+            /// <param name="transmap">References the transmap of the previous layer.</param>
+            /// <param name="sequence">The branching of plans considered ahead.</param>
+            public Plan(Situation state, ref Heatmap transmap, int[] sequence)
             {
                 this = new Plan();
 
-                pre_situation = (Situation)situation.Clone();
+                situation = state.Clone(); //The resulting situation is based on the starting situation.
 
-                Heatmap targetingMap = situation.targetingMap;
-                TargetArtillery(targetingMap, variation);
-                TargetTorpedoes(targetingMap, maximumTorpedoCount, variation);
-                TargetAircraft(targetingMap, variation);
+                /*
+                    Targeting
+                Every targeting procedure will work as follows:
+                1.Pick the ideal target from the targeting map.
+                2.Is it possible to blacklist?
+                YES:
+                 3.Blacklist it and any other considered invalid tiles in the transmap - set their value to -infinity.
+                 4.Discard the target and start again.
+                NO:
+                 3.Confirm the target.
+                 4.Apply contextual transmap heat - ranging from -1 to 1.
 
-                post_situation = (Situation)pre_situation.Clone();
+                    Blacklisting
+                Sets a value in the transmap reference parameter to -infinity. This will inform other plans to ignore these tiles.
+                    Contextual heating (contextual heat)
+                Applies heat to the transmap informing other plans to shoot somewhere else. Also informs other attacks in THIS plan to go elsewhere if there is a cyclone or something similar.
+                */
+
+                TargetArtillery();
+
+                TargetTorpedoes();
+
+                TargetAircraft();
 
 
-                PredictEventAdvancement();
-                PredictAmmoConsumption();
-                PredictTargetHits(targetingMap);
+                transmap = situation.transmap; //Set the previous plan's transmap to the result's transmap
 
-                if (sequence.Length > 0) successives = post_situation.GetStrategy(sequence); else successives = new Plan[0];
+                if (sequence.Length > 0) successives = situation.GetStrategy(sequence); else successives = new Plan[0];
             }
-            void TargetArtillery(Heatmap targetingMap, int variation)
+
+            public void TargetArtillery()
             {
-                Vector2Int[] targets = targetingMap.GetExtremeTiles(pre_situation.totalArtilleryCount + variation);
-                targets.OrderByDescending(x => UnityEngine.Random.Range(0.0f, 100.0f));
-                targets = targets.Skip(variation).ToArray();
 
-                artilleryTargets = Array.ConvertAll(targets, x => Battle.main.defender.board.tiles[x.x, x.y]);
             }
 
-            void TargetTorpedoes(Heatmap targetingMap, int limit, int variation)
+            public void TargetTorpedoes()
             {
-                Board defenderBoard = Battle.main.defender.board;
-                limit = Mathf.Min(pre_situation.loadedTorpedoCount, limit);
 
-                int[] possibleLanes = targetingMap.GetExtremeLanes(limit + variation);
-                possibleLanes.OrderByDescending(x => UnityEngine.Random.Range(0.0f, 100.0f));
-                possibleLanes = possibleLanes.Skip(variation).ToArray();
-
-                torpedoTargets = Array.ConvertAll(possibleLanes, lane =>
-                {
-                    int position = lane % targetingMap.tiles.GetLength(0);
-
-                    bool horizontal = position < lane;
-                    bool reverse = UnityEngine.Random.Range(0, 2) == 0;
-
-                    TorpedoAttack.Target result;
-
-                    result.torpedoHeading = (horizontal ? Vector2Int.right : Vector2Int.up) * (reverse ? -1 : 1);
-
-                    Vector2Int dropoff = new Vector2Int(position, reverse ? defenderBoard.tiles.GetLength(1) - 1 : 0);
-                    if (horizontal) dropoff = new Vector2Int(dropoff.y, dropoff.x);
-
-                    result.torpedoDropPoint = defenderBoard.tiles[dropoff.x, dropoff.y];
-
-                    return result;
-                });
             }
 
-            void TargetAircraft(Heatmap targetingMap, int variation)
+            public void TargetAircraft()
             {
-                aircraftTargets = targetingMap.GetExtremeGridLines(pre_situation.aircraftCooldowns.Count(x => x == 0));
+
             }
 
-            void PredictAmmoConsumption()
-            {
-                int firedTorpedoes = torpedoTargets.Length;
-                if (firedTorpedoes > 0)
-                {
-                    post_situation.loadedTorpedoCount -= firedTorpedoes;
-                    post_situation.totalTorpedoCount -= firedTorpedoes;
-
-                    post_situation.torpedoReload = Effect.RetrieveEffectPrefab(typeof(TorpedoReload)).duration;
-                    post_situation.torpedoCooldown = (Effect.RetrieveEffectPrefab(typeof(TorpedoCooldown)) as TorpedoCooldown).durations[firedTorpedoes];
-                }
-                else
-                {
-                    if (post_situation.torpedoCooldown > 0) post_situation.torpedoCooldown--;
-                    else
-                    {
-                        post_situation.torpedoReload--;
-                        if (post_situation.torpedoReload == 0)
-                        {
-                            post_situation.loadedTorpedoCount = Mathf.Clamp(post_situation.loadedTorpedoCount + 1, 0, post_situation.totalTorpedoCount);
-                            post_situation.torpedoReload = Effect.RetrieveEffectPrefab(typeof(TorpedoReload)).duration;
-                        }
-                    }
-                }
-
-                AircraftRecon aircraftPrefab = Effect.RetrieveEffectPrefab(typeof(AircraftRecon)) as AircraftRecon;
-                for (int i = 0; i < aircraftTargets.Length; i++)
-                {
-                    for (int x = 0; x < post_situation.aircraftCooldowns.Length; x++)
-                    {
-                        if (post_situation.aircraftCooldowns[x] == 0) post_situation.aircraftCooldowns[x] = aircraftPrefab.duration;
-                    }
-                }
-            }
-            void PredictEventAdvancement()
-            {
-                post_situation.time++;
-            }
-            void PredictTargetHits(Heatmap targetingMap)
-            {
-                List<Vector2Int> potentialHits = new List<Vector2Int>();
-                potentialHits.AddRange(
-                    Array.ConvertAll(artilleryTargets, x => x.coordinates)
-                );
-
-                for (int i = 0; i < torpedoTargets.Length; i++)
-                {
-                    Tile currentPosition = torpedoTargets[i].torpedoDropPoint;
-                    while (currentPosition != null)
-                    {
-                        if (!potentialHits.Contains(currentPosition.coordinates)) potentialHits.Add(currentPosition.coordinates);
-
-                        Vector2Int newCoordinates = currentPosition.coordinates + torpedoTargets[i].torpedoHeading;
-                        currentPosition = (newCoordinates.x >= 0 && newCoordinates.x < post_situation.map.GetLength(0) && newCoordinates.y >= 0 && newCoordinates.y < post_situation.map.GetLength(1)) ? Battle.main.defender.board.tiles[newCoordinates.x, newCoordinates.y] : null;
-                    }
-                }
-
-                Heatmap normalizedTargeting = targetingMap.GetNormalizedMap();
-
-                List<Vector2Int> hits = potentialHits.FindAll(x => (normalizedTargeting.tiles[x.x, x.y] / normalizedTargeting.averageHeat) > hitConfidenceThreshold);
-                List<Vector2Int> misses = new List<Vector2Int>();
-
-                foreach (Vector2Int target in hits)
-                {
-                    int minimumShipLength = 1;
-                    int maximumShipLength = 0;
-
-                    Vector2Int estabilishedDirection = Vector2Int.zero;
-
-                    //Determine which direction the ship being shot is pointing
-                    for (int x = 0; x < 4; x++)
-                    {
-                        Vector2Int direction = new Vector2Int(x < 2 ? (x == 0 ? 1 : -1) : 0, x < 2 ? 0 : (x == 2 ? 1 : -1));
-                        Vector2Int candidate = target + direction;
-
-                        if (candidate.x >= 0 && candidate.y >= 0 && candidate.x < pre_situation.map.GetLength(0) && candidate.y < pre_situation.map.GetLength(1))
-                        {
-                            if (pre_situation.IsTileShipHit(candidate))
-                            {
-                                estabilishedDirection = direction;
-                                break;
-                            }
-                        }
-                    }
-
-                    //Determine the minimum and maximum length of the ship that was theoretically hit
-                    for (int directional = (estabilishedDirection.y == 0 ? 0 : 1); directional < (estabilishedDirection.x == 0 ? 2 : 1); directional++)
-                    {
-                        int maximumDirectionLength = 0;
-                        int minimumDirectionLength = 0;
-
-                        bool pastTarget = false;
-                        bool chaining = estabilishedDirection != Vector2Int.zero;
-
-                        for (int d = 0; d < pre_situation.map.GetLength(directional); d++)
-                        {
-                            Vector2Int examined = new Vector2Int(directional == 0 ? d : target.x, directional == 0 ? target.y : d);
-
-                            if (examined == target) pastTarget = true;
-
-                            if (pre_situation.IsTileMiss(examined) || pre_situation.IsTileShipHit(examined))
-                            {
-                                if (pastTarget) break;
-                                else maximumDirectionLength = 0;
-                            }
-                            else maximumDirectionLength++;
-
-
-
-                            if (chaining)
-                            {
-                                if (!(pre_situation.IsTileShipHit(examined) || examined == target))
-                                {
-                                    if (pastTarget) chaining = false;
-                                    else minimumDirectionLength = 1;
-                                }
-                                else minimumDirectionLength++;
-                            }
-                        }
-
-                        if (maximumDirectionLength > maximumShipLength) maximumShipLength = maximumDirectionLength;
-                        if (minimumDirectionLength > minimumShipLength) minimumShipLength = minimumDirectionLength;
-                    }
-
-                    int longestPossibleLurkingShipIndex = -1;
-                    int longestPossibleLurkingShipLength = -1;
-
-                    for (int i = 0; i < Battle.main.defender.board.ships.Length; i++)
-                    {
-                        Ship candidate = Battle.main.defender.board.ships[i];
-                        if (pre_situation.expectedEnemyShipHealth[i] > 0 && candidate.maxHealth >= minimumShipLength && candidate.maxHealth <= maximumShipLength)
-                        {
-                            if (candidate.maxHealth > longestPossibleLurkingShipLength)
-                            {
-                                longestPossibleLurkingShipIndex = i;
-                                longestPossibleLurkingShipLength = candidate.maxHealth;
-                            }
-                        }
-                    }
-
-                    if (longestPossibleLurkingShipIndex >= 0) post_situation.expectedEnemyShipHealth[longestPossibleLurkingShipIndex]--; else misses.Add(target);
-                }
-
-
-
-                foreach (Vector2Int candidate in potentialHits)
-                {
-                    post_situation.map[candidate.x, candidate.y, 4] = (ref Heatmap m, Vector2Int pos) => { m.tiles[pos.x, pos.y] = Mathf.NegativeInfinity; };
-                    bool hit = hits.Contains(candidate) && !misses.Contains(candidate);
-                    post_situation.map[candidate.x, candidate.y, hit ? 3 : 2] = (ref Heatmap m, Vector2Int pos) => { m.Heat(pos, hit ? theoreticalHitHeat : missedTileHeat, hitMissHeatDropoff); };
-                }
-            }
-            public Situation pre_situation;
-            public Situation post_situation;
             public Plan[] successives;
-            public float rating
-            {
-                get
-                {
-                    return successives.Length > 0 ? successives.Max(x => x.rating) : post_situation.rating;
-                }
-            }
-
-            public Tile[] artilleryTargets;
-            public TorpedoAttack.Target[] torpedoTargets;
-            public int[] aircraftTargets;
         }
 
         void Attack()
         {
-            Plan[] plans = new Situation(Battle.main.defender.board, owner.arsenal).GetStrategy(new int[] { 6, 1, 2 });
 
-            Heatmap e = plans[0].post_situation.targetingMap;
-
-            RenderDebugPlanTree(plans, Vector3.up * 20, 230f, 40f);
-
-            Debug.Log("--------------------------PLANS--------------------");
-
-            for (int i = 0; i < plans.Length; i++)
-            {
-                Plan plan = plans[i];
-                Debug.Log("Plan " + i + " rating " + plan.rating + " guns " + plan.artilleryTargets.Length + " torpedoes " + plan.torpedoTargets.Length);
-            }
-
-            ExecutePlan(plans.OrderByDescending(x => x.rating).First()); //3. Execute the best plan
         }
 
-        void RenderDebugPlanTree(Plan[] plans, Vector3 linkPoint, float space, float layerSpacing)
-        {
-            float spacing = plans.Length > 1 ? space / (plans.Length - 1) : 0;
-            Vector3 startingPosition = linkPoint + new Vector3(layerSpacing, 0, space / 2.0f);
+        // void RenderDebugPlanTree(Plan[] plans, Vector3 linkPoint, float space, float layerSpacing)
+        // {
+        //     float spacing = plans.Length > 1 ? space / (plans.Length - 1) : 0;
+        //     Vector3 startingPosition = linkPoint + new Vector3(layerSpacing, 0, space / 2.0f);
 
-            space /= (float)plans.Length * 1.2f;
+        //     space /= (float)plans.Length * 1.2f;
 
-            for (int i = 0; i < plans.Length; i++)
-            {
-                Plan plan = plans[i];
+        //     for (int i = 0; i < plans.Length; i++)
+        //     {
+        //         Plan plan = plans[i];
 
-                Vector3 centerPosition = startingPosition + Vector3.back * i * spacing;
-                Vector3 boardCornerPosition = centerPosition - new Vector3(Battle.main.defender.board.tiles.GetLength(0), 0, Battle.main.defender.board.tiles.GetLength(1));
-                Situation renderedSituation = plan.post_situation;
-                Heatmap targetMap = plan.pre_situation.targetingMap;
-                Heatmap heatmap = targetMap.GetNormalizedMap();
+        //         Vector3 centerPosition = startingPosition + Vector3.back * i * spacing;
+        //         Vector3 boardCornerPosition = centerPosition - new Vector3(Battle.main.defender.board.tiles.GetLength(0), 0, Battle.main.defender.board.tiles.GetLength(1));
+        //         Situation renderedSituation = plan.post_situation;
+        //         Heatmap targetMap = plan.pre_situation.targetingMap;
+        //         Heatmap heatmap = targetMap.GetNormalizedMap();
 
-                Debug.DrawLine(linkPoint, boardCornerPosition, Color.blue, Mathf.Infinity, true);
+        //         Debug.DrawLine(linkPoint, boardCornerPosition, Color.blue, Mathf.Infinity, true);
 
-                for (int x = 0; x < renderedSituation.map.GetLength(0); x++)
-                {
-                    for (int y = 0; y < renderedSituation.map.GetLength(1); y++)
-                    {
-                        Vector3 lineBeginningPosition = boardCornerPosition + new Vector3(x, 0, y);
-                        float cubeHeight = heatmap.tiles[x, y] * 0.5f + 0.002f;
-                        // Debug.DrawLine(lineBeginningPosition, lineBeginningPosition + Vector3.up * cubeHeight, renderedSituation.map[x, y, 3] != null ? Color.red : Color.black, Mathf.Infinity, true);
+        //         for (int x = 0; x < renderedSituation.map.GetLength(0); x++)
+        //         {
+        //             for (int y = 0; y < renderedSituation.map.GetLength(1); y++)
+        //             {
+        //                 Vector3 lineBeginningPosition = boardCornerPosition + new Vector3(x, 0, y);
+        //                 float cubeHeight = heatmap.tiles[x, y] * 0.5f + 0.002f;
+        //                 // Debug.DrawLine(lineBeginningPosition, lineBeginningPosition + Vector3.up * cubeHeight, renderedSituation.map[x, y, 3] != null ? Color.red : Color.black, Mathf.Infinity, true);
 
-                        GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        //                 GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-                        cube.transform.position = lineBeginningPosition + Vector3.up * cubeHeight / 2.0f;
-                        cube.transform.localScale = new Vector3(1, cubeHeight, 1);
+        //                 cube.transform.position = lineBeginningPosition + Vector3.up * cubeHeight / 2.0f;
+        //                 cube.transform.localScale = new Vector3(1, cubeHeight, 1);
 
-                        Renderer r = cube.GetComponent<Renderer>();
+        //                 Renderer r = cube.GetComponent<Renderer>();
 
-                        MaterialPropertyBlock block = new MaterialPropertyBlock();
-                        block.SetColor("_Color", renderedSituation.IsTileShipHit(new Vector2Int(x, y)) ? Color.red : (plan.artilleryTargets.Any(t => t.coordinates == new Vector2Int(x, y)) ? Color.blue : (renderedSituation.IsTileMiss(new Vector2Int(x, y)) ? Color.black : Color.white)));
+        //                 MaterialPropertyBlock block = new MaterialPropertyBlock();
+        //                 block.SetColor("_Color", renderedSituation.IsTileShipHit(new Vector2Int(x, y)) ? Color.red : (plan.artilleryTargets.Any(t => t.coordinates == new Vector2Int(x, y)) ? Color.blue : (renderedSituation.IsTileMiss(new Vector2Int(x, y)) ? Color.black : Color.white)));
 
-                        r.SetPropertyBlock(block);
-                    }
-                }
+        //                 r.SetPropertyBlock(block);
+        //             }
+        //         }
 
-                Vector3 lPoint = centerPosition + Vector3.right * Battle.main.defender.board.tiles.GetLength(0) * 1.1f;
-                if (plan.successives.Length > 0) RenderDebugPlanTree(plan.successives, lPoint, space, layerSpacing);
-            }
-        }
+        //         Vector3 lPoint = centerPosition + Vector3.right * Battle.main.defender.board.tiles.GetLength(0) * 1.1f;
+        //         if (plan.successives.Length > 0) RenderDebugPlanTree(plan.successives, lPoint, space, layerSpacing);
+        //     }
+        // }
 
         /// <summary>
         /// Executes a final plan and ends the turn.
@@ -811,35 +503,35 @@ namespace Gameplay
         /// <param name="plan"></param>
         void ExecutePlan(Plan plan)
         {
-            for (int i = 0; i < plan.artilleryTargets.Length; i++)
-            {
-                ArtilleryAttack attack = Effect.CreateEffect(typeof(ArtilleryAttack)) as ArtilleryAttack;
-                attack.target = plan.artilleryTargets[i];
-                attack.targetedPlayer = Battle.main.defender;
-                attack.visibleTo = owner;
+            // for (int i = 0; i < plan.artilleryTargets.Length; i++)
+            // {
+            //     ArtilleryAttack attack = Effect.CreateEffect(typeof(ArtilleryAttack)) as ArtilleryAttack;
+            //     attack.target = plan.artilleryTargets[i];
+            //     attack.targetedPlayer = Battle.main.defender;
+            //     attack.visibleTo = owner;
 
-                if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
-            }
+            //     if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
+            // }
 
-            for (int i = 0; i < plan.torpedoTargets.Length; i++)
-            {
-                TorpedoAttack attack = Effect.CreateEffect(typeof(TorpedoAttack)) as TorpedoAttack;
-                attack.target = plan.torpedoTargets[i];
-                attack.targetedPlayer = Battle.main.defender;
-                attack.visibleTo = owner;
+            // for (int i = 0; i < plan.torpedoTargets.Length; i++)
+            // {
+            //     TorpedoAttack attack = Effect.CreateEffect(typeof(TorpedoAttack)) as TorpedoAttack;
+            //     attack.target = plan.torpedoTargets[i];
+            //     attack.targetedPlayer = Battle.main.defender;
+            //     attack.visibleTo = owner;
 
-                if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
-            }
+            //     if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
+            // }
 
-            for (int i = 0; i < plan.aircraftTargets.Length; i++)
-            {
-                AircraftRecon r = Effect.CreateEffect(typeof(AircraftRecon)) as AircraftRecon;
-                r.target = plan.aircraftTargets[i];
-                r.targetedPlayer = Battle.main.defender;
-                r.visibleTo = owner;
+            // for (int i = 0; i < plan.aircraftTargets.Length; i++)
+            // {
+            //     AircraftRecon r = Effect.CreateEffect(typeof(AircraftRecon)) as AircraftRecon;
+            //     r.target = plan.aircraftTargets[i];
+            //     r.targetedPlayer = Battle.main.defender;
+            //     r.visibleTo = owner;
 
-                if (!Effect.AddToQueue(r)) Destroy(r.gameObject);
-            }
+            //     if (!Effect.AddToQueue(r)) Destroy(r.gameObject);
+            // }
 
 
             Battle.main.NextTurn();
