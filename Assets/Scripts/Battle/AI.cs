@@ -205,41 +205,44 @@ public struct Heatmap
         return result;
     }
 
-    public Heatmap GetNormalizedMap()
+    public Heatmap normalized
     {
-        Heatmap result = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
-
-        Heatmap intermediate = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
-        Vector2Int coldestTile = GetExtremeTiles(1, float.MinValue, true)[0];
-        float lowestHeat = tiles[coldestTile.x, coldestTile.y];
-
-        for (int x = 0; x < tiles.GetLength(0); x++)
+        get
         {
-            for (int y = 0; y < tiles.GetLength(1); y++)
+            Heatmap result = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
+
+            Heatmap intermediate = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
+            Vector2Int coldestTile = GetExtremeTiles(1, float.MinValue, true)[0];
+            float lowestHeat = tiles[coldestTile.x, coldestTile.y];
+
+            for (int x = 0; x < tiles.GetLength(0); x++)
             {
-                float heat = tiles[x, y];
-                intermediate.tiles[x, y] = heat < float.MinValue ? 0 : heat - lowestHeat;
+                for (int y = 0; y < tiles.GetLength(1); y++)
+                {
+                    float heat = tiles[x, y];
+                    intermediate.tiles[x, y] = heat < float.MinValue ? 0 : heat - lowestHeat;
+                }
             }
-        }
 
 
-        Vector2Int hottestTile = intermediate.GetExtremeTiles(1)[0];
-        float highestHeat = intermediate.tiles[hottestTile.x, hottestTile.y];
+            Vector2Int hottestTile = intermediate.GetExtremeTiles(1)[0];
+            float highestHeat = intermediate.tiles[hottestTile.x, hottestTile.y];
 
-        if (highestHeat == 0)
-        {
+            if (highestHeat == 0)
+            {
+                return result;
+            }
+
+            for (int x = 0; x < tiles.GetLength(0); x++)
+            {
+                for (int y = 0; y < tiles.GetLength(1); y++)
+                {
+                    result.tiles[x, y] = intermediate.tiles[x, y] / highestHeat;
+                }
+            }
+
             return result;
         }
-
-        for (int x = 0; x < tiles.GetLength(0); x++)
-        {
-            for (int y = 0; y < tiles.GetLength(1); y++)
-            {
-                result.tiles[x, y] = intermediate.tiles[x, y] / highestHeat;
-            }
-        }
-
-        return result;
     }
 
     public Vector2Int[] GetExtremeTiles(int count = int.MaxValue, float threshold = float.MaxValue, bool coldest = false)
@@ -309,7 +312,7 @@ namespace Gameplay
 
         struct Maptile
         {
-            public Maptile(Maptile[,] parent, Vector2Int coordinates)
+            public Maptile(Datamap parent, Vector2Int coordinates)
             {
                 this.parent = parent;
                 this.coordinates = coordinates;
@@ -317,39 +320,67 @@ namespace Gameplay
                 containedShipID = -1;
             }
             Vector2Int coordinates;
-            Maptile[,] parent;
+            Datamap parent;
             public bool hit;
             public int containedShipID;
+            public int ContainedShipHealth
+            {
+                get
+                {
+                    return containedShipID >= 0 ? parent.health[containedShipID] : -1;
+                }
+            }
+        }
+
+        struct Datamap
+        {
+            public int[] health;
+            Maptile[,] tiledata;
+            bool[,] blackmap;
+
+            public bool[,] Blackmap
+            {
+                get
+                {
+                    return blackmap;
+                }
+            }
+
+            public Maptile[,] Tiledata
+            {
+                get
+                {
+                    return tiledata;
+                }
+            }
+
+
         }
 
         struct Situation
         {
             /// <summary>
-            /// Tracks the health of enemy ships.
-            /// </summary>
-            public int[] health;
-            /// <summary>
             /// Used to determine heatmap - provides information about current board status.
             /// </summary>
-            public Maptile[,] datamap;
+            public Datamap datamap;
             /// <summary>
-            /// Used to determine targetmap - provides transitional information about tiles which cannot be targeted or shouldn't be targeted.
+            /// Used to determine targetmap - provides transitional information about what tiles are prefered for targeting. Uses values from -1 to 1.
             /// </summary>
-            public Heatmap transmap;
+            public Heatmap heatmap_transitional;
 
             /// <summary>
             /// Used to determine targetmap - provides ABSOLUTE values about the likelyhood of a ship occupying any given tile. DOES NOT take placement rules into account. Shouldn't be modified by anything.
             /// </summary>
-            public Heatmap heatmap;
-            public void ConstructHeatmap()
+            public Heatmap heatmap_statistical;
+            public void ConstructStatisticalHeatmap()
             {
-                heatmap = new Heatmap(datamap.GetLength(0), datamap.GetLength(1));
-                for (int x = 0; x < datamap.GetLength(0); x++)
+                heatmap_statistical = new Heatmap(datamap.Tiledata.GetLength(0), datamap.Tiledata.GetLength(1));
+                for (int x = 0; x < datamap.Tiledata.GetLength(0); x++)
                 {
-                    for (int y = 0; y < datamap.GetLength(1); y++)
+                    for (int y = 0; y < datamap.Tiledata.GetLength(1); y++)
                     {
-                        Maptile tile = datamap[x, y];
-                        if (tile.hit) heatmap.Heat(new Vector2Int(x, y), tile.containedShipID >= 0 ? (health[tile.containedShipID] <= 0 ? destructionHeat : hitHeat) : missHeat, heatDropoff);
+                        Maptile tile = datamap.Tiledata[x, y];
+                        if (tile.hit) heatmap_statistical.Heat(new Vector2Int(x, y), tile.containedShipID >= 0 ? (tile.ContainedShipHealth <= 0 ? destructionHeat : hitHeat) : missHeat, heatDropoff);
                     }
                 }
             }
@@ -359,13 +390,20 @@ namespace Gameplay
             public Heatmap targetmap;
             public void ConstructTargetmap()
             {
-                ConstructHeatmap();
+                ConstructStatisticalHeatmap();
 
                 //Combine maps
-                Heatmap normalizedHeatmap = heatmap.GetNormalizedMap();
-                targetmap = (normalizedHeatmap + transmap).GetNormalizedMap();
+                targetmap = (heatmap_statistical.normalized + heatmap_transitional);
 
-                //Apply placement rules
+                for (int x = 0; x < targetmap.tiles.GetLength(0); x++)
+                {
+                    for (int y = 0; y < targetmap.tiles.GetLength(1); y++)
+                    {
+                        if (datamap.Blackmap[x, y]) targetmap.tiles[x, y] = Mathf.NegativeInfinity;
+                    }
+                }
+
+                targetmap = targetmap.normalized;
             }
 
 
@@ -377,7 +415,7 @@ namespace Gameplay
 
                 for (int i = 0; i < results.Length; i++)
                 {
-                    results[i] = new Plan(this, ref transmap, sequence);
+                    results[i] = new Plan(this, ref heatmap_transitional, sequence);
                 }
                 return results;
             }
@@ -390,9 +428,9 @@ namespace Gameplay
             /// Creates a new plan for a source situation.
             /// </summary>
             /// <param name="state">Situation to be planned on.</param>
-            /// <param name="transmap">References the transmap of the previous layer.</param>
+            /// <param name="heatmap_transitional">References the transmap of the previous layer.</param>
             /// <param name="sequence">The branching of plans considered ahead.</param>
-            public Plan(Situation state, ref Heatmap transmap, int[] sequence)
+            public Plan(Situation state, ref Heatmap heatmap_transitional, int[] sequence)
             {
                 this = new Plan();
 
@@ -423,7 +461,7 @@ namespace Gameplay
                 TargetAircraft();
 
 
-                transmap = situation.transmap; //Set the previous plan's transmap to the result's transmap
+                heatmap_transitional = situation.heatmap_transitional; //Set the previous plan's transmap to the result's transmap
 
                 if (sequence.Length > 0) successives = situation.GetStrategy(sequence); else successives = new Plan[0];
             }
