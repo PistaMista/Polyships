@@ -312,17 +312,33 @@ namespace Gameplay
 
         struct Maptile
         {
-            public Maptile(Datamap parent, Vector2Int coordinates, bool hit, )
+            public Maptile(Datamap parent, Vector2Int coordinates)
             {
                 this.parent = parent;
                 this.coordinates = coordinates;
+                permanentlyBlocked = false;
                 hit = false;
                 containedShipID = -1;
+                space = Vector2Int.one * -1;
             }
             Vector2Int coordinates;
             Datamap parent;
+            /// <summary>
+            /// Whether this tile cannot contain anything no matter what.
+            /// </summary>
+            public bool permanentlyBlocked;
+            /// <summary>
+            /// Whether this tile has been damaged/hit.
+            /// </summary>
             public bool hit;
+            /// <summary>
+            /// The ship in this tile.
+            /// </summary>
             public int containedShipID;
+            /// <summary>
+            /// The remaining health of the contained ship.
+            /// </summary>
+            /// <returns></returns>
             public int ContainedShipHealth
             {
                 get
@@ -331,7 +347,14 @@ namespace Gameplay
                 }
             }
 
+            /// <summary>
+            /// The longest ship length this tile can contain horizontally and vertically.
+            /// </summary>
             public Vector2Int space;
+            /// <summary>
+            /// The longest ship length this tile can contain.
+            /// </summary>
+            /// <returns></returns>
             public int MaxSpace
             {
                 get
@@ -339,34 +362,100 @@ namespace Gameplay
                     return Mathf.Max(space.x, space.y);
                 }
             }
+
+            /// <summary>
+            /// Whether this tile is not worth shooting at.
+            /// </summary>
+            /// <returns></returns>
+            public bool IsBlack
+            {
+                get
+                {
+                    return parent.smallestShipLength > MaxSpace;
+                }
+            }
         }
 
+        /// <summary>
+        /// Provides information about health of enemy ships, tile predictions and how long of a ship each tile can contain.
+        /// </summary>
         struct Datamap
         {
-            // public Datamap(int dimX, int dimY)
-            // {
-            //     tiledata = new Maptile[dimX, dimY];
-
-
-
-            // }
+            /// <summary>
+            /// Expected remaining health of enemy ships.
+            /// </summary>
             public int[] health;
+            /// <summary>
+            /// Information about all the tiles on the board.
+            /// </summary>
             Maptile[,] tiledata;
-            int smallestShipLength;
+            /// <summary>
+            /// The length of the smallest ship left intact.
+            /// </summary>
+            /// <returns></returns>
+            public int smallestShipLength
+            {
+                get
+                {
+                    int result = 0;
+                    for (int i = 0; i < health.Length; i++)
+                    {
+                        int shipLength = Battle.main.defender.board.ships[i].maxHealth;
+                        if (health[i] > 0 && shipLength > result) result = shipLength;
+                    }
 
+                    return result;
+                }
+            }
 
-
+            bool spaceDataToDate;
+            /// <summary>
+            /// Gets the tilemap and ensures all space availability information is up to date.
+            /// </summary>
+            /// <returns></returns>
             public Maptile[,] Tiledata
             {
                 get
                 {
+                    if (!spaceDataToDate)
+                    {
+
+                        spaceDataToDate = true;
+                    }
                     return tiledata;
                 }
             }
 
-            public bool IsTileBlack(Vector2Int tile)
+            /// <summary>
+            /// Logs shots on a tile.
+            /// </summary>
+            /// <param name="coordinates">Position of the tile.</param>
+            /// <param name="shipHit">False if miss, true if hit - contained ship is automatically predicted.</param>
+            public void LogHit(Vector2Int coordinates, bool shipHit)
             {
-                return tiledata[tile.x, tile.y].MaxSpace < smallestShipLength;
+                if (shipHit)
+                {
+                    int predictedShipID = 0;
+
+                    LogHit(coordinates, predictedShipID);
+                }
+                else
+                {
+                    spaceDataToDate = false;
+                    tiledata[coordinates.x, coordinates.y].hit = true;
+                }
+            }
+            /// <summary>
+            /// Logs a hit on tile.
+            /// </summary>
+            /// <param name="coordinates">Position of the tile.</param>
+            /// <param name="knownContainedShipID">The ship that was damaged.</param>
+            public void LogHit(Vector2Int coordinates, int knownContainedShipID)
+            {
+                spaceDataToDate = false;
+                tiledata[coordinates.x, coordinates.y].hit = true;
+                tiledata[coordinates.x, coordinates.y].containedShipID = knownContainedShipID;
+                health[knownContainedShipID]--;
             }
         }
 
@@ -412,7 +501,7 @@ namespace Gameplay
                 {
                     for (int y = 0; y < targetmap.tiles.GetLength(1); y++)
                     {
-                        if (datamap.IsTileBlack(new Vector2Int(x, y))) targetmap.tiles[x, y] = Mathf.NegativeInfinity;
+                        if (datamap.Tiledata[x, y].IsBlack) targetmap.tiles[x, y] = Mathf.NegativeInfinity;
                     }
                 }
 
