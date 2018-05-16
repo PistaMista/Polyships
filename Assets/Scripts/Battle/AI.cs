@@ -312,7 +312,7 @@ namespace Gameplay
 
         struct Maptile
         {
-            public Maptile(Datamap parent, Vector2Int coordinates)
+            public Maptile(Datamap parent, Vector2Int coordinates, bool hit, )
             {
                 this.parent = parent;
                 this.coordinates = coordinates;
@@ -330,21 +330,31 @@ namespace Gameplay
                     return containedShipID >= 0 ? parent.health[containedShipID] : -1;
                 }
             }
+
+            public Vector2Int space;
+            public int MaxSpace
+            {
+                get
+                {
+                    return Mathf.Max(space.x, space.y);
+                }
+            }
         }
 
         struct Datamap
         {
+            // public Datamap(int dimX, int dimY)
+            // {
+            //     tiledata = new Maptile[dimX, dimY];
+
+
+
+            // }
             public int[] health;
             Maptile[,] tiledata;
-            bool[,] blackmap;
+            int smallestShipLength;
 
-            public bool[,] Blackmap
-            {
-                get
-                {
-                    return blackmap;
-                }
-            }
+
 
             public Maptile[,] Tiledata
             {
@@ -354,7 +364,10 @@ namespace Gameplay
                 }
             }
 
-
+            public bool IsTileBlack(Vector2Int tile)
+            {
+                return tiledata[tile.x, tile.y].MaxSpace < smallestShipLength;
+            }
         }
 
         struct Situation
@@ -399,7 +412,7 @@ namespace Gameplay
                 {
                     for (int y = 0; y < targetmap.tiles.GetLength(1); y++)
                     {
-                        if (datamap.Blackmap[x, y]) targetmap.tiles[x, y] = Mathf.NegativeInfinity;
+                        if (datamap.IsTileBlack(new Vector2Int(x, y))) targetmap.tiles[x, y] = Mathf.NegativeInfinity;
                     }
                 }
 
