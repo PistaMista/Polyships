@@ -10,7 +10,6 @@ using Gameplay.Ships;
 [Serializable]
 public struct Heatmap
 {
-    public delegate void Heater(ref Heatmap map, Vector2Int affectedCoordinates);
     public float[,] tiles;
     public float[] verticalLanes
     {
@@ -347,6 +346,24 @@ namespace Gameplay
                 }
             }
 
+            public Vector2Int[] NeighbouringHits
+            {
+                get
+                {
+                    List<Vector2Int> result = new List<Vector2Int>();
+                    for (int i = 0; i < 4; i++)
+                    {
+                        Vector2Int potentialNeighbour = coordinates + new Vector2Int(i < 2 ? (i == 0 ? 1 : -1) : 0, i >= 2 ? (i == 2 ? 1 : -1) : 0);
+                        if (potentialNeighbour.x >= 0 && potentialNeighbour.y >= 0 && potentialNeighbour.x < parent.tiledata.GetLength(0) && potentialNeighbour.y < parent.tiledata.GetLength(1) && parent.tiledata[potentialNeighbour.x, potentialNeighbour.y].containedShipID >= 0)
+                        {
+                            result.Add(potentialNeighbour);
+                        }
+                    }
+
+                    return result.ToArray();
+                }
+            }
+
             /// <summary>
             /// The longest ship length this tile can contain horizontally and vertically.
             /// </summary>
@@ -388,7 +405,7 @@ namespace Gameplay
             /// <summary>
             /// Information about all the tiles on the board.
             /// </summary>
-            Maptile[,] tiledata;
+            public Maptile[,] tiledata;
             /// <summary>
             /// The length of the smallest ship left intact.
             /// </summary>
@@ -397,14 +414,15 @@ namespace Gameplay
             {
                 get
                 {
-                    int result = 0;
+                    int result = 200;
                     for (int i = 0; i < health.Length; i++)
                     {
                         int shipLength = Battle.main.defender.board.ships[i].maxHealth;
-                        if (health[i] > 0 && shipLength > result) result = shipLength;
+                        if (health[i] > 0 && shipLength < result) result = shipLength;
                     }
 
-                    return result;
+
+                    return result < 200 ? result : 0;
                 }
             }
 
@@ -419,12 +437,85 @@ namespace Gameplay
                 {
                     if (!spaceDataToDate)
                     {
+                        List<int> lanesToUpdate = new List<int>();
+
+                        for (int x = 0; x < tiledata.GetLength(0); x++)
+                        {
+                            for (int y = 0; y < tiledata.GetLength(1); y++)
+                            {
+                                Maptile tile = tiledata[x, y];
+
+                                if (tile.hit && !tile.permanentlyBlocked)
+                                {
+                                    tile.permanentlyBlocked = true;
+                                    tile.space = Vector2Int.zero;
+
+                                    if (!lanesToUpdate.Contains(x)) lanesToUpdate.Add(x);
+                                    int horizontal = tiledata.GetLength(0) + y;
+                                    if (!lanesToUpdate.Contains(horizontal)) lanesToUpdate.Add(horizontal);
+
+                                    if (tile.containedShipID >= 0)
+                                    {
+                                        for (int i = 0; i < 4; i++)
+                                        {
+                                            Vector2Int pos = new Vector2Int(x + (i < 2 ? 1 : -1), y + (i % 2 == 0 ? 1 : -1));
+                                            if (pos.x >= 0 && pos.y >= 0 && pos.x < tiledata.GetLength(0) && pos.y < tiledata.GetLength(1))
+                                            {
+                                                tiledata[pos.x, pos.y].permanentlyBlocked = true;
+                                                tiledata[pos.x, pos.y].space = Vector2Int.zero;
+
+                                                if (!lanesToUpdate.Contains(pos.x)) lanesToUpdate.Add(pos.x);
+                                                horizontal = tiledata.GetLength(0) + pos.y;
+                                                if (!lanesToUpdate.Contains(horizontal)) lanesToUpdate.Add(horizontal);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                tiledata[x, y] = tile;
+                            }
+                        }
+
+                        foreach (int lane in lanesToUpdate)
+                        {
+                            int coordinate = lane % tiledata.GetLength(0);
+                            bool horizontal = coordinate < lane;
+                            int targetDepth = tiledata.GetLength(horizontal ? 0 : 1);
+
+                            int space = 0;
+                            List<Vector2Int> consecutiveTiles = new List<Vector2Int>();
+
+                            for (int depth = 0; depth < targetDepth; depth++)
+                            {
+                                Vector2Int tile = new Vector2Int(horizontal ? depth : coordinate, horizontal ? coordinate : depth);
+                                bool blocking = tiledata[tile.x, tile.y].permanentlyBlocked && (tiledata[tile.x, tile.y].containedShipID < 0);
+
+                                if (!blocking)
+                                {
+                                    space++;
+                                    if (tiledata[tile.x, tile.y].containedShipID < 0) consecutiveTiles.Add(tile);
+                                }
+
+                                if (blocking || depth == targetDepth - 1)
+                                {
+                                    foreach (Vector2Int u in consecutiveTiles)
+                                    {
+                                        if (horizontal) tiledata[u.x, u.y].space.x = space; else tiledata[u.x, u.y].space.y = space;
+                                    }
+
+                                    consecutiveTiles.Clear();
+                                    space = 0;
+                                }
+                            }
+                        }
 
                         spaceDataToDate = true;
                     }
                     return tiledata;
                 }
             }
+
+
 
             /// <summary>
             /// Logs shots on a tile.
@@ -435,7 +526,20 @@ namespace Gameplay
             {
                 if (shipHit)
                 {
+                    int maxAvailableSpace = Tiledata[coordinates.x, coordinates.y].MaxSpace;
+                    int longest = 0;
                     int predictedShipID = 0;
+
+                    Ship[] ships = Battle.main.defender.board.ships;
+
+                    for (int i = 0; i < ships.Length; i++)
+                    {
+                        if (health[i] > 0 && ships[i].maxHealth <= maxAvailableSpace && ships[i].maxHealth > longest)
+                        {
+                            predictedShipID = i;
+                            longest = ships[i].maxHealth;
+                        }
+                    }
 
                     LogHit(coordinates, predictedShipID);
                 }
@@ -448,13 +552,13 @@ namespace Gameplay
             /// <summary>
             /// Logs a hit on tile.
             /// </summary>
-            /// <param name="coordinates">Position of the tile.</param>
+            /// <param name="pos">Position of the tile.</param>
             /// <param name="knownContainedShipID">The ship that was damaged.</param>
-            public void LogHit(Vector2Int coordinates, int knownContainedShipID)
+            public void LogHit(Vector2Int pos, int knownContainedShipID)
             {
                 spaceDataToDate = false;
-                tiledata[coordinates.x, coordinates.y].hit = true;
-                tiledata[coordinates.x, coordinates.y].containedShipID = knownContainedShipID;
+                tiledata[pos.x, pos.y].hit = true;
+                tiledata[pos.x, pos.y].containedShipID = knownContainedShipID;
                 health[knownContainedShipID]--;
             }
         }
@@ -542,18 +646,6 @@ namespace Gameplay
                     Targeting
                 Every targeting procedure will work as follows:
                 1.Pick the ideal target from the targeting map.
-                2.Is it possible to blacklist?
-                YES:
-                 3.Blacklist it and any other considered invalid tiles in the transmap - set their value to -infinity.
-                 4.Discard the target and start again.
-                NO:
-                 3.Confirm the target.
-                 4.Apply contextual transmap heat - ranging from -1 to 1.
-
-                    Blacklisting
-                Sets a value in the transmap reference parameter to -infinity. This will inform other plans to ignore these tiles.
-                    Contextual heating (contextual heat)
-                Applies heat to the transmap informing other plans to shoot somewhere else. Also informs other attacks in THIS plan to go elsewhere if there is a cyclone or something similar.
                 */
 
                 TargetArtillery();
