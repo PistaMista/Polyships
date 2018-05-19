@@ -8,8 +8,15 @@ using Gameplay.Effects;
 using Gameplay.Ships;
 
 [Serializable]
-public struct Heatmap
+public struct Heatmap : ICloneable
 {
+    public object Clone()
+    {
+        Heatmap result = new Heatmap();
+        result.tiles = (float[,])tiles.Clone();
+
+        return result;
+    }
     public float[,] tiles;
     public float[] verticalLanes
     {
@@ -309,8 +316,20 @@ namespace Gameplay
             }
         }
 
-        struct Maptile
+        struct Maptile : ICloneable
         {
+            public object Clone()
+            {
+                Maptile result;
+                result.parent = parent;
+                result.coordinates = coordinates;
+                result.permanentlyBlocked = permanentlyBlocked;
+                result.hit = hit;
+                result.containedShipID = containedShipID;
+                result.space = space;
+
+                return result;
+            }
             public Maptile(Datamap parent, Vector2Int coordinates)
             {
                 this.parent = parent;
@@ -321,7 +340,7 @@ namespace Gameplay
                 space = Vector2Int.one * -1;
             }
             Vector2Int coordinates;
-            Datamap parent;
+            public Datamap parent;
             /// <summary>
             /// Whether this tile cannot contain anything no matter what.
             /// </summary>
@@ -396,8 +415,17 @@ namespace Gameplay
         /// <summary>
         /// Provides information about health of enemy ships, tile predictions and how long of a ship each tile can contain.
         /// </summary>
-        struct Datamap
+        struct Datamap : ICloneable
         {
+            public object Clone()
+            {
+                Datamap result;
+                result.health = (int[])health.Clone();
+                result.tiledata = (Maptile[,])tiledata.Clone();
+                result.spaceDataToDate = spaceDataToDate;
+
+                return result;
+            }
             /// <summary>
             /// Expected remaining health of enemy ships.
             /// </summary>
@@ -563,8 +591,18 @@ namespace Gameplay
             }
         }
 
-        struct Situation
+        struct Situation : ICloneable
         {
+            public object Clone()
+            {
+                Situation result;
+                result.datamap = (Datamap)datamap.Clone();
+                result.heatmap_statistical = new Heatmap(heatmap_statistical.tiles.GetLength(0), heatmap_statistical.tiles.GetLength(1));
+                result.heatmap_transitional = new Heatmap(heatmap_statistical.tiles.GetLength(0), heatmap_statistical.tiles.GetLength(1));
+                result.targetmap = new Heatmap(heatmap_statistical.tiles.GetLength(0), heatmap_statistical.tiles.GetLength(1));
+
+                return result;
+            }
             /// <summary>
             /// Used to determine heatmap - provides information about current board status.
             /// </summary>
@@ -640,13 +678,9 @@ namespace Gameplay
             {
                 this = new Plan();
 
-                situation = state.Clone(); //The resulting situation is based on the starting situation.
+                situation = (Situation)state.Clone(); //The resulting situation is based on the starting situation.
 
-                /*
-                    Targeting
-                Every targeting procedure will work as follows:
-                1.Pick the ideal target from the targeting map.
-                */
+                situation.ConstructTargetmap();
 
                 TargetArtillery();
 
@@ -663,11 +697,13 @@ namespace Gameplay
             public void TargetArtillery()
             {
 
+                situation.ConstructTargetmap();
             }
 
             public void TargetTorpedoes()
             {
 
+                situation.ConstructTargetmap();
             }
 
             public void TargetAircraft()
