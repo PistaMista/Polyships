@@ -417,6 +417,28 @@ namespace Gameplay
         /// </summary>
         struct Datamap : ICloneable
         {
+            public Datamap(Board board)
+            {
+                health = Array.ConvertAll(board.ships, x => x.health == 0 ? 0 : x.maxHealth);
+
+                tiledata = new Maptile[board.tiles.GetLength(0), board.tiles.GetLength(1)];
+                for (int x = 0; x < tiledata.GetLength(0); x++)
+                {
+                    for (int y = 0; y < tiledata.GetLength(1); y++)
+                    {
+                        Tile actual = board.tiles[x, y];
+
+                        Maptile tile;
+                        tile.hit = actual.hit;
+
+                        tile.space = new Vector2Int(tiledata.GetLength(0), tiledata.GetLength(1));
+
+                        tiledata[x, y] = tile;
+                    }
+                }
+
+                spaceDataToDate = false;
+            }
             public object Clone()
             {
                 Datamap result;
@@ -593,6 +615,10 @@ namespace Gameplay
 
         struct Situation : ICloneable
         {
+            public Situation(Board board)
+            {
+                datamap = new Datamap(board);
+            }
             public object Clone()
             {
                 Situation result;
@@ -603,6 +629,7 @@ namespace Gameplay
 
                 return result;
             }
+
             /// <summary>
             /// Used to determine heatmap - provides information about current board status.
             /// </summary>
@@ -682,25 +709,25 @@ namespace Gameplay
 
                 situation.ConstructTargetmap();
 
-                TargetArtillery();
+                GetNextArtilleryTarget();
 
-                TargetTorpedoes();
+                GetNextTorpedoTarget();
 
                 TargetAircraft();
 
 
-                heatmap_transitional = situation.heatmap_transitional; //Set the previous plan's transmap to the result's transmap
+                heatmap_transitional += situation.heatmap_transitional; //Add the result's transmap to the previous plan's transmap
 
                 if (sequence.Length > 0) successives = situation.GetStrategy(sequence); else successives = new Plan[0];
             }
 
-            public void TargetArtillery()
+            public Tile GetNextArtilleryTarget()
             {
 
                 situation.ConstructTargetmap();
             }
 
-            public void TargetTorpedoes()
+            public TorpedoAttack.Target GetNextTorpedoTarget()
             {
 
                 situation.ConstructTargetmap();
