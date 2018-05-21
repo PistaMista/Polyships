@@ -298,6 +298,7 @@ namespace Gameplay
         public const float hitHeat = 1.0f;
         public const float destructionHeat = 1.0f;
         public const float heatDropoff = 0.4f;
+        public const float hitConfidenceThreshold = 1.4f;
         public void DoTurn()
         {
             if (owner.board.ships == null)
@@ -534,7 +535,7 @@ namespace Gameplay
                 }
             }
 
-            bool spaceDataToDate;
+            public bool spaceDataToDate;
             /// <summary>
             /// Gets the tilemap and ensures all space availability information is up to date.
             /// </summary>
@@ -697,10 +698,10 @@ namespace Gameplay
                 totalArtilleryCount = ammo.guns;
 
                 aircraftCooldowns = new int[ammo.aircraft];
-                for (int i = 0; i < recon.Length && i < aircraftCooldowns.Length; i++)
-                {
-                    aircraftCooldowns[i] = recon[i].duration;
-                }
+                // for (int i = 0; i < recon.Length && i < aircraftCooldowns.Length; i++)
+                // {
+                //     aircraftCooldowns[i] = recon[i].duration;
+                // }
 
                 Effect torpedoCooldown = Effect.GetEffectsInQueue(x => x.visibleTo == ammo.targetedPlayer, typeof(TorpedoCooldown), 1).FirstOrDefault();
                 this.torpedoCooldown = torpedoCooldown ? torpedoCooldown.duration : 0;
@@ -789,15 +790,15 @@ namespace Gameplay
             public Plan[] GetStrategy(int[] sequence)
             {
                 //Load the first number of the sequence and make that many plans
-                Plan[] results = new Plan[sequence[0]];
+                Plan[] results = new Plan[sequence[0] * 2];
 
                 //Discard the first number
                 sequence = sequence.Skip(1).ToArray();
 
                 //Create the plans and provide each with the remaining sequence
-                for (int i = 0; i < results.Length * 2; i++)
+                for (int i = 0; i < results.Length; i++)
                 {
-                    int torpedoCount = Mathf.CeilToInt(Mathf.Clamp01((i - results.Length + 1) / (float)results.Length) * loadedTorpedoCount);
+                    int torpedoCount = Mathf.CeilToInt(Mathf.Clamp01((i - results.Length / 2 + 1) / (float)results.Length) * loadedTorpedoCount);
                     results[i] = new Plan(this, ref heatmap_transitional, torpedoCount, sequence);
                 }
                 return results;
@@ -844,13 +845,16 @@ namespace Gameplay
                 }
                 artillery = artilleryTargets.ToArray();
 
+                torpedoes = new TorpedoAttack.Target[0];
+                aircraft = new int[0];
+
                 //Choose the torpedo targets
-                List<TorpedoAttack.Target> torpedoTargets = new List<TorpedoAttack.Target>();
-                for (int i = 0; i < torpedoCount && i < situation.loadedTorpedoCount; i++)
-                {
-                    torpedoTargets.Add(GetNextTorpedoTarget());
-                }
-                torpedoes = torpedoTargets.ToArray();
+                // List<TorpedoAttack.Target> torpedoTargets = new List<TorpedoAttack.Target>();
+                // for (int i = 0; i < torpedoCount && i < situation.loadedTorpedoCount; i++)
+                // {
+                //     torpedoTargets.Add(GetNextTorpedoTarget());
+                // }
+                // torpedoes = torpedoTargets.ToArray();
 
                 TargetAircraft();
 
@@ -863,15 +867,22 @@ namespace Gameplay
 
             public Tile GetNextArtilleryTarget()
             {
+                Vector2Int bestTarget = situation.targetmap.GetExtremeTiles(1)[0];
+                situation.heatmap_transitional.Heat(bestTarget, -0.2f, 0.3f);
+                situation.datamap.tiledata[bestTarget.x, bestTarget.y].hit = true;
+                situation.datamap.tiledata[bestTarget.x, bestTarget.y].containsShip = situation.targetmap.tiles[bestTarget.x, bestTarget.y] / situation.targetmap.averageHeat > hitConfidenceThreshold;
 
+                situation.datamap.spaceDataToDate = false;
                 situation.ConstructTargetmap();
+
+                return Battle.main.defender.board.tiles[bestTarget.x, bestTarget.y];
             }
 
-            public TorpedoAttack.Target GetNextTorpedoTarget()
-            {
+            // public TorpedoAttack.Target GetNextTorpedoTarget()
+            // {
 
-                situation.ConstructTargetmap();
-            }
+            //     situation.ConstructTargetmap();
+            // }
 
             public void TargetAircraft()
             {
