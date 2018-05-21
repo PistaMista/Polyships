@@ -457,10 +457,15 @@ namespace Gameplay
         {
             public Datamap(Board board)
             {
+                //Record what we know about the health of enemy ships
                 health = Array.ConvertAll(board.ships, x => x.health == 0 ? 0 : x.maxHealth);
 
-                tiledata = new Maptile[board.tiles.GetLength(0), board.tiles.GetLength(1)];
+                //Force the tile space data to update
                 spaceDataToDate = false;
+
+                //Convert the board to a 2D struct array
+                tiledata = new Maptile[board.tiles.GetLength(0), board.tiles.GetLength(1)];
+
 
                 for (int x = 0; x < tiledata.GetLength(0); x++)
                 {
@@ -476,6 +481,19 @@ namespace Gameplay
                         tile.space = new Vector2Int(tiledata.GetLength(0), tiledata.GetLength(1));
 
                         tiledata[x, y] = tile;
+                    }
+                }
+
+                //Predict the damage caused to intact ships
+                for (int x = 0; x < Tiledata.GetLength(0); x++)
+                {
+                    for (int y = 0; y < Tiledata.GetLength(1); y++)
+                    {
+                        Maptile tile = Tiledata[x, y];
+                        if (tile.containsShip)
+                        {
+                            health[tile.ContainedShipID]--;
+                        }
                     }
                 }
             }
@@ -525,10 +543,13 @@ namespace Gameplay
             {
                 get
                 {
+                    //If the space data is not updated update it
                     if (!spaceDataToDate)
                     {
+                        //Records the IDs of tile lanes that have to be recalculated
                         List<int> lanesToUpdate = new List<int>();
 
+                        //Calculate the blocking tiles and what lanes have to be updated
                         for (int x = 0; x < tiledata.GetLength(0); x++)
                         {
                             for (int y = 0; y < tiledata.GetLength(1); y++)
@@ -567,6 +588,7 @@ namespace Gameplay
                             }
                         }
 
+                        //Update the lanes
                         foreach (int lane in lanesToUpdate)
                         {
                             int coordinate = lane % tiledata.GetLength(0);
@@ -576,11 +598,13 @@ namespace Gameplay
                             int space = 0;
                             List<Vector2Int> consecutiveTiles = new List<Vector2Int>();
 
+                            //Go along the lane
                             for (int depth = 0; depth < targetDepth; depth++)
                             {
                                 Vector2Int tile = new Vector2Int(horizontal ? depth : coordinate, horizontal ? coordinate : depth);
                                 bool blocking = tiledata[tile.x, tile.y].permanentlyBlocked;
 
+                                //If this tile is free, add its provided space to the consecutive space
                                 if (!blocking)
                                 {
                                     space++;
@@ -588,6 +612,7 @@ namespace Gameplay
                                     if ((horizontal ? startingSpace.x : startingSpace.y) >= 0) consecutiveTiles.Add(tile);
                                 }
 
+                                //If this tile is blocked or we reached the end of the lane, assign the consecutive space to the tiles that provided it and are not locked
                                 if (blocking || depth == targetDepth - 1)
                                 {
                                     foreach (Vector2Int u in consecutiveTiles)
@@ -659,12 +684,15 @@ namespace Gameplay
         {
             public Situation(Board board)
             {
+                //Create a new datamap from the enemy's board
                 datamap = new Datamap(board);
 
+                //Initialize the heatmaps
                 heatmap_statistical = new Heatmap(board.tiles.GetLength(0), board.tiles.GetLength(1));
                 heatmap_transitional = new Heatmap(board.tiles.GetLength(0), board.tiles.GetLength(1));
                 targetmap = new Heatmap(board.tiles.GetLength(0), board.tiles.GetLength(1));
 
+                //Assign gun count and information about torpedoes and aircraft
                 AmmoRegistry ammo = Battle.main.attacker.arsenal;
                 totalArtilleryCount = ammo.guns;
 
@@ -760,13 +788,17 @@ namespace Gameplay
 
             public Plan[] GetStrategy(int[] sequence)
             {
+                //Load the first number of the sequence and make that many plans
                 Plan[] results = new Plan[sequence[0]];
 
+                //Discard the first number
                 sequence = sequence.Skip(1).ToArray();
 
-                for (int i = 0; i < results.Length; i++)
+                //Create the plans and provide each with the remaining sequence
+                for (int i = 0; i < results.Length * 2; i++)
                 {
-                    results[i] = new Plan(this, ref heatmap_transitional, sequence);
+                    int torpedoCount = Mathf.CeilToInt(Mathf.Clamp01((i - results.Length + 1) / (float)results.Length) * loadedTorpedoCount);
+                    results[i] = new Plan(this, ref heatmap_transitional, torpedoCount, sequence);
                 }
                 return results;
             }
@@ -774,6 +806,19 @@ namespace Gameplay
 
         struct Plan
         {
+            public float rating
+            {
+                get
+                {
+                    float result = situation.heatmap_statistical.normalized.averageHeat;
+                    for (int i = 0; i < successives.Length; i++)
+                    {
+                        result += successives[i].rating;
+                    }
+
+                    return rating;
+                }
+            }
             Situation situation;
             /// <summary>
             /// Creates a new plan for a source situation.
@@ -781,23 +826,38 @@ namespace Gameplay
             /// <param name="state">Situation to be planned on.</param>
             /// <param name="heatmap_transitional">References the transmap of the previous layer.</param>
             /// <param name="sequence">The branching of plans considered ahead.</param>
-            public Plan(Situation state, ref Heatmap heatmap_transitional, int[] sequence)
+            public Plan(Situation state, ref Heatmap heatmap_transitional, int torpedoCount, int[] sequence)
             {
                 this = new Plan();
 
-                situation = (Situation)state.Clone(); //The resulting situation is based on the starting situation.
+                //Copy the original situation
+                situation = (Situation)state.Clone();
 
+                //Initialize targeting maps
                 situation.ConstructTargetmap();
 
-                GetNextArtilleryTarget();
+                //Choose the gun targets
+                List<Tile> artilleryTargets = new List<Tile>();
+                for (int i = 0; i < situation.totalArtilleryCount; i++)
+                {
+                    artilleryTargets.Add(GetNextArtilleryTarget());
+                }
+                artillery = artilleryTargets.ToArray();
 
-                GetNextTorpedoTarget();
+                //Choose the torpedo targets
+                List<TorpedoAttack.Target> torpedoTargets = new List<TorpedoAttack.Target>();
+                for (int i = 0; i < torpedoCount && i < situation.loadedTorpedoCount; i++)
+                {
+                    torpedoTargets.Add(GetNextTorpedoTarget());
+                }
+                torpedoes = torpedoTargets.ToArray();
 
                 TargetAircraft();
 
 
-                heatmap_transitional += situation.heatmap_transitional; //Add the result's transmap to the previous plan's transmap
+                heatmap_transitional += situation.heatmap_transitional;
 
+                //If a sequence is provided branch this plan further with it
                 if (sequence.Length > 0) successives = situation.GetStrategy(sequence); else successives = new Plan[0];
             }
 
@@ -819,14 +879,23 @@ namespace Gameplay
             }
 
             public Plan[] successives;
+            public Tile[] artillery;
+            public TorpedoAttack.Target[] torpedoes;
+            public int[] aircraft;
         }
 
         void Attack()
         {
+            //In order to perform a attack we need to know the targets for artillery, torpedoes and aircraft
+
+            //Convert the current game state into a struct
             Situation situation = new Situation(Battle.main.defender.board);
 
+            //Create plans for striking the most likely enemy ship positions and rate them based on their consequences
             Plan[] plans = situation.GetStrategy(new int[] { 4, 2, 2 });
 
+            //Execute the plan with the highest rating
+            ExecutePlan(plans.OrderByDescending(x => x.rating).First());
         }
 
         // void RenderDebugPlanTree(Plan[] plans, Vector3 linkPoint, float space, float layerSpacing)
@@ -881,35 +950,35 @@ namespace Gameplay
         /// <param name="plan"></param>
         void ExecutePlan(Plan plan)
         {
-            // for (int i = 0; i < plan.artilleryTargets.Length; i++)
-            // {
-            //     ArtilleryAttack attack = Effect.CreateEffect(typeof(ArtilleryAttack)) as ArtilleryAttack;
-            //     attack.target = plan.artilleryTargets[i];
-            //     attack.targetedPlayer = Battle.main.defender;
-            //     attack.visibleTo = owner;
+            for (int i = 0; i < plan.artillery.Length; i++)
+            {
+                ArtilleryAttack attack = Effect.CreateEffect(typeof(ArtilleryAttack)) as ArtilleryAttack;
+                attack.target = plan.artillery[i];
+                attack.targetedPlayer = Battle.main.defender;
+                attack.visibleTo = owner;
 
-            //     if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
-            // }
+                if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
+            }
 
-            // for (int i = 0; i < plan.torpedoTargets.Length; i++)
-            // {
-            //     TorpedoAttack attack = Effect.CreateEffect(typeof(TorpedoAttack)) as TorpedoAttack;
-            //     attack.target = plan.torpedoTargets[i];
-            //     attack.targetedPlayer = Battle.main.defender;
-            //     attack.visibleTo = owner;
+            for (int i = 0; i < plan.torpedoes.Length; i++)
+            {
+                TorpedoAttack attack = Effect.CreateEffect(typeof(TorpedoAttack)) as TorpedoAttack;
+                attack.target = plan.torpedoes[i];
+                attack.targetedPlayer = Battle.main.defender;
+                attack.visibleTo = owner;
 
-            //     if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
-            // }
+                if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
+            }
 
-            // for (int i = 0; i < plan.aircraftTargets.Length; i++)
-            // {
-            //     AircraftRecon r = Effect.CreateEffect(typeof(AircraftRecon)) as AircraftRecon;
-            //     r.target = plan.aircraftTargets[i];
-            //     r.targetedPlayer = Battle.main.defender;
-            //     r.visibleTo = owner;
+            for (int i = 0; i < plan.aircraft.Length; i++)
+            {
+                AircraftRecon r = Effect.CreateEffect(typeof(AircraftRecon)) as AircraftRecon;
+                r.target = plan.aircraft[i];
+                r.targetedPlayer = Battle.main.defender;
+                r.visibleTo = owner;
 
-            //     if (!Effect.AddToQueue(r)) Destroy(r.gameObject);
-            // }
+                if (!Effect.AddToQueue(r)) Destroy(r.gameObject);
+            }
 
 
             Battle.main.NextTurn();
