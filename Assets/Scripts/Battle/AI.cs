@@ -869,12 +869,12 @@ namespace Gameplay
                 aircraft = new int[0];
 
                 //Choose the torpedo targets
-                // List<TorpedoAttack.Target> torpedoTargets = new List<TorpedoAttack.Target>();
-                // for (int i = 0; i < torpedoCount && i < situation.loadedTorpedoCount; i++)
-                // {
-                //     torpedoTargets.Add(GetNextTorpedoTarget());
-                // }
-                // torpedoes = torpedoTargets.ToArray();
+                List<TorpedoAttack.Target> torpedoTargets = new List<TorpedoAttack.Target>();
+                for (int i = 0; i < torpedoCount && i < situation.loadedTorpedoCount; i++)
+                {
+                    torpedoTargets.Add(GetNextTorpedoTarget());
+                }
+                torpedoes = torpedoTargets.ToArray();
 
                 TargetAircraft();
 
@@ -898,11 +898,52 @@ namespace Gameplay
                 return Battle.main.defender.board.tiles[bestTarget.x, bestTarget.y];
             }
 
-            // public TorpedoAttack.Target GetNextTorpedoTarget()
-            // {
+            public TorpedoAttack.Target GetNextTorpedoTarget()
+            {
+                //Get the ID of the hottest targeting lane
+                int bestLane = situation.targetmap.GetExtremeLanes(1)[0];
 
-            //     situation.ConstructTargetmap();
-            // }
+                //Get the x/y position of the lane
+                int position = bestLane % situation.targetmap.tiles.GetLength(0);
+
+                //Determine whether the lane is horizontal
+                bool horizontal = position < bestLane;
+                int maxDepth = situation.targetmap.tiles.GetLength(horizontal ? 0 : 1);
+
+                bool negativeDrop = false;
+                for (int depth = 0; depth < maxDepth; depth++)
+                {
+                    Vector2Int tile = horizontal ? new Vector2Int(depth, position) : new Vector2Int(position, depth);
+
+                    bool chosenForTargeting = situation.targetmap.tiles[tile.x, tile.y] / situation.targetmap.averageHeat > hitConfidenceThreshold;
+
+
+                    if (situation.datamap.Tiledata[tile.x, tile.y].definitelyContainsShip)
+                    {
+                        situation.datamap.health[situation.datamap.Tiledata[tile.x, tile.y].ContainedShipID] = 0;
+                        chosenForTargeting = true;
+                    }
+                    else if (chosenForTargeting)
+                    {
+                        situation.datamap.tiledata[tile.x, tile.y].definitelyContainsShip = true;
+                    }
+
+                    if (chosenForTargeting)
+                    {
+                        negativeDrop = depth < maxDepth / 2;
+                        for (int i = negativeDrop ? maxDepth - 1 : 0; negativeDrop ? i >= depth : i <= depth; i = i + (negativeDrop ? -1 : 1))
+                        {
+                            situation.datamap.tiledata[horizontal ? i : position, horizontal ? position : i].hit = true;
+                        }
+                        break;
+                    }
+                }
+
+                situation.ConstructTargetmap();
+
+                int dropDepth = negativeDrop ? maxDepth - 1 : 0;
+                return new TorpedoAttack.Target(Battle.main.defender.board.tiles[horizontal ? dropDepth : position, horizontal ? position : dropDepth], new Vector2Int(horizontal ? (negativeDrop ? -1 : 1) : 0, horizontal ? 0 : (negativeDrop ? -1 : 1)));
+            }
 
             public void TargetAircraft()
             {
@@ -923,8 +964,11 @@ namespace Gameplay
             Situation situation = new Situation(Battle.main.defender.board);
 
             //Create plans for striking the most likely enemy ship positions and rate them based on their consequences
-            Plan[] plans = situation.GetStrategy(new int[] { 1 });
+            Plan[] plans = situation.GetStrategy(new int[] { 3, 1, 1 });
 
+            Destroy(debugObjectParent);
+
+            debugObjectParent = new GameObject("Debug Object Parent");
             RenderDebugPlanTree(plans, Vector3.up * 40, 280f, 20f);
 
             //Execute the plan with the highest rating
@@ -934,9 +978,6 @@ namespace Gameplay
         GameObject debugObjectParent;
         void RenderDebugPlanTree(Plan[] plans, Vector3 linkPoint, float space, float layerSpacing)
         {
-            Destroy(debugObjectParent);
-
-            debugObjectParent = new GameObject("Debug Object Parent");
             float spacing = plans.Length > 1 ? space / (plans.Length - 1) : 0;
             Vector3 startingPosition = linkPoint + new Vector3(layerSpacing, 0, space / 2.0f);
 
