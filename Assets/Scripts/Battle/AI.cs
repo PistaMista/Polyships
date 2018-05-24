@@ -295,10 +295,10 @@ namespace Gameplay
                 1. Rate each plan.
         */
         public const float missHeat = -1.0f;
-        public const float hitHeat = 1.0f;
+        public const float hitHeat = 3.0f;
         public const float destructionHeat = 1.0f;
         public const float heatDropoff = 0.4f;
-        public const float hitConfidenceThreshold = 1.4f;
+        public const float hitConfidenceThreshold = 4.0f;
         public void DoTurn()
         {
             if (owner.board.ships == null)
@@ -324,9 +324,13 @@ namespace Gameplay
                 Maptile result;
                 result.parent = parent;
                 result.coordinates = coordinates;
-                result.permanentlyBlocked = permanentlyBlocked;
+
+                result.definitelyContainsShip = definitelyContainsShip;
+                result.definitelyDoesntContainShip = definitelyDoesntContainShip;
+
                 result.hit = hit;
-                result.containsShip = containsShip;
+
+                result.considered = considered;
                 result.containedShipID = ContainedShipID;
                 result.space = space;
 
@@ -336,23 +340,34 @@ namespace Gameplay
             {
                 this.parent = parent;
                 this.coordinates = coordinates;
-                permanentlyBlocked = false;
+
                 hit = false;
-                containsShip = false;
+                definitelyContainsShip = false;
+                definitelyDoesntContainShip = false;
+
+                considered = false;
+
                 containedShipID = -1;
                 space = Vector2Int.one * -1;
             }
             Vector2Int coordinates;
             Datamap parent;
             /// <summary>
-            /// Whether this tile cannot contain anything no matter what.
+            /// Whether this tile was considered by the spacing calculator.
             /// </summary>
-            public bool permanentlyBlocked;
+            public bool considered;
             /// <summary>
             /// Whether this tile has been damaged/hit.
             /// </summary>
             public bool hit;
-            public bool containsShip;
+            /// <summary>
+            /// Whether this tile definitely DOES contain a ship.
+            /// </summary>
+            public bool definitelyContainsShip;
+            /// <summary>
+            /// Whether this tile definitely DOES NOT contain a ship.
+            /// </summary>
+            public bool definitelyDoesntContainShip;
             /// <summary>
             /// The ship in this tile.
             /// </summary>
@@ -362,7 +377,7 @@ namespace Gameplay
             {
                 get
                 {
-                    if (containsShip)
+                    if (definitelyContainsShip)
                     {
                         if (containedShipID < 0)
                         {
@@ -382,12 +397,10 @@ namespace Gameplay
                     }
                     else containedShipID = -1;
 
-                    ContainedShipID = containedShipID;
                     return containedShipID;
                 }
                 set
                 {
-                    containsShip = value >= 0;
                     containedShipID = value;
                 }
             }
@@ -434,7 +447,7 @@ namespace Gameplay
             {
                 get
                 {
-                    return Mathf.Max(space.x, space.y);
+                    return definitelyDoesntContainShip ? 0 : Mathf.Max(space.x, space.y);
                 }
             }
 
@@ -446,7 +459,7 @@ namespace Gameplay
             {
                 get
                 {
-                    return parent.smallestShipLength > MaxSpace;
+                    return parent.smallestShipLength > MaxSpace || hit;
                 }
             }
         }
@@ -477,8 +490,13 @@ namespace Gameplay
                         Maptile tile = new Maptile(this, new Vector2Int(x, y));
 
                         tile.hit = actual.hit;
-                        tile.containsShip = actual.hit && actual.containedShip;
-                        tile.ContainedShipID = tile.containsShip && actual.containedShip.health == 0 ? actual.containedShip.index : -1;
+
+                        if (actual.containedShip != null && actual.hit)
+                        {
+                            tile.definitelyContainsShip = true;
+                            if (actual.containedShip.health == 0) tile.ContainedShipID = actual.containedShip.index;
+                        }
+
                         tile.space = new Vector2Int(tiledata.GetLength(0), tiledata.GetLength(1));
 
                         tiledata[x, y] = tile;
@@ -491,7 +509,7 @@ namespace Gameplay
                     for (int y = 0; y < Tiledata.GetLength(1); y++)
                     {
                         Maptile tile = Tiledata[x, y];
-                        if (tile.containsShip)
+                        if (tile.definitelyContainsShip)
                         {
                             health[tile.ContainedShipID]--;
                         }
@@ -557,25 +575,27 @@ namespace Gameplay
                             {
                                 Maptile tile = tiledata[x, y];
 
-                                if (tile.hit && !tile.permanentlyBlocked)
+                                if (tile.hit && !tile.considered)
                                 {
-                                    tile.permanentlyBlocked = !tile.containsShip;
-                                    tile.space = Vector2Int.one * -1;
+                                    tile.considered = true;
+
+                                    tile.definitelyDoesntContainShip = !tile.definitelyContainsShip;
 
                                     if (!lanesToUpdate.Contains(x)) lanesToUpdate.Add(x);
                                     int horizontal = tiledata.GetLength(0) + y;
                                     if (!lanesToUpdate.Contains(horizontal)) lanesToUpdate.Add(horizontal);
 
                                     //Block all diagonal neighbouring tiles
-                                    if (tile.ContainedShipID >= 0)
+                                    if (tile.definitelyContainsShip)
                                     {
                                         for (int i = 0; i < 4; i++)
                                         {
                                             Vector2Int pos = new Vector2Int(x + (i < 2 ? 1 : -1), y + (i % 2 == 0 ? 1 : -1));
                                             if (pos.x >= 0 && pos.y >= 0 && pos.x < tiledata.GetLength(0) && pos.y < tiledata.GetLength(1))
                                             {
-                                                tiledata[pos.x, pos.y].permanentlyBlocked = true;
-                                                tiledata[pos.x, pos.y].space = Vector2Int.one * -1;
+                                                tiledata[pos.x, pos.y].considered = true;
+
+                                                tiledata[pos.x, pos.y].definitelyDoesntContainShip = true;
 
                                                 if (!lanesToUpdate.Contains(pos.x)) lanesToUpdate.Add(pos.x);
                                                 horizontal = tiledata.GetLength(0) + pos.y;
@@ -603,14 +623,14 @@ namespace Gameplay
                             for (int depth = 0; depth < targetDepth; depth++)
                             {
                                 Vector2Int tile = new Vector2Int(horizontal ? depth : coordinate, horizontal ? coordinate : depth);
-                                bool blocking = tiledata[tile.x, tile.y].permanentlyBlocked;
+                                bool blocking = tiledata[tile.x, tile.y].definitelyDoesntContainShip;
 
                                 //If this tile is free, add its provided space to the consecutive space
                                 if (!blocking)
                                 {
                                     space++;
                                     Vector2Int startingSpace = tiledata[tile.x, tile.y].space;
-                                    if ((horizontal ? startingSpace.x : startingSpace.y) >= 0) consecutiveTiles.Add(tile);
+                                    consecutiveTiles.Add(tile);
                                 }
 
                                 //If this tile is blocked or we reached the end of the lane, assign the consecutive space to the tiles that provided it and are not locked
@@ -870,7 +890,7 @@ namespace Gameplay
                 Vector2Int bestTarget = situation.targetmap.GetExtremeTiles(1)[0];
                 situation.heatmap_transitional.Heat(bestTarget, -0.2f, 0.3f);
                 situation.datamap.tiledata[bestTarget.x, bestTarget.y].hit = true;
-                situation.datamap.tiledata[bestTarget.x, bestTarget.y].containsShip = situation.targetmap.tiles[bestTarget.x, bestTarget.y] / situation.targetmap.averageHeat > hitConfidenceThreshold;
+                situation.datamap.tiledata[bestTarget.x, bestTarget.y].definitelyContainsShip = situation.targetmap.tiles[bestTarget.x, bestTarget.y] / situation.targetmap.averageHeat > hitConfidenceThreshold;
 
                 situation.datamap.spaceDataToDate = false;
                 situation.ConstructTargetmap();
@@ -903,7 +923,7 @@ namespace Gameplay
             Situation situation = new Situation(Battle.main.defender.board);
 
             //Create plans for striking the most likely enemy ship positions and rate them based on their consequences
-            Plan[] plans = situation.GetStrategy(new int[] { 2, 1, 1 });
+            Plan[] plans = situation.GetStrategy(new int[] { 1 });
 
             RenderDebugPlanTree(plans, Vector3.up * 40, 280f, 20f);
 
@@ -911,8 +931,12 @@ namespace Gameplay
             ExecutePlan(plans.OrderByDescending(x => x.rating).First());
         }
 
+        GameObject debugObjectParent;
         void RenderDebugPlanTree(Plan[] plans, Vector3 linkPoint, float space, float layerSpacing)
         {
+            Destroy(debugObjectParent);
+
+            debugObjectParent = new GameObject("Debug Object Parent");
             float spacing = plans.Length > 1 ? space / (plans.Length - 1) : 0;
             Vector3 startingPosition = linkPoint + new Vector3(layerSpacing, 0, space / 2.0f);
 
@@ -939,13 +963,15 @@ namespace Gameplay
 
                         GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
+                        cube.transform.SetParent(debugObjectParent.transform);
+
                         cube.transform.position = lineBeginningPosition + Vector3.up * cubeHeight / 2.0f;
                         cube.transform.localScale = new Vector3(1, cubeHeight, 1);
 
                         Renderer r = cube.GetComponent<Renderer>();
 
                         MaterialPropertyBlock block = new MaterialPropertyBlock();
-                        block.SetColor("_Color", renderedSituation.datamap.tiledata[x, y].containsShip ? Color.red : (plan.artillery.Any(t => t.coordinates == new Vector2Int(x, y)) ? Color.blue : (renderedSituation.datamap.tiledata[x, y].hit) ? Color.black : Color.white));
+                        block.SetColor("_Color", renderedSituation.datamap.tiledata[x, y].definitelyContainsShip ? Color.red : (plan.artillery.Any(t => t.coordinates == new Vector2Int(x, y)) ? Color.blue : (renderedSituation.datamap.tiledata[x, y].hit) ? Color.black : Color.white));
 
                         r.SetPropertyBlock(block);
                     }
