@@ -642,6 +642,7 @@ namespace Gameplay
             }
 
             data.attacker.board = boardData;
+            data.attacker.heatmap_recon = new Heatmap(boardSideLength, boardSideLength);
             data.attacker.flag = flags[0];
 
             boardData = new Board.BoardData();
@@ -658,6 +659,7 @@ namespace Gameplay
             data.defender.index = 1;
             data.defender.board = boardData;
             data.defender.flag = flags[1];
+            data.defender.heatmap_recon = new Heatmap(boardSideLength, boardSideLength);
             data.defender.aiEnabled = aiOpponent;
 
             data.tutorialStage = tutorialEnabled ? 1 : 0;

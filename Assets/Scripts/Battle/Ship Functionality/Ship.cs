@@ -194,7 +194,7 @@ namespace Gameplay
                 tiles = location;
             }
 
-            if (parentBoard.owner.aiModule == null)
+            if (!parentBoard.owner.aiEnabled)
             {
                 placementInfo.waypoints = new List<Vector3>();
 
@@ -248,7 +248,7 @@ namespace Gameplay
 
             parentBoard.ReevaluateTiles();
 
-            if (parentBoard.owner.aiModule == null)
+            if (!parentBoard.owner.aiEnabled)
             {
                 placementInfo.waypoints = new List<Vector3>();
                 placementInfo.waypoints.Add(new Vector3(transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight + 4.0f, transform.position.z));

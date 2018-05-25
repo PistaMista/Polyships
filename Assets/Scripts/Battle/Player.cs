@@ -16,7 +16,7 @@ namespace Gameplay
             public int index;
             public Board.BoardData board;
             public bool aiEnabled;
-            //public AI.AIModuleData aIModuleData;
+            public Heatmap heatmap_recon;
             public float[,,] flag;
             public static implicit operator PlayerData(Player player)
             {
@@ -24,7 +24,7 @@ namespace Gameplay
                 result.index = player.index;
                 result.board = player.board;
                 result.aiEnabled = player.aiEnabled;
-                //result.aIModuleData = player.aiEnabled ? player.aiModule : new AI.AIModuleData();
+                result.heatmap_recon = player.heatmap_recon;
                 result.flag = new float[player.flag.GetLength(0), player.flag.GetLength(1), 3];
                 for (int x = 0; x < player.flag.GetLength(0); x++)
                 {
@@ -45,6 +45,7 @@ namespace Gameplay
         public int index;
         public Board board;
         public bool aiEnabled;
+        public Heatmap heatmap_recon;
         public Color[,] flag;
         public AmmoRegistry arsenal
         {
@@ -54,8 +55,6 @@ namespace Gameplay
             }
         }
 
-
-        public AI aiModule;
         public void Initialize(PlayerData data)
         {
             index = data.index;
@@ -64,12 +63,7 @@ namespace Gameplay
             board.Initialize(data.board);
 
             aiEnabled = data.aiEnabled;
-            if (aiEnabled)
-            {
-                aiModule = (AI)ScriptableObject.CreateInstance(typeof(AI));
-                aiModule.owner = this;
-                //aiModule.Initialize(data.aIModuleData);
-            }
+            heatmap_recon = data.heatmap_recon;
 
             flag = new Color[data.flag.GetLength(0), data.flag.GetLength(1)];
             for (int x = 0; x < flag.GetLength(0); x++)
@@ -88,13 +82,6 @@ namespace Gameplay
         public void AssignReferences(PlayerData data)
         {
             board.AssignReferences(data.board);
-
-            Board targetBoard = board == Battle.main.attacker.board ? Battle.main.defender.board : Battle.main.attacker.board;
-
-            if (aiEnabled)
-            {
-                //aiModule.AssignReferences(data.aIModuleData);
-            }
         }
 
         /// <summary>
@@ -140,6 +127,26 @@ namespace Gameplay
                     board.ships[i].OnTurnEnd();
                 }
             }
+
+            AircraftRecon[] reconEffects = Array.ConvertAll(Effect.GetEffectsInQueue(x => x.targetedPlayer != this, typeof(AircraftRecon), int.MaxValue), x => x as AircraftRecon);
+
+            for (int i = 0; i < reconEffects.Length; i++)
+            {
+                AircraftRecon line = reconEffects[i];
+
+                int linePosition = (line.target % (Battle.main.defender.board.tiles.GetLength(0) - 1));
+                bool lineVertical = line.target == linePosition;
+
+                for (int x = lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; x < (lineVertical ? (line.result != 1 ? linePosition + 1 : heatmap_recon.tiles.GetLength(0)) : heatmap_recon.tiles.GetLength(0)); x++)
+                {
+                    for (int y = !lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; y < (lineVertical ? (line.result != 1 ? linePosition + 1 : heatmap_recon.tiles.GetLength(1)) : heatmap_recon.tiles.GetLength(1)); y++)
+                    {
+                        heatmap_recon.Heat(new Vector2Int(x, y), AI.reconChangeRate, 1);
+                    }
+                }
+            }
+
+            heatmap_recon = heatmap_recon.normalized;
         }
     }
 }

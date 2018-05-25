@@ -47,7 +47,7 @@ namespace BattleUIAgents.UI
 
         void DoAITurn()
         {
-            player.aiModule.DoTurn();
+            AI.PlayTurnForPlayer(player);
             gameObject.SetActive(false);
             if (Battle.main.log.Count > 1)
             {
