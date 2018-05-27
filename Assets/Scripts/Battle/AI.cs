@@ -339,7 +339,7 @@ namespace Gameplay
         public const float missHeat = -1.0f;
         public const float hitHeat = 5.0f;
         public const float destructionHeat = 1.5f;
-        public const float heatDropoff = 0.4f;
+        public const float heatDropoff = 0.55f;
         public const float hitConfidenceThreshold = 4.2f;
         public static void PlayTurnForPlayer(Player player)
         {
@@ -1003,7 +1003,7 @@ namespace Gameplay
             Destroy(debugObjectParent);
 
             debugObjectParent = new GameObject("Debug Object Parent");
-            RenderDebugPlanTree(plans, Vector3.up * 40, 280f, 20f);
+            //RenderDebugPlanTree(plans, Vector3.up * 40, 280f, 20f);
 
             //Execute the plan with the highest rating
             Plan best = plans.OrderByDescending(x => x.rating).First();
