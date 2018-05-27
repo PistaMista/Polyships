@@ -135,28 +135,32 @@ public struct Heatmap : ICloneable
 
     public static Heatmap operator *(Heatmap map, float mult)
     {
-        for (int x = 0; x < map.tiles.GetLength(0); x++)
+        Heatmap result = new Heatmap(map.tiles.GetLength(0), map.tiles.GetLength(1));
+
+        for (int x = 0; x < result.tiles.GetLength(0); x++)
         {
-            for (int y = 0; y < map.tiles.GetLength(1); y++)
+            for (int y = 0; y < result.tiles.GetLength(1); y++)
             {
-                map.tiles[x, y] *= mult;
+                result.tiles[x, y] = map.tiles[x, y] * mult;
             }
         }
 
-        return map;
+        return result;
     }
 
     public static Heatmap operator +(Heatmap map1, Heatmap map2)
     {
-        for (int x = 0; x < map1.tiles.GetLength(0); x++)
+        Heatmap result = new Heatmap(map1.tiles.GetLength(0), map1.tiles.GetLength(1));
+
+        for (int x = 0; x < result.tiles.GetLength(0); x++)
         {
-            for (int y = 0; y < map1.tiles.GetLength(1); y++)
+            for (int y = 0; y < result.tiles.GetLength(1); y++)
             {
-                map1.tiles[x, y] += map2.tiles[x, y];
+                result.tiles[x, y] = map1.tiles[x, y] + map2.tiles[x, y];
             }
         }
 
-        return map1;
+        return result;
     }
 
     public void Heat(Vector2Int source, float heat, float dropoff)
@@ -218,7 +222,7 @@ public struct Heatmap : ICloneable
             Heatmap result = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
 
             Heatmap intermediate = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
-            Vector2Int coldestTile = GetExtremeTiles(1, float.MinValue, true)[0];
+            Vector2Int coldestTile = ColdestTile;
             float lowestHeat = tiles[coldestTile.x, coldestTile.y];
 
             for (int x = 0; x < tiles.GetLength(0); x++)
@@ -226,12 +230,12 @@ public struct Heatmap : ICloneable
                 for (int y = 0; y < tiles.GetLength(1); y++)
                 {
                     float heat = tiles[x, y];
-                    intermediate.tiles[x, y] = heat < float.MinValue ? 0 : heat - lowestHeat;
+                    intermediate.tiles[x, y] = heat < float.MinValue ? 0 : heat - lowestHeat + 0.000001f;
                 }
             }
 
 
-            Vector2Int hottestTile = intermediate.GetExtremeTiles(1)[0];
+            Vector2Int hottestTile = intermediate.HottestTile;
             float highestHeat = intermediate.tiles[hottestTile.x, hottestTile.y];
 
             if (highestHeat == 0)
@@ -251,9 +255,44 @@ public struct Heatmap : ICloneable
         }
     }
 
-    public Vector2Int[] GetExtremeTiles(int count = int.MaxValue, float threshold = float.MaxValue, bool coldest = false)
+    public Vector2Int HottestTile
     {
-        return Utilities.GetExtremeArrayElements(tiles, count, coldest, threshold);
+        get
+        {
+            Vector2Int pos = Vector2Int.zero;
+            float highest = Mathf.NegativeInfinity;
+
+            for (int x = 0; x < tiles.GetLength(0); x++)
+            {
+                for (int y = 0; y < tiles.GetLength(1); y++)
+                {
+                    float heat = tiles[x, y];
+                    if (heat >= highest) { pos = new Vector2Int(x, y); highest = heat; }
+                }
+            }
+
+            return pos;
+        }
+    }
+
+    public Vector2Int ColdestTile
+    {
+        get
+        {
+            Vector2Int pos = Vector2Int.zero;
+            float lowest = Mathf.Infinity;
+
+            for (int x = 0; x < tiles.GetLength(0); x++)
+            {
+                for (int y = 0; y < tiles.GetLength(1); y++)
+                {
+                    float heat = tiles[x, y];
+                    if (heat <= lowest && heat > float.MinValue) { pos = new Vector2Int(x, y); lowest = heat; }
+                }
+            }
+
+            return pos;
+        }
     }
 
     public int[] GetExtremeGridLines(int count = int.MaxValue, float threshold = float.MaxValue, bool coldest = false)
@@ -272,6 +311,7 @@ namespace Gameplay
     public class AI : UnityEngine.Object
     {
         public static Player processedPlayer;
+        public static bool cycloneActive;
         /*
             Transcript
         Process
@@ -294,16 +334,17 @@ namespace Gameplay
             NO:
                 1. Rate each plan.
         */
-        public const float reconModifier = 0.3f;
+        public const float reconModifier = 0.2f;
         public const float reconChangeRate = 0.5f;
         public const float missHeat = -1.0f;
-        public const float hitHeat = 3.0f;
-        public const float destructionHeat = 1.0f;
+        public const float hitHeat = 5.0f;
+        public const float destructionHeat = 1.5f;
         public const float heatDropoff = 0.4f;
-        public const float hitConfidenceThreshold = 4.0f;
+        public const float hitConfidenceThreshold = 4.2f;
         public static void PlayTurnForPlayer(Player player)
         {
             processedPlayer = player;
+            cycloneActive = Effect.GetEffectsInQueue(x => true, typeof(Cyclone), 1).Length == 1;
 
             if (player.board.ships == null)
             {
@@ -712,7 +753,7 @@ namespace Gameplay
 
         struct Situation : ICloneable
         {
-            public Situation(Board board, Heatmap recon)
+            public Situation(Board board)
             {
                 //Create a new datamap from the enemy's board
                 datamap = new Datamap(board);
@@ -720,7 +761,6 @@ namespace Gameplay
                 //Initialize the heatmaps
                 heatmap_statistical = new Heatmap(board.tiles.GetLength(0), board.tiles.GetLength(1));
                 heatmap_transitional = new Heatmap(board.tiles.GetLength(0), board.tiles.GetLength(1));
-                heatmap_recon = recon;
 
                 targetmap = new Heatmap(board.tiles.GetLength(0), board.tiles.GetLength(1));
 
@@ -744,7 +784,6 @@ namespace Gameplay
                 result.heatmap_statistical = new Heatmap(heatmap_statistical.tiles.GetLength(0), heatmap_statistical.tiles.GetLength(1));
                 result.heatmap_transitional = new Heatmap(heatmap_statistical.tiles.GetLength(0), heatmap_statistical.tiles.GetLength(1));
                 result.targetmap = new Heatmap(heatmap_statistical.tiles.GetLength(0), heatmap_statistical.tiles.GetLength(1));
-                result.heatmap_recon = (Heatmap)heatmap_recon.Clone();
 
                 result.totalArtilleryCount = totalArtilleryCount;
 
@@ -769,10 +808,6 @@ namespace Gameplay
             /// Used to determine targetmap - provides ABSOLUTE values about the likelyhood of a ship occupying any given tile. DOES NOT take placement rules into account. Shouldn't be modified by anything.
             /// </summary>
             public Heatmap heatmap_statistical;
-            /// <summary>
-            /// Used to determine targetmap - provides NORMALIZED values about results of air reconaissance.
-            /// </summary>
-            public Heatmap heatmap_recon;
             public void ConstructStatisticalHeatmap()
             {
                 heatmap_statistical = new Heatmap(datamap.Tiledata.GetLength(0), datamap.Tiledata.GetLength(1));
@@ -794,7 +829,7 @@ namespace Gameplay
                 ConstructStatisticalHeatmap();
 
                 //Combine maps
-                targetmap = (heatmap_statistical.normalized + heatmap_transitional + heatmap_recon);
+                targetmap = (heatmap_statistical.normalized + heatmap_transitional + AI.processedPlayer.heatmap_recon);
 
                 for (int x = 0; x < targetmap.tiles.GetLength(0); x++)
                 {
@@ -861,6 +896,7 @@ namespace Gameplay
 
                 //Copy the original situation
                 situation = (Situation)state.Clone();
+                situation.heatmap_transitional = heatmap_transitional;
 
                 //Initialize targeting maps
                 situation.ConstructTargetmap();
@@ -884,7 +920,7 @@ namespace Gameplay
                 }
                 torpedoes = torpedoTargets.ToArray();
 
-                heatmap_transitional = heatmap_transitional + situation.heatmap_transitional;
+                heatmap_transitional = (Heatmap)heatmap_transitional.Clone();
 
                 //If a sequence is provided branch this plan further with it
                 if (sequence.Length > 0) successives = situation.GetStrategy(sequence); else successives = new Plan[0];
@@ -892,8 +928,8 @@ namespace Gameplay
 
             public Tile GetNextArtilleryTarget()
             {
-                Vector2Int bestTarget = situation.targetmap.GetExtremeTiles(1)[0];
-                situation.heatmap_transitional.Heat(bestTarget, -0.2f, 0.3f);
+                Vector2Int bestTarget = situation.targetmap.HottestTile;
+                situation.heatmap_transitional.Heat(bestTarget, cycloneActive ? -1.0f : -0.2f, 0.3f);
                 situation.datamap.tiledata[bestTarget.x, bestTarget.y].hit = true;
                 situation.datamap.tiledata[bestTarget.x, bestTarget.y].definitelyContainsShip = situation.targetmap.tiles[bestTarget.x, bestTarget.y] / situation.targetmap.averageHeat > hitConfidenceThreshold;
 
@@ -959,7 +995,7 @@ namespace Gameplay
             //In order to perform a attack we need to know the targets for artillery and torpedoes
 
             //Convert the current game state into a struct
-            Situation situation = new Situation(Battle.main.defender.board, processedPlayer.heatmap_recon);
+            Situation situation = new Situation(Battle.main.defender.board);
 
             //Create plans for striking the most likely enemy ship positions and rate them based on their consequences
             Plan[] plans = situation.GetStrategy(new int[] { 3, 1 });
