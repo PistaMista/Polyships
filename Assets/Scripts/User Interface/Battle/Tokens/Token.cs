@@ -15,7 +15,13 @@ namespace BattleUIAgents.Tokens
         public static Token heldToken;
         public Effect effectType;
         public Effect effect;
-        public float pickupRadius;
+        public float pickupRadius
+        {
+            get
+            {
+                return effect != null ? 2.0f : 0.5f;
+            }
+        }
         public float occlusionRadius;
         public float height;
         bool stacked;
@@ -100,15 +106,18 @@ namespace BattleUIAgents.Tokens
 
             Utilities.PerspectiveProjection scaleInfo = Utilities.GetPositionOnElevationFromPerspective(hookedPosition, Camera.main.transform.position, MiscellaneousVariables.it.boardUIRenderHeight);
             float planarDistance = Vector2.Distance(scaleInfo.planarPosition, planarInput);
+            bool hasEffect = effect != null;
 
             if (heldToken == null && planarDistance < pickupRadius * scaleInfo.scalar)
             {
                 if (FindAgent(x =>
                 {
-                    Token c = (Token)x;
-                    Utilities.PerspectiveProjection candidateScaleInfo = Utilities.GetPositionOnElevationFromPerspective(c.hookedPosition, Camera.main.transform.position, MiscellaneousVariables.it.boardUIRenderHeight);
-                    float planarCandidateDistance = Vector2.Distance(planarInput, candidateScaleInfo.planarPosition);
-                    return planarCandidateDistance < c.occlusionRadius * scaleInfo.scalar && c.GetType() == GetType() && ((c.hookedPosition.y > hookedPosition.y) || (Mathf.Approximately(c.hookedPosition.y, hookedPosition.y) && planarCandidateDistance < planarDistance));
+                    Token blocker = x as Token;
+                    bool blockerHasEffect = blocker.effect != null;
+                    Utilities.PerspectiveProjection candidateScaleInfo = Utilities.GetPositionOnElevationFromPerspective(blocker.hookedPosition, Camera.main.transform.position, MiscellaneousVariables.it.boardUIRenderHeight);
+                    float blockerPlanarDistance = Vector2.Distance(planarInput, candidateScaleInfo.planarPosition);
+                    //Block pickup if a token is: LINKED AND ((BOTH DONT HAVE AN EFFECT OR BOTH DO) AND (CLOSER TO INPUT OR (OF SAME TYPE AND ABOVE AND BOTH DONT HAVE AN EFFECT))) 
+                    return blocker.linked && ((blockerHasEffect == hasEffect) && (blockerPlanarDistance < planarDistance || (GetType() == blocker.GetType() && blocker.hookedPosition.y > hookedPosition.y && !hasEffect)));
                 }, typeof(Token)) == null)
                 {
                     return true;

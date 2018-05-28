@@ -134,7 +134,7 @@ namespace Gameplay
 
         //ADDABILITY CHECKS------------------------------------------------------------------------------------------------------------------------------
         /// <summary>
-        /// Gets how many effects of this type are possible to add. Effects themselves may not be added if they conflict with present ones.
+        /// Gets how many effects of this type are possible to add. Effects themselves may not be added if they conflict with present ones. Cannot use case data and must use all available other data.
         /// </summary>
         /// <returns>Default addable amount of this effect type.</returns>
         public virtual int GetTheoreticalMaximumAddableAmount()

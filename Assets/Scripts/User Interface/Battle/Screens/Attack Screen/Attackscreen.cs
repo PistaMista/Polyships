@@ -35,6 +35,19 @@ namespace BattleUIAgents.UI
 
             Delinker += () => { Token.heldToken = null; };
 
+            SetupTokenStacking();
+
+            LinkAgents(FindAgents(x =>
+            {
+                Token token = x as Token;
+                return token.ConnectWithAnyCompatibleEffect();
+            }, typeof(Token), int.MaxValue), true);
+
+            UpdateAbilityTokens();
+        }
+
+        void SetupTokenStacking()
+        {
             Vector3 startingPositionRelativeToCamera = player.transform.position + Vector3.right * (player.board.tiles.GetLength(0) / 1.5f) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight - cameraWaypoint.transform.position;
             Vector3 boardEdgeRelativeToCamera = new Vector3(player.board.tiles[player.board.tiles.GetLength(0) - 1, 0].transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight, 0) - cameraWaypoint.transform.position;
             float originalDistance = Vector3.Distance(startingPositionRelativeToCamera, boardEdgeRelativeToCamera);
@@ -66,14 +79,6 @@ namespace BattleUIAgents.UI
             eventTokenStart += cameraWaypoint.transform.position;
 
             Token.SetTypeStacking(typeof(Gameplay.Event), eventTokenStart, Vector3.back * player.board.tiles.GetLength(1) / 4.7f * scalar);
-
-            LinkAgents(FindAgents(x =>
-            {
-                Token token = x as Token;
-                return token.ConnectWithAnyCompatibleEffect();
-            }, typeof(Token), int.MaxValue), true);
-
-            UpdateAbilityTokens();
         }
 
         protected override void ProcessInput()

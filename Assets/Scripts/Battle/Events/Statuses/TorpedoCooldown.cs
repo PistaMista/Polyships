@@ -52,7 +52,7 @@ namespace Gameplay.Effects
 
         public override string GetDescription()
         {
-            return "No torpedoes can be loaded for " + FormattedDuration + ".";
+            return "No torpedoes can be fired/reloaded for " + FormattedDuration + ".";
         }
     }
 }

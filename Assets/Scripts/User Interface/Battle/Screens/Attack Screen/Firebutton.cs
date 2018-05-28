@@ -15,6 +15,7 @@ namespace BattleUIAgents.Agents
         {
             base.PerformLinkageOperations();
             LinkAgent(buttonPart, false);
+            Delinker += () => { buttonPart.hookedPosition = buttonPart.unhookedPosition; };
         }
         public bool TryPush(Vector3 position)
         {

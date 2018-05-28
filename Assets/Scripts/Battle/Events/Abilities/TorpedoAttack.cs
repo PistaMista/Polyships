@@ -109,7 +109,8 @@ namespace Gameplay.Effects
 
         public override int GetTheoreticalMaximumAddableAmount()
         {
-            return Battle.main.attacker.arsenal.loadedTorpedoes - Effect.GetEffectsInQueue(null, typeof(TorpedoAttack), int.MaxValue).Length;
+            bool onCooldown = GetEffectsInQueue(x => x.targetedPlayer == Battle.main.attacker, typeof(TorpedoCooldown), 1).Length == 1; //If the torpedoes are on cooldown they can never be used.
+            return onCooldown ? 0 : Battle.main.attacker.arsenal.loadedTorpedoes - Effect.GetEffectsInQueue(null, typeof(TorpedoAttack), int.MaxValue).Length;
         }
 
         protected override bool CheckGameplayRulesForAddition()
