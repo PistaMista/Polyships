@@ -19,7 +19,7 @@ namespace Gameplay
             {
                 BoardData result = new BoardData();
 
-                bool shipsPlaced = board.ships != null && (board.placementInfo.notplacedShips == null || board.placementInfo.notplacedShips.Count == 0);
+                bool shipsPlaced = board.ShipsPlaced;
 
                 result.ownedByAttacker = board.owner == Battle.main.attacker;
                 result.tiles = new Tile.TileData[board.tiles.GetLength(0), board.tiles.GetLength(1)];
@@ -49,6 +49,13 @@ namespace Gameplay
         public Tile[,] tiles;
         public Ship[] ships;
         public int intactShipCount;
+        public bool ShipsPlaced
+        {
+            get
+            {
+                return ships != null && (placementInfo.notplacedShips == null || placementInfo.notplacedShips.Count == 0);
+            }
+        }
 
         public void Initialize(BoardData data)
         {
