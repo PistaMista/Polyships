@@ -340,7 +340,7 @@ namespace Gameplay
         public const float hitHeat = 5.0f;
         public const float destructionHeat = 1.5f;
         public const float heatDropoff = 0.55f;
-        public const float hitConfidenceThreshold = 4.2f;
+        public const float hitConfidenceThreshold = 4.0f;
         public static void PlayTurnForPlayer(Player player)
         {
             processedPlayer = player;
@@ -559,7 +559,7 @@ namespace Gameplay
                     for (int y = 0; y < Tiledata.GetLength(1); y++)
                     {
                         Maptile tile = Tiledata[x, y];
-                        if (tile.definitelyContainsShip)
+                        if (tile.definitelyContainsShip && health[tile.ContainedShipID] > 0)
                         {
                             health[tile.ContainedShipID]--;
                         }
@@ -829,7 +829,7 @@ namespace Gameplay
                 ConstructStatisticalHeatmap();
 
                 //Combine maps
-                targetmap = (heatmap_statistical.normalized + heatmap_transitional + AI.processedPlayer.heatmap_recon);
+                targetmap = (heatmap_statistical.normalized + heatmap_transitional + AI.processedPlayer.heatmap_recon * reconModifier);
 
                 for (int x = 0; x < targetmap.tiles.GetLength(0); x++)
                 {
@@ -874,7 +874,20 @@ namespace Gameplay
             {
                 get
                 {
-                    float result = situation.heatmap_statistical.normalized.averageHeat;
+                    float heat = situation.heatmap_statistical.normalized.averageHeat;
+                    float damage = 0;
+
+                    Ship[] ships = Battle.main.defender.board.ships;
+                    float weights = 0;
+                    for (int i = 0; i < ships.Length; i++)
+                    {
+                        damage -= situation.datamap.health[i] / (float)ships[i].maxHealth * ships[i].importanceAIValue;
+                        weights += ships[i].importanceAIValue;
+                    }
+
+                    damage = damage / weights * 1.5f;
+
+                    float result = heat + damage;
                     for (int i = 0; i < successives.Length; i++)
                     {
                         result += successives[i].rating;
@@ -930,8 +943,15 @@ namespace Gameplay
             {
                 Vector2Int bestTarget = situation.targetmap.HottestTile;
                 situation.heatmap_transitional.Heat(bestTarget, cycloneActive ? -1.0f : -0.2f, 0.3f);
+
                 situation.datamap.tiledata[bestTarget.x, bestTarget.y].hit = true;
-                situation.datamap.tiledata[bestTarget.x, bestTarget.y].definitelyContainsShip = situation.targetmap.tiles[bestTarget.x, bestTarget.y] / situation.targetmap.averageHeat > hitConfidenceThreshold;
+
+                bool containsShip = situation.targetmap.tiles[bestTarget.x, bestTarget.y] / situation.targetmap.averageHeat > hitConfidenceThreshold;
+                if (containsShip)
+                {
+                    situation.datamap.tiledata[bestTarget.x, bestTarget.y].definitelyContainsShip = true;
+                    situation.datamap.health[situation.datamap.tiledata[bestTarget.x, bestTarget.y].ContainedShipID]--;
+                }
 
                 situation.datamap.spaceDataToDate = false;
                 situation.ConstructTargetmap();
@@ -1000,9 +1020,9 @@ namespace Gameplay
             //Create plans for striking the most likely enemy ship positions and rate them based on their consequences
             Plan[] plans = situation.GetStrategy(new int[] { 3, 1 });
 
-            Destroy(debugObjectParent);
+            //Destroy(debugObjectParent);
 
-            debugObjectParent = new GameObject("Debug Object Parent");
+            //debugObjectParent = new GameObject("Debug Object Parent");
             //RenderDebugPlanTree(plans, Vector3.up * 40, 280f, 20f);
 
             //Execute the plan with the highest rating
