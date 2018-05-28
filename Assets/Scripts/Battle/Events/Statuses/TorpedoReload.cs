@@ -27,7 +27,7 @@ namespace Gameplay.Effects
         protected override bool IsTriggered()
         {
             AmmoRegistry arsenal = Battle.main.attacker.arsenal;
-            return arsenal.torpedoes - arsenal.loadedTorpedoes > 0;
+            return arsenal.torpedoes - arsenal.loadedTorpedoes > 0 && arsenal.loadedTorpedoes < arsenal.loadedTorpedoCap;
         }
 
         protected override void SetupEvent()
