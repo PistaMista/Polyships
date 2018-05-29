@@ -13,7 +13,7 @@ namespace BattleUIAgents.Agents
             Renderer renderer = GetComponent<Renderer>();
             renderer.material = material;
             MaterialPropertyBlock block = new MaterialPropertyBlock();
-            block.SetColor("Color", color);
+            block.SetColor("_Color", color);
 
             renderer.SetPropertyBlock(block);
         }

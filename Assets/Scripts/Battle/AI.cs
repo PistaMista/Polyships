@@ -367,7 +367,7 @@ namespace Gameplay
             if (player.aiEnabled) Battle.main.NextTurn();
         }
 
-        struct Maptile : ICloneable
+        public struct Maptile : ICloneable
         {
             public object Clone()
             {
@@ -517,7 +517,7 @@ namespace Gameplay
         /// <summary>
         /// Provides information about health of enemy ships, tile predictions and how long of a ship each tile can contain.
         /// </summary>
-        struct Datamap : ICloneable
+        public struct Datamap : ICloneable
         {
             public Datamap(Board board)
             {
@@ -702,53 +702,6 @@ namespace Gameplay
                     return tiledata;
                 }
             }
-
-
-
-            /// <summary>
-            /// Logs shots on a tile.
-            /// </summary>
-            /// <param name="coordinates">Position of the tile.</param>
-            /// <param name="shipHit">False if miss, true if hit - contained ship is automatically predicted.</param>
-            public void LogHit(Vector2Int coordinates, bool shipHit)
-            {
-                if (shipHit)
-                {
-                    int maxAvailableSpace = Tiledata[coordinates.x, coordinates.y].MaxSpace;
-                    int longest = 0;
-                    int predictedShipID = 0;
-
-                    Ship[] ships = Battle.main.defender.board.ships;
-
-                    for (int i = 0; i < ships.Length; i++)
-                    {
-                        if (health[i] > 0 && ships[i].maxHealth <= maxAvailableSpace && ships[i].maxHealth > longest)
-                        {
-                            predictedShipID = i;
-                            longest = ships[i].maxHealth;
-                        }
-                    }
-
-                    LogHit(coordinates, predictedShipID);
-                }
-                else
-                {
-                    spaceDataToDate = false;
-                    tiledata[coordinates.x, coordinates.y].hit = true;
-                }
-            }
-            /// <summary>
-            /// Logs a hit on tile.
-            /// </summary>
-            /// <param name="pos">Position of the tile.</param>
-            /// <param name="knownContainedShipID">The ship that was damaged.</param>
-            public void LogHit(Vector2Int pos, int knownContainedShipID)
-            {
-                spaceDataToDate = false;
-                tiledata[pos.x, pos.y].hit = true;
-                tiledata[pos.x, pos.y].ContainedShipID = knownContainedShipID;
-                health[knownContainedShipID]--;
-            }
         }
 
         struct Situation : ICloneable
@@ -808,39 +761,24 @@ namespace Gameplay
             /// Used to determine targetmap - provides ABSOLUTE values about the likelyhood of a ship occupying any given tile. DOES NOT take placement rules into account. Shouldn't be modified by anything.
             /// </summary>
             public Heatmap heatmap_statistical;
+
             public void ConstructStatisticalHeatmap()
             {
-                heatmap_statistical = new Heatmap(datamap.Tiledata.GetLength(0), datamap.Tiledata.GetLength(1));
-                for (int x = 0; x < datamap.Tiledata.GetLength(0); x++)
-                {
-                    for (int y = 0; y < datamap.Tiledata.GetLength(1); y++)
-                    {
-                        Maptile tile = datamap.Tiledata[x, y];
-                        if (tile.hit) heatmap_statistical.Heat(new Vector2Int(x, y), tile.ContainedShipID >= 0 ? (tile.ContainedShipHealth <= 0 ? destructionHeat : hitHeat) : missHeat, heatDropoff);
-                    }
-                }
+                heatmap_statistical = GetStatisticalHeatmap(datamap);
             }
+
             /// <summary>
             /// Used to determine best attack options - provides NORMALIZED values about the likelyhood of a ship occupying any given tile. DOES take placement rules into account.
             /// </summary>
             public Heatmap targetmap;
+
             public void ConstructTargetmap()
             {
                 ConstructStatisticalHeatmap();
+                targetmap = GetTargetmap(heatmap_statistical.normalized + heatmap_transitional + AI.processedPlayer.heatmap_recon * reconModifier, datamap);
 
-                //Combine maps
-                targetmap = (heatmap_statistical.normalized + heatmap_transitional + AI.processedPlayer.heatmap_recon * reconModifier);
-
-                for (int x = 0; x < targetmap.tiles.GetLength(0); x++)
-                {
-                    for (int y = 0; y < targetmap.tiles.GetLength(1); y++)
-                    {
-                        if (datamap.Tiledata[x, y].IsBlack) targetmap.tiles[x, y] = Mathf.NegativeInfinity;
-                    }
-                }
-
-                targetmap = targetmap.normalized;
             }
+
 
             public int totalArtilleryCount;
             public int totalTorpedoCount;
@@ -866,6 +804,39 @@ namespace Gameplay
                 }
                 return results;
             }
+        }
+
+        public static Heatmap GetStatisticalHeatmap(Datamap datamap)
+        {
+            Heatmap result = new Heatmap(datamap.Tiledata.GetLength(0), datamap.Tiledata.GetLength(1));
+
+            for (int x = 0; x < datamap.Tiledata.GetLength(0); x++)
+            {
+                for (int y = 0; y < datamap.Tiledata.GetLength(1); y++)
+                {
+                    Maptile tile = datamap.Tiledata[x, y];
+                    if (tile.hit) result.Heat(new Vector2Int(x, y), tile.ContainedShipID >= 0 ? (tile.ContainedShipHealth <= 0 ? destructionHeat : hitHeat) : missHeat, heatDropoff);
+                }
+            }
+
+            return result;
+        }
+
+        public static Heatmap GetTargetmap(Heatmap heatmap, Datamap datamap)
+        {
+            Heatmap result = (Heatmap)heatmap.Clone();
+
+            for (int x = 0; x < result.tiles.GetLength(0); x++)
+            {
+                for (int y = 0; y < result.tiles.GetLength(1); y++)
+                {
+                    if (datamap.Tiledata[x, y].IsBlack) result.tiles[x, y] = Mathf.NegativeInfinity;
+                }
+            }
+
+            result = result.normalized;
+
+            return result;
         }
 
         struct Plan

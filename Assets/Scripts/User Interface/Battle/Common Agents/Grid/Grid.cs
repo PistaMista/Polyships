@@ -22,7 +22,8 @@ namespace BattleUIAgents.Agents
             TILE_RESTRICTED,
             TILE_CONCEALMENT_AREA,
             TILE_SELECTED_FOR_PLACEMENT,
-            TILE_HIT
+            TILE_HIT,
+            TILE_RADAR
         }
         protected override void PerformLinkageOperations()
         {
@@ -66,6 +67,12 @@ namespace BattleUIAgents.Agents
 
                 tiles = new Agents.Tile[managedBoard.tiles.GetLength(0), managedBoard.tiles.GetLength(1)];
             }
+        }
+
+        public void SetTileGraphic(Vector2Int coordinates, TileGraphicMaterial material)
+        {
+            Material mat = tileGraphicMaterials[(int)material - 1];
+            SetTileGraphic(coordinates, material, mat.color);
         }
 
         public void SetTileGraphic(Vector2Int tileCoordinates, TileGraphicMaterial material, Color color)
@@ -136,7 +143,7 @@ namespace BattleUIAgents.Agents
                     foreach (Gameplay.Tile tile in ship.tiles)
                     {
                         drawnTiles.Add(tile);
-                        SetTileGraphic(tile.coordinates, ship.concealedBy != null ? TileGraphicMaterial.SHIP_CONCEALED : TileGraphicMaterial.SHIP_INTACT, Color.white);
+                        SetTileGraphic(tile.coordinates, ship.concealedBy != null ? TileGraphicMaterial.SHIP_CONCEALED : TileGraphicMaterial.SHIP_INTACT);
                     }
                 }
             }
@@ -151,7 +158,7 @@ namespace BattleUIAgents.Agents
                         if (tile.hit)
                         {
                             drawnTiles.Add(tile);
-                            SetTileGraphic(tile.coordinates, tile.containedShip != null ? TileGraphicMaterial.SHIP_DAMAGED : TileGraphicMaterial.TILE_HIT, Color.white);
+                            SetTileGraphic(tile.coordinates, tile.containedShip != null ? TileGraphicMaterial.SHIP_DAMAGED : TileGraphicMaterial.TILE_HIT);
                         }
                     }
                 }

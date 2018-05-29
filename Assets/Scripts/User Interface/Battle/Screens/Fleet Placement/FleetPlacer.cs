@@ -155,7 +155,7 @@ namespace BattleUIAgents.UI
                         {
                             if (cruiser.concealing == null)
                             {
-                                grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.TILE_CONCEALMENT_AREA, Color.white);
+                                grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.TILE_CONCEALMENT_AREA);
                                 setTiles.Add(tile);
                             }
                         }
@@ -167,7 +167,7 @@ namespace BattleUIAgents.UI
             {
                 if (!player.board.placementInfo.occupiedTiles.Contains(tile) && !player.board.placementInfo.selectedTiles.Contains(tile))
                 {
-                    grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.TILE_RESTRICTED, Color.white);
+                    grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.TILE_RESTRICTED);
                     setTiles.Add(tile);
                 }
             }
@@ -176,7 +176,7 @@ namespace BattleUIAgents.UI
             {
                 if (!player.board.placementInfo.occupiedTiles.Contains(tile))
                 {
-                    grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.TILE_SELECTED_FOR_PLACEMENT, Color.white);
+                    grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.TILE_SELECTED_FOR_PLACEMENT);
                     setTiles.Add(tile);
                 }
             }
@@ -188,11 +188,11 @@ namespace BattleUIAgents.UI
                     Gameplay.Tile tile = ship.tiles[i];
                     if (ship.concealedBy)
                     {
-                        grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.SHIP_CONCEALED, Color.white);
+                        grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.SHIP_CONCEALED);
                     }
                     else
                     {
-                        grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.SHIP_INTACT, Color.white);
+                        grid.SetTileGraphic(tile.coordinates, Agents.Grid.TileGraphicMaterial.SHIP_INTACT);
                     }
                     setTiles.Add(tile);
                 }

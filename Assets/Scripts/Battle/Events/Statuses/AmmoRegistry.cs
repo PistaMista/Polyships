@@ -12,11 +12,12 @@ namespace Gameplay.Effects
         public int loadedTorpedoCap;
         public int torpedoesFiredLastTurn;
         public int aircraft;
+        public int radars;
 
         int[] startingMetadata;
         void Awake()
         {
-            startingMetadata = new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, torpedoesFiredLastTurn, aircraft };
+            startingMetadata = new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, torpedoesFiredLastTurn, aircraft, radars };
         }
         public override void OnTurnStart()
         {
@@ -25,7 +26,7 @@ namespace Gameplay.Effects
         }
         protected override int[] GetMetadata()
         {
-            return targetedPlayer.board.ShipsPlaced ? new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, torpedoesFiredLastTurn, aircraft } : startingMetadata;
+            return targetedPlayer.board.ShipsPlaced ? new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, torpedoesFiredLastTurn, aircraft, radars } : startingMetadata;
         }
         public override void Initialize(EffectData data)
         {
@@ -36,6 +37,7 @@ namespace Gameplay.Effects
             loadedTorpedoCap = data.metadata[3];
             torpedoesFiredLastTurn = data.metadata[4];
             aircraft = data.metadata[5];
+            radars = data.metadata[6];
         }
         public override string GetDescription()
         {
