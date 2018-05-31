@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using System.Linq;
 
 using BattleUIAgents.Base;
 using BattleUIAgents.Agents;
@@ -15,9 +16,12 @@ namespace BattleUIAgents.UI
     {
         Agents.Grid grid;
         public Effect[] abilityTokenTypes;
-        public float tokenStartingPositionPadding;
-        public float abilityTokenSpacing;
-        public float abilityTokenSpace;
+        public Vector2 abilityTokenSegmentSize;
+        /// <summary>
+        /// x - right, y - top, z - left, w - bottom
+        /// </summary>
+        public Vector4 abilityTokenSegmentPadding;
+        public float eventTokenSegmentSize;
         Firebutton firebutton;
         protected override void PerformLinkageOperations()
         {
@@ -35,7 +39,7 @@ namespace BattleUIAgents.UI
 
             Delinker += () => { Token.heldToken = null; };
 
-            SetupTokenStacking();
+            SetupAbilityTokenStacking();
 
             LinkAgents(FindAgents(x =>
             {
@@ -46,39 +50,67 @@ namespace BattleUIAgents.UI
             UpdateAbilityTokens();
         }
 
-        void SetupTokenStacking()
+        void SetupAbilityTokenStacking()
         {
-            Vector3 startingPositionRelativeToCamera = player.transform.position + Vector3.right * (player.board.tiles.GetLength(0) / 1.5f) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight - cameraWaypoint.transform.position;
-            Vector3 boardEdgeRelativeToCamera = new Vector3(player.board.tiles[player.board.tiles.GetLength(0) - 1, 0].transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight, 0) - cameraWaypoint.transform.position;
-            float originalDistance = Vector3.Distance(startingPositionRelativeToCamera, boardEdgeRelativeToCamera);
+            // Vector3 startingPositionRelativeToCamera = player.transform.position + Vector3.right * (player.board.tiles.GetLength(0) / 1.5f) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight - cameraWaypoint.transform.position;
+            // Vector3 boardEdgeRelativeToCamera = new Vector3(player.board.tiles[player.board.tiles.GetLength(0) - 1, 0].transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight, 0) - cameraWaypoint.transform.position;
+            // float originalDistance = Vector3.Distance(startingPositionRelativeToCamera, boardEdgeRelativeToCamera);
 
-            float startPosNormalAngle = Vector3.Angle(Vector3.down, startingPositionRelativeToCamera.normalized);
-            float boardEdgeNormalAngle = Vector3.Angle(Vector3.down, boardEdgeRelativeToCamera.normalized);
-            float angleBetweenNormals = Mathf.Abs(startPosNormalAngle - boardEdgeNormalAngle);
+            // float startPosNormalAngle = Vector3.Angle(Vector3.down, startingPositionRelativeToCamera.normalized);
+            // float boardEdgeNormalAngle = Vector3.Angle(Vector3.down, boardEdgeRelativeToCamera.normalized);
+            // float angleBetweenNormals = Mathf.Abs(startPosNormalAngle - boardEdgeNormalAngle);
 
-            float axisNormalPadding = Mathf.Cos((startPosNormalAngle + angleBetweenNormals / 2.0f) * Mathf.Deg2Rad) * tokenStartingPositionPadding;
-            float positionDistance = axisNormalPadding / (2.0f * Mathf.Cos((180 - angleBetweenNormals) / 2.0f * Mathf.Deg2Rad));
+            // float axisNormalPadding = Mathf.Cos((startPosNormalAngle + angleBetweenNormals / 2.0f) * Mathf.Deg2Rad) * tokenStartingPositionPadding;
+            // float positionDistance = axisNormalPadding / (2.0f * Mathf.Cos((180 - angleBetweenNormals) / 2.0f * Mathf.Deg2Rad));
 
-            startingPositionRelativeToCamera = startingPositionRelativeToCamera.normalized * positionDistance;
-            boardEdgeRelativeToCamera = boardEdgeRelativeToCamera.normalized * positionDistance;
+            // startingPositionRelativeToCamera = startingPositionRelativeToCamera.normalized * positionDistance;
+            // boardEdgeRelativeToCamera = boardEdgeRelativeToCamera.normalized * positionDistance;
 
-            float scalar = Vector3.Distance(startingPositionRelativeToCamera, boardEdgeRelativeToCamera) / originalDistance;
+            // float scalar = Vector3.Distance(startingPositionRelativeToCamera, boardEdgeRelativeToCamera) / originalDistance;
 
 
 
-            Vector3 abilityTokenStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / abilityTokenSpacing) * scalar + cameraWaypoint.transform.position;
-            Vector3 abilityTokenStep = Vector3.back * (player.board.tiles.GetLength(1) / (abilityTokenSpacing * (abilityTokenTypes.Length - 1))) * scalar;
+            // Vector3 abilityTokenStart = startingPositionRelativeToCamera + Vector3.forward * (player.board.tiles.GetLength(1) / abilityTokenSpacing) * scalar + cameraWaypoint.transform.position;
+            // Vector3 abilityTokenStep = Vector3.back * (player.board.tiles.GetLength(1) / (abilityTokenSpacing * (abilityTokenTypes.Length - 1))) * scalar;
+
+            // for (int i = 0; i < abilityTokenTypes.Length; i++)
+            // {
+            //     Token.SetTypeStacking(abilityTokenTypes[i].GetType(), abilityTokenStart + abilityTokenStep * i, Vector3.right * (tokenStackWidth * scalar / 5));
+            // }
+
+            // Vector3 eventTokenStart = startingPositionRelativeToCamera + Vector3.right * scalar * 2 + Vector3.forward * (player.board.tiles.GetLength(1) / 2.0f) * scalar;
+            // eventTokenStart.x *= -1;
+            // eventTokenStart += cameraWaypoint.transform.position;
+
+            // Token.SetTypeStacking(typeof(Gameplay.Event), eventTokenStart, Vector3.back * player.board.tiles.GetLength(1) / 4.7f * scalar);
+            float defaultHeight = cameraWaypoint.transform.position.y - MiscellaneousVariables.it.boardUIRenderHeight;
+
+            float seaPlaneViewHeight = defaultHeight * Mathf.Tan(Camera.main.fieldOfView / 2.0f * Mathf.Deg2Rad) * 2.0f;
+            float seaPlaneViewWidth = (seaPlaneViewHeight * Camera.main.aspect - player.board.tiles.GetLength(0)) / 2.0f;
+
+            float scalar = GetScalar(abilityTokenSegmentSize, abilityTokenSegmentPadding, new Vector2(seaPlaneViewWidth, seaPlaneViewHeight));
+
+            Vector3 start = player.transform.position + Vector3.right * (player.board.tiles.GetLength(0) * scalar / 2.0f + abilityTokenSegmentSize.x / 2.0f + abilityTokenSegmentPadding.z) + Vector3.forward * (abilityTokenSegmentSize.y / 2.0f - abilityTokenSegmentPadding.y);
+            start.y = cameraWaypoint.transform.position.y - defaultHeight * scalar;
+
+            Vector3 step = Vector3.back * (abilityTokenSegmentSize.y / abilityTokenTypes.Length);
+
+            int highestTokenCount = abilityTokenTypes.Max(x => x.GetTheoreticalMaximumAddableAmount());
 
             for (int i = 0; i < abilityTokenTypes.Length; i++)
             {
-                Token.SetTypeStacking(abilityTokenTypes[i].GetType(), abilityTokenStart + abilityTokenStep * i, Vector3.right * (abilityTokenSpace * scalar / 5));
+                Token.SetTypeStacking(abilityTokenTypes[i].GetType(), start + step * i, Vector3.right * ((abilityTokenSegmentSize.x - 1.0f) / highestTokenCount));
             }
+        }
 
-            Vector3 eventTokenStart = startingPositionRelativeToCamera + Vector3.right * scalar * 2 + Vector3.forward * (player.board.tiles.GetLength(1) / 2.0f) * scalar;
-            eventTokenStart.x *= -1;
-            eventTokenStart += cameraWaypoint.transform.position;
+        void SetupEventTokenStacking()
+        {
 
-            Token.SetTypeStacking(typeof(Gameplay.Event), eventTokenStart, Vector3.back * player.board.tiles.GetLength(1) / 4.7f * scalar);
+        }
+
+        float GetScalar(Vector2 targetSize, Vector4 targetPadding, Vector2 defaultSize)
+        {
+            return Mathf.Max((targetSize.x + targetPadding.x + targetPadding.z) / defaultSize.x, (targetSize.y + targetPadding.y + targetPadding.w) / defaultSize.y);
         }
 
         protected override void ProcessInput()
