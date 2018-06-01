@@ -31,7 +31,7 @@ namespace Gameplay.Effects
         }
         public override int GetTheoreticalMaximumAddableAmount()
         {
-            return Effect.GetEffectsInQueue(x => { return x.targetedPlayer == Battle.main.defender; }, typeof(RadarRecon), 1).Length == 0 && Battle.main.attacker.arsenal.radars > 0 ? 1 : 0;
+            return Effect.GetEffectsInQueue(x => x is RadarRecon && x.targetedPlayer == Battle.main.defender || x is RadarRecharge && targetedPlayer == Battle.main.attacker, typeof(Effect), 1).Length == 0 && Battle.main.attacker.arsenal.radars > 0 ? 1 : 0;
         }
 
         protected override bool CheckGameplayRulesForAddition()
@@ -41,16 +41,19 @@ namespace Gameplay.Effects
 
         protected override bool IsConflictingWithEffect(Effect effect)
         {
-            return effect is RadarRecon && effect.targetedPlayer == targetedPlayer; //Conflicts with radar targeted at the same player
+            return effect is RadarRecon && effect.targetedPlayer == targetedPlayer || effect is RadarRecharge && effect.targetedPlayer == visibleTo; //Conflicts with radar targeted at the same player
         }
 
         public override string GetDescription()
         {
-            string desc = "Shows most likely enemy positions. Isn't guarenteed to be right.";
+            string desc = "";
             if (!editable)
-            {
-                desc += " Lasts for " + FormattedDuration + ".";
-            }
+                desc = "Displays an overlay indicating likely ship positions. Darker means more likely. Lasts for " + FormattedDuration + ".";
+            else
+                desc = "Deploys radar, which provides statistical data about enemy ship positions.";
+
+
+
 
             return desc;
         }

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 using Gameplay.Effects;
 
@@ -25,6 +26,12 @@ namespace Gameplay.Ships
         {
             base.Destroy();
             parentBoard.owner.arsenal.radars -= radarBonus;
+
+            Effect radar = Effect.GetEffectsInQueue(x => x is RadarRecon || x is RadarRecharge, typeof(Effect), 1).FirstOrDefault();
+            if (radar != null)
+            {
+                Effect.RemoveFromQueue(radar);
+            }
         }
     }
 }
