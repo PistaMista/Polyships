@@ -79,7 +79,7 @@ namespace BattleUIAgents.Tokens
                     {
                         if (!board.tiles[x, y].hit)
                         {
-                            color.g = recon.result.tiles[x, y];
+                            color.a = recon.result.tiles[x, y] * 0.5f + 0.2f;
                             grid.SetTileGraphic(new Vector2Int(x, y), Agents.Grid.TileGraphicMaterial.TILE_RADAR, color);
                         }
                     }

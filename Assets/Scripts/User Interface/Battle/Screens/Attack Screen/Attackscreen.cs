@@ -21,7 +21,8 @@ namespace BattleUIAgents.UI
         /// x - right, y - top, z - left, w - bottom
         /// </summary>
         public Vector4 abilityTokenSegmentPadding;
-        public float eventTokenSegmentSize;
+        public Vector2 eventTokenSegmentSize;
+        public Vector4 eventTokenSegmentPadding;
         Firebutton firebutton;
         protected override void PerformLinkageOperations()
         {
@@ -39,18 +40,35 @@ namespace BattleUIAgents.UI
 
             Delinker += () => { Token.heldToken = null; };
 
-            SetupAbilityTokenStacking();
+            float defaultHeight = cameraWaypoint.transform.position.y - MiscellaneousVariables.it.boardUIRenderHeight;
+            Vector2 defaultSidebarSize = new Vector2(0, defaultHeight * Mathf.Tan(Camera.main.fieldOfView / 2.0f * Mathf.Deg2Rad) * 2.0f);
+            defaultSidebarSize.x = (defaultSidebarSize.y * Camera.main.aspect - player.board.tiles.GetLength(0)) / 2.0f;
 
-            LinkAgents(FindAgents(x =>
+            SetupAbilityTokenStacking(defaultSidebarSize, defaultHeight);
+
+            //Reconnect any tokens to represent already deployed effects or events.
+            int eventTokenCount = 0;
+            BattleUIAgent[] tokensToConnect = FindAgents(x =>
             {
                 Token token = x as Token;
-                return token.ConnectWithAnyCompatibleEffect();
-            }, typeof(Token), int.MaxValue), true);
+
+                if (token.ConnectWithAnyCompatibleEffect())
+                {
+                    if (token is EventToken) eventTokenCount++;
+                    return true;
+                }
+
+                return false;
+            }, typeof(Token), int.MaxValue);
+
+            if (eventTokenCount > 0) SetupEventTokenStacking(defaultSidebarSize, defaultHeight, eventTokenCount);
+
+            LinkAgents(tokensToConnect, true);
 
             UpdateAbilityTokens();
         }
 
-        void SetupAbilityTokenStacking()
+        void SetupAbilityTokenStacking(Vector2 defaultSize, float defaultHeight)
         {
             // Vector3 startingPositionRelativeToCamera = player.transform.position + Vector3.right * (player.board.tiles.GetLength(0) / 1.5f) + Vector3.up * MiscellaneousVariables.it.boardUIRenderHeight - cameraWaypoint.transform.position;
             // Vector3 boardEdgeRelativeToCamera = new Vector3(player.board.tiles[player.board.tiles.GetLength(0) - 1, 0].transform.position.x, MiscellaneousVariables.it.boardUIRenderHeight, 0) - cameraWaypoint.transform.position;
@@ -83,14 +101,9 @@ namespace BattleUIAgents.UI
             // eventTokenStart += cameraWaypoint.transform.position;
 
             // Token.SetTypeStacking(typeof(Gameplay.Event), eventTokenStart, Vector3.back * player.board.tiles.GetLength(1) / 4.7f * scalar);
-            float defaultHeight = cameraWaypoint.transform.position.y - MiscellaneousVariables.it.boardUIRenderHeight;
+            float scalar = GetScalar(abilityTokenSegmentSize, abilityTokenSegmentPadding, defaultSize);
 
-            float seaPlaneViewHeight = defaultHeight * Mathf.Tan(Camera.main.fieldOfView / 2.0f * Mathf.Deg2Rad) * 2.0f;
-            float seaPlaneViewWidth = (seaPlaneViewHeight * Camera.main.aspect - player.board.tiles.GetLength(0)) / 2.0f;
-
-            float scalar = GetScalar(abilityTokenSegmentSize, abilityTokenSegmentPadding, new Vector2(seaPlaneViewWidth, seaPlaneViewHeight));
-
-            Vector3 start = player.transform.position + Vector3.right * (player.board.tiles.GetLength(0) * scalar / 2.0f + abilityTokenSegmentSize.x / 2.0f + abilityTokenSegmentPadding.z) + Vector3.forward * (abilityTokenSegmentSize.y / 2.0f - abilityTokenSegmentPadding.y);
+            Vector3 start = player.transform.position + Vector3.right * (player.board.tiles.GetLength(0) * scalar / 2.0f + abilityTokenSegmentSize.x / 2.0f + abilityTokenSegmentPadding.z) + Vector3.forward * (defaultSize.y / 2.0f * scalar - abilityTokenSegmentPadding.y);
             start.y = cameraWaypoint.transform.position.y - defaultHeight * scalar;
 
             Vector3 step = Vector3.back * (abilityTokenSegmentSize.y / abilityTokenTypes.Length);
@@ -103,9 +116,16 @@ namespace BattleUIAgents.UI
             }
         }
 
-        void SetupEventTokenStacking()
+        void SetupEventTokenStacking(Vector2 defaultSize, float defaultHeight, int eventTokenCount)
         {
+            float scalar = GetScalar(eventTokenSegmentSize, eventTokenSegmentPadding, defaultSize);
 
+            Vector3 start = player.transform.position + Vector3.left * (player.board.tiles.GetLength(0) * scalar / 2.0f + eventTokenSegmentSize.x / 2.0f + eventTokenSegmentPadding.x) + Vector3.forward * (defaultSize.y / 2.0f * scalar - eventTokenSegmentPadding.y);
+            start.y = cameraWaypoint.transform.position.y - defaultHeight * scalar;
+
+            Vector3 step = Vector3.back * (eventTokenSegmentSize.y / eventTokenCount);
+
+            Token.SetTypeStacking(typeof(Gameplay.Event), start, step);
         }
 
         float GetScalar(Vector2 targetSize, Vector4 targetPadding, Vector2 defaultSize)
