@@ -9,11 +9,6 @@ namespace Gameplay.Effects
     public class RadarRecon : Effect
     {
         public Heatmap result;
-        public override void OnTurnStart()
-        {
-            base.OnTurnStart();
-            OnTurnResume();
-        }
         public override void OnTurnResume()
         {
             base.OnTurnResume();
@@ -28,6 +23,11 @@ namespace Gameplay.Effects
         {
             base.OnTurnEnd();
             editable = false;
+        }
+
+        protected override bool IsExpired()
+        {
+            return base.IsExpired() || visibleTo.arsenal.radars <= 0;
         }
         public override int GetTheoreticalMaximumAddableAmount()
         {
@@ -51,9 +51,6 @@ namespace Gameplay.Effects
                 desc = "Displays an overlay indicating likely ship positions. Darker means more likely. Lasts for " + FormattedDuration + ".";
             else
                 desc = "Deploys radar, which provides statistical data about enemy ship positions.";
-
-
-
 
             return desc;
         }

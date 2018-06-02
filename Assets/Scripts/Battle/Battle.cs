@@ -298,12 +298,16 @@ namespace Gameplay
             }
 
             attacker.OnTurnStart();
+
+            if (Effect.pre_action != null)
+            {
+                Effect.pre_action();
+                Effect.pre_action = null;
+            }
             foreach (Effect effect in effects)
             {
                 effect.OnTurnStart();
             }
-
-            Effect.RemoveExpiredEffectsFromQueue();
         }
 
         /// <summary>
@@ -316,16 +320,6 @@ namespace Gameplay
             foreach (Effect effect in effects)
             {
                 effect.OnTurnResume();
-            }
-
-            for (int i = 0; i < effects.Count; i++)
-            {
-                Effect effect = effects[i];
-                effect.OnTurnResume();
-                if (effect == null)
-                {
-
-                }
             }
         }
 
@@ -341,7 +335,11 @@ namespace Gameplay
                 effect.OnTurnEnd();
             }
 
-            Effect.RemoveExpiredEffectsFromQueue();
+            if (Effect.post_action != null)
+            {
+                Effect.post_action();
+                Effect.post_action = null;
+            }
         }
 
         public static Battle CreateBattle(BattleData data)

@@ -27,10 +27,10 @@ namespace Gameplay.Ships
             base.Destroy();
             parentBoard.owner.arsenal.radars -= radarBonus;
 
-            Effect radar = Effect.GetEffectsInQueue(x => x is RadarRecon || x is RadarRecharge, typeof(Effect), 1).FirstOrDefault();
+            Effect radar = Effect.GetEffectsInQueue(x => (x is RadarRecon || x is RadarRecharge) && x.visibleTo == parentBoard.owner, typeof(Effect), 1).FirstOrDefault();
             if (radar != null)
             {
-                Effect.RemoveFromQueue(radar);
+                Effect.post_action += () => Effect.RemoveFromQueue(radar);
             }
         }
     }

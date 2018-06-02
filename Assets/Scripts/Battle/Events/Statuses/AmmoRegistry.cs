@@ -29,6 +29,10 @@ namespace Gameplay.Effects
                 radarUsed = false;
             }
         }
+        protected override bool IsExpired()
+        {
+            return false; //Never expires
+        }
         protected override int[] GetMetadata()
         {
             return targetedPlayer.board.ShipsPlaced ? new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, torpedoesFiredLastTurn, aircraft, radars, radarUsed ? 1 : 0 } : startingMetadata;

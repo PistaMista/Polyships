@@ -4,26 +4,11 @@ using UnityEngine;
 
 namespace Gameplay.Effects
 {
-    public class RadarRecharge : Event
+    public class RadarRecharge : Effect
     {
-        public override void OnTurnStart()
+        protected override bool IsExpired()
         {
-            base.OnTurnStart();
-            if (targetedPlayer.arsenal.radars <= 0)
-            {
-                expiredEffects.Add(this);
-            }
-        }
-
-        protected override bool IsTriggered()
-        {
-            return false;
-        }
-
-        protected override void SetupEvent()
-        {
-            base.SetupEvent();
-            targetedPlayer = Battle.main.attacker;
+            return base.IsExpired() || targetedPlayer.arsenal.radars <= 0;
         }
 
         public override int GetTheoreticalMaximumAddableAmount()

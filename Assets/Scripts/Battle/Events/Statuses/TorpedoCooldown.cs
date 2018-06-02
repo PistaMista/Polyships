@@ -4,16 +4,12 @@ using UnityEngine;
 
 namespace Gameplay.Effects
 {
-    public class TorpedoCooldown : Event
+    public class TorpedoCooldown : Effect
     {
         public int[] durations;
-        public override void OnTurnStart()
+        protected override bool IsExpired()
         {
-            base.OnTurnStart();
-            if (targetedPlayer.arsenal.torpedoes <= 0)
-            {
-                expiredEffects.Add(this);
-            }
+            return base.IsExpired() || targetedPlayer.arsenal.torpedoes <= 0;
         }
 
         protected override bool IsTriggered()

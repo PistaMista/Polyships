@@ -108,9 +108,10 @@ namespace Gameplay
         {
             base.OnTurnEnd();
             duration--;
-            if (duration == 0)
+            if (IsExpired())
             {
-                expiredEffects.Add(this);
+                OnExpire();
+                post_action += () => RemoveFromQueue(this);
             }
         }
 
@@ -128,6 +129,23 @@ namespace Gameplay
         /// </summary>
         /// <param name="removedEffect">Effect that was removed.</param>
         public virtual void OnEffectRemove(Effect removedEffect)
+        {
+
+        }
+
+        /// <summary>
+        /// Determines whether this effect is expired.
+        /// </summary>
+        /// <returns>Whether this effect has expired.</returns>
+        protected virtual bool IsExpired()
+        {
+            return duration <= 0;
+        }
+
+        /// <summary>
+        /// Executes when this effect expires.
+        /// </summary>
+        protected virtual void OnExpire()
         {
 
         }
@@ -263,19 +281,10 @@ namespace Gameplay
             Destroy(effect.gameObject);
         }
 
-        public static List<Effect> expiredEffects = new List<Effect>();
-        /// <summary>
-        /// Removes expired effects from the queue.
-        /// </summary>
-        public static void RemoveExpiredEffectsFromQueue()
-        {
-            foreach (Effect effect in expiredEffects)
-            {
-                RemoveFromQueue(effect);
-            }
+        public static Action pre_action;
+        public static Action post_action;
 
-            expiredEffects = new List<Effect>();
-        }
+
 
         /// <summary>
         /// Finds effects of one type in the queue.

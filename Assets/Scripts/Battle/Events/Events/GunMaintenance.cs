@@ -17,13 +17,9 @@ namespace Gameplay.Effects
             base.Initialize(data);
             artilleryAttackDecrease = data.metadata[0];
         }
-        public override void OnTurnStart()
+        protected override bool IsExpired()
         {
-            base.OnTurnStart();
-            if (targetedPlayer.arsenal.guns <= 0)
-            {
-                expiredEffects.Add(this);
-            }
+            return base.IsExpired() || targetedPlayer.arsenal.guns <= 0;
         }
 
         public override void OnEffectAdd(Effect addedEffect)

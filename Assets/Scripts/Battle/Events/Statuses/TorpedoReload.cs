@@ -4,15 +4,12 @@ using UnityEngine;
 
 namespace Gameplay.Effects
 {
-    public class TorpedoReload : Event
+    public class TorpedoReload : Effect
     {
         public override void OnTurnStart()
         {
             base.OnTurnStart();
-            if (targetedPlayer.arsenal.torpedoes <= 0)
-            {
-                expiredEffects.Add(this);
-            }
+
         }
 
         public override void OnTurnEnd()
@@ -22,6 +19,11 @@ namespace Gameplay.Effects
             {
                 targetedPlayer.arsenal.loadedTorpedoes++;
             }
+        }
+
+        protected override bool IsExpired()
+        {
+            return base.IsExpired() || targetedPlayer.arsenal.torpedoes <= 0;
         }
 
         protected override bool IsTriggered()
