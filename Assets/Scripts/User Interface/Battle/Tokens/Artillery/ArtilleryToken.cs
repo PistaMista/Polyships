@@ -37,6 +37,8 @@ namespace BattleUIAgents.Tokens
                 if (targetedTile != null)
                 {
                     effect = Effect.CreateEffect(typeof(ArtilleryAttack));
+                    effect.targetedPlayer = Battle.main.defender;
+                    effect.visibleTo = Battle.main.attacker;
                 }
                 else
                 {

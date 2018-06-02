@@ -7,29 +7,47 @@ namespace Gameplay.Effects
     public class TorpedoCooldown : Effect
     {
         public int[] durations;
-        protected override bool IsExpired()
+        protected override bool IsForcedToExpire()
         {
-            return base.IsExpired() || targetedPlayer.arsenal.torpedoes <= 0;
+            return targetedPlayer.arsenal.torpedoes <= 0;
         }
 
-        protected override bool IsTriggered()
+        protected override void OnExpire(bool forced)
         {
-            int last = Battle.main.attacker.arsenal.torpedoesFiredLastTurn;
-            return last > 0;
-        }
-
-        protected override void SetupEvent()
-        {
-            base.SetupEvent();
-            targetedPlayer = Battle.main.attacker;
-            duration = durations[targetedPlayer.arsenal.torpedoesFiredLastTurn];
-
-            Effect[] candidate = GetEffectsInQueue(x => { return x.targetedPlayer == targetedPlayer; }, typeof(TorpedoReload), 1);
-            if (candidate.Length > 0)
+            base.OnExpire(forced);
+            AmmoRegistry arsenal = targetedPlayer.arsenal;
+            if (!forced && arsenal.torpedoes - arsenal.loadedTorpedoes > 0 && arsenal.loadedTorpedoes < arsenal.loadedTorpedoCap)
             {
-                RemoveFromQueue(candidate[0]);
+                post_action += () =>
+                {
+                    Effect torpedoReload = CreateEffect(typeof(TorpedoReload));
+
+                    torpedoReload.targetedPlayer = targetedPlayer;
+                    torpedoReload.visibleTo = visibleTo;
+
+                    AddToQueue(torpedoReload);
+                };
             }
         }
+
+        // protected override bool IsTriggered()
+        // {
+        //     int last = Battle.main.attacker.arsenal.torpedoesFiredLastTurn;
+        //     return last > 0;
+        // }
+
+        // protected override void SetupEvent()
+        // {
+        //     base.SetupEvent();
+        //     targetedPlayer = Battle.main.attacker;
+        //     duration = durations[targetedPlayer.arsenal.torpedoesFiredLastTurn];
+
+        //     Effect[] candidate = GetEffectsInQueue(x => { return x.targetedPlayer == targetedPlayer; }, typeof(TorpedoReload), 1);
+        //     if (candidate.Length > 0)
+        //     {
+        //         RemoveFromQueue(candidate[0]);
+        //     }
+        // }
 
         public override int GetTheoreticalMaximumAddableAmount()
         {

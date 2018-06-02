@@ -18,7 +18,7 @@ namespace Gameplay.Effects
         int[] startingMetadata;
         void Awake()
         {
-            startingMetadata = new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, torpedoesFiredLastTurn, aircraft, radars, radarUsed ? 1 : 0 };
+            startingMetadata = new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, aircraft, radars };
         }
         public override void OnTurnStart()
         {
@@ -29,13 +29,9 @@ namespace Gameplay.Effects
                 radarUsed = false;
             }
         }
-        protected override bool IsExpired()
-        {
-            return false; //Never expires
-        }
         protected override int[] GetMetadata()
         {
-            return targetedPlayer.board.ShipsPlaced ? new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, torpedoesFiredLastTurn, aircraft, radars, radarUsed ? 1 : 0 } : startingMetadata;
+            return targetedPlayer.board.ShipsPlaced ? new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, aircraft, radars } : startingMetadata;
         }
         public override void Initialize(EffectData data)
         {
@@ -44,10 +40,8 @@ namespace Gameplay.Effects
             torpedoes = data.metadata[1];
             loadedTorpedoes = data.metadata[2];
             loadedTorpedoCap = data.metadata[3];
-            torpedoesFiredLastTurn = data.metadata[4];
-            aircraft = data.metadata[5];
-            radars = data.metadata[6];
-            radarUsed = data.metadata[7] == 1;
+            aircraft = data.metadata[4];
+            radars = data.metadata[5];
         }
         public override string GetDescription()
         {

@@ -108,9 +108,10 @@ namespace Gameplay
         {
             base.OnTurnEnd();
             duration--;
-            if (IsExpired())
+            bool forcedToExpire = IsForcedToExpire();
+            if (duration == 0 || forcedToExpire)
             {
-                OnExpire();
+                OnExpire(forcedToExpire);
                 post_action += () => RemoveFromQueue(this);
             }
         }
@@ -134,18 +135,19 @@ namespace Gameplay
         }
 
         /// <summary>
-        /// Determines whether this effect is expired.
+        /// Determines whether this effect is forced to expire before it times out.
         /// </summary>
         /// <returns>Whether this effect has expired.</returns>
-        protected virtual bool IsExpired()
+        protected virtual bool IsForcedToExpire()
         {
-            return duration <= 0;
+            return false;
         }
 
         /// <summary>
         /// Executes when this effect expires.
         /// </summary>
-        protected virtual void OnExpire()
+        /// <param name="forced">Whether this effect was forced to expire before timing out normally.</param>
+        protected virtual void OnExpire(bool forced)
         {
 
         }

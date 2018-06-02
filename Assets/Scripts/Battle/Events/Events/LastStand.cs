@@ -16,11 +16,6 @@ namespace Gameplay.Effects
             targetedPlayer = Battle.main.attacker;
         }
 
-        protected override bool IsExpired()
-        {
-            return false; //Never expires
-        }
-
         public override void OnEffectAdd(Effect addedEffect)
         {
             base.OnEffectAdd(addedEffect);

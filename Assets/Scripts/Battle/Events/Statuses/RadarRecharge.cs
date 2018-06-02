@@ -6,9 +6,9 @@ namespace Gameplay.Effects
 {
     public class RadarRecharge : Effect
     {
-        protected override bool IsExpired()
+        protected override bool IsForcedToExpire()
         {
-            return base.IsExpired() || targetedPlayer.arsenal.radars <= 0;
+            return targetedPlayer.arsenal.radars <= 0;
         }
 
         public override int GetTheoreticalMaximumAddableAmount()

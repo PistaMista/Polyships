@@ -25,13 +25,30 @@ namespace Gameplay.Effects
             editable = false;
         }
 
-        protected override bool IsExpired()
+        protected override bool IsForcedToExpire()
         {
-            return base.IsExpired() || visibleTo.arsenal.radars <= 0;
+            return visibleTo.arsenal.radars <= 0;
+        }
+
+        protected override void OnExpire(bool forced)
+        {
+            base.OnExpire(forced);
+            if (!forced)
+            {
+                post_action += () =>
+                {
+                    Effect radarRecharge = CreateEffect(typeof(RadarRecharge));
+
+                    radarRecharge.targetedPlayer = visibleTo;
+                    radarRecharge.visibleTo = visibleTo;
+
+                    AddToQueue(radarRecharge);
+                };
+            }
         }
         public override int GetTheoreticalMaximumAddableAmount()
         {
-            return Effect.GetEffectsInQueue(x => x is RadarRecon && x.targetedPlayer == Battle.main.defender || x is RadarRecharge && targetedPlayer == Battle.main.attacker, typeof(Effect), 1).Length == 0 && Battle.main.attacker.arsenal.radars > 0 ? 1 : 0;
+            return Effect.GetEffectsInQueue(x => (x is RadarRecon && x.targetedPlayer == Battle.main.defender) || (x is RadarRecharge && x.targetedPlayer == Battle.main.attacker), typeof(Effect), 1).Length == 0 && Battle.main.attacker.arsenal.radars > 0 ? 1 : 0;
         }
 
         protected override bool CheckGameplayRulesForAddition()
@@ -41,7 +58,7 @@ namespace Gameplay.Effects
 
         protected override bool IsConflictingWithEffect(Effect effect)
         {
-            return effect is RadarRecon && effect.targetedPlayer == targetedPlayer || effect is RadarRecharge && effect.targetedPlayer == visibleTo; //Conflicts with radar targeted at the same player
+            return effect is RadarRecon && effect.targetedPlayer == targetedPlayer || effect is RadarRecharge && effect.targetedPlayer == visibleTo; //Conflicts with radar targeted at the same player or the radar recharging
         }
 
         public override string GetDescription()

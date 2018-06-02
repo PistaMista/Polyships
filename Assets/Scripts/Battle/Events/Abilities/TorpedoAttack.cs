@@ -102,9 +102,29 @@ namespace Gameplay.Effects
             //Consume a torpedo 
             Battle.main.attacker.arsenal.torpedoes--;
             Battle.main.attacker.arsenal.loadedTorpedoes--;
-            Battle.main.attacker.arsenal.torpedoesFiredLastTurn++;
 
             base.OnTurnEnd();
+        }
+
+        protected override void OnExpire(bool forced)
+        {
+            base.OnExpire(forced);
+            bool cooldownInitiated = GetEffectsInQueue(x => x.targetedPlayer != targetedPlayer, typeof(TorpedoCooldown), 1).Length == 1;
+
+            if (!cooldownInitiated)
+            {
+                int torpedoAttacks = GetEffectsInQueue(x => x.targetedPlayer == targetedPlayer, typeof(TorpedoAttack), int.MaxValue).Length;
+                post_action += () =>
+                {
+                    TorpedoCooldown cooldown = CreateEffect(typeof(TorpedoCooldown)) as TorpedoCooldown;
+                    cooldown.duration = cooldown.durations[torpedoAttacks];
+
+                    cooldown.targetedPlayer = visibleTo;
+                    cooldown.visibleTo = visibleTo;
+
+                    AddToQueue(cooldown);
+                };
+            }
         }
 
         public override int GetTheoreticalMaximumAddableAmount()
