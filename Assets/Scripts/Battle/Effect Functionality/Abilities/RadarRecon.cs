@@ -48,7 +48,9 @@ namespace Gameplay.Effects
         }
         public override int GetTheoreticalMaximumAddableAmount()
         {
-            return Effect.GetEffectsInQueue(x => (x is RadarRecon && x.targetedPlayer == Battle.main.defender) || (x is RadarRecharge && x.targetedPlayer == Battle.main.attacker), typeof(Effect), 1).Length == 0 && Battle.main.attacker.arsenal.radars > 0 ? 1 : 0;
+            int radarRechargeCount = Effect.GetEffectsInQueue(x => x.targetedPlayer == Battle.main.attacker, typeof(RadarRecharge), int.MaxValue).Length;
+            int radarReconCount = Effect.GetEffectsInQueue(x => x.targetedPlayer == Battle.main.defender, typeof(RadarRecon), int.MaxValue).Length;
+            return radarReconCount == 0 && radarRechargeCount == 0 && Battle.main.attacker.arsenal.radars > 0 ? 1 : 0;
         }
 
         protected override bool CheckGameplayRulesForAddition()
