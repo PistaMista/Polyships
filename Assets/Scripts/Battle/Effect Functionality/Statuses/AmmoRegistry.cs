@@ -16,7 +16,7 @@ namespace Gameplay.Effects
         public bool radarUsed;
 
         int[] startingMetadata;
-        void Awake()
+        void Start()
         {
             startingMetadata = new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, aircraft, radars };
         }

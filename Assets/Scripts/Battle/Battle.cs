@@ -353,7 +353,10 @@ namespace Gameplay
                 Effect defenderAmmo = Effect.CreateEffect(typeof(AmmoRegistry));
 
                 attackerAmmo.targetedPlayer = battle.attacker;
+                attackerAmmo.visibleTo = battle.attacker;
+
                 defenderAmmo.targetedPlayer = battle.defender;
+                defenderAmmo.visibleTo = battle.defender;
 
                 Effect.AddToQueue(attackerAmmo);
                 Effect.AddToQueue(defenderAmmo);

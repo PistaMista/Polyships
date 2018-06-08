@@ -18,7 +18,7 @@ namespace BattleUIAgents.Tokens
         {
             foreach (Effect effect in Battle.main.effects)
             {
-                if (effect.GetType() == effectType.GetType() && effect.targetedPlayer != Battle.main.defender)
+                if (effect.GetType() == effectType.GetType() && (effect.visibleTo != Battle.main.defender))
                 {
                     if (FindAgent(x => { return (x as Token).effect == effect; }, typeof(Token)) == null)
                     {

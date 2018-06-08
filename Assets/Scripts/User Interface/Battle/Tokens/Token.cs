@@ -24,7 +24,7 @@ namespace BattleUIAgents.Tokens
         }
         public float occlusionRadius;
         public float height;
-        bool stacked;
+        public bool stacked;
         public struct Stacking
         {
             public Vector3 stackStart;
@@ -220,7 +220,7 @@ namespace BattleUIAgents.Tokens
             Token[] tokens = Array.ConvertAll(FindAgents(x =>
             {
                 Token token = x as Token;
-                return token.effectType.GetType() == tokenEffectType || (tokenEffectType == typeof(Gameplay.Event) && token.effectType is Gameplay.Event);
+                return token.effectType.GetType() == tokenEffectType || (tokenEffectType == typeof(Gameplay.Event) && token is EventToken);
             }, typeof(Token), int.MaxValue), x => { return x as Token; });
 
             Array.ForEach(tokens, x => { x.stacked = false; });

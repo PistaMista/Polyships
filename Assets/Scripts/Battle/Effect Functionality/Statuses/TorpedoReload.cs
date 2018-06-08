@@ -21,21 +21,24 @@ namespace Gameplay.Effects
         {
             if (!forced)
             {
-                targetedPlayer.arsenal.loadedTorpedoes++;
+                AmmoRegistry arsenal = targetedPlayer.arsenal;
+
+                arsenal.loadedTorpedoes++;
+
+                if (arsenal.torpedoes - arsenal.loadedTorpedoes > 0 && arsenal.loadedTorpedoes < arsenal.loadedTorpedoCap)
+                {
+                    post_action += () =>
+                    {
+                        Effect reload = CreateEffect(typeof(TorpedoReload));
+
+                        reload.targetedPlayer = targetedPlayer;
+                        reload.visibleTo = visibleTo;
+
+                        AddToQueue(reload);
+                    };
+                }
             }
         }
-
-        // protected override bool IsTriggered()
-        // {
-        //     AmmoRegistry arsenal = Battle.main.attacker.arsenal;
-        //     return arsenal.torpedoes - arsenal.loadedTorpedoes > 0 && arsenal.loadedTorpedoes < arsenal.loadedTorpedoCap;
-        // }
-
-        // protected override void SetupEvent()
-        // {
-        //     base.SetupEvent();
-        //     targetedPlayer = Battle.main.attacker;
-        // }
 
         public override int GetTheoreticalMaximumAddableAmount()
         {
