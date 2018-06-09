@@ -6,12 +6,6 @@ namespace Gameplay.Effects
 {
     public class TorpedoReload : Effect
     {
-        public override void OnTurnStart()
-        {
-            base.OnTurnStart();
-
-        }
-
         protected override bool IsForcedToExpire()
         {
             return targetedPlayer.arsenal.torpedoes <= 0;
@@ -21,11 +15,9 @@ namespace Gameplay.Effects
         {
             if (!forced)
             {
-                AmmoRegistry arsenal = targetedPlayer.arsenal;
+                targetedPlayer.arsenal.loadedTorpedoes++;
 
-                arsenal.loadedTorpedoes++;
-
-                if (arsenal.torpedoes - arsenal.loadedTorpedoes > 0 && arsenal.loadedTorpedoes < arsenal.loadedTorpedoCap)
+                if (TorpedoesReloadableForPlayer(targetedPlayer))
                 {
                     post_action += () =>
                     {
@@ -47,7 +39,12 @@ namespace Gameplay.Effects
 
         protected override bool CheckGameplayRulesForAddition()
         {
-            AmmoRegistry arsenal = Battle.main.attacker.arsenal;
+            return TorpedoesReloadableForPlayer(Battle.main.attacker);
+        }
+
+        public static bool TorpedoesReloadableForPlayer(Player player)
+        {
+            AmmoRegistry arsenal = player.arsenal;
             return arsenal.torpedoes - arsenal.loadedTorpedoes > 0 && arsenal.loadedTorpedoes < arsenal.loadedTorpedoCap;
         }
 
