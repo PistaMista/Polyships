@@ -49,7 +49,7 @@ namespace BattleUIAgents.UI
         {
             AI.PlayTurnForPlayer(player);
             gameObject.SetActive(false);
-            if (Battle.main.log.Count > 1)
+            if (Battle.main.fighting)
             {
                 FindAgent(x => { return x.player != player; }, typeof(Damagereport)).gameObject.SetActive(true);
             }

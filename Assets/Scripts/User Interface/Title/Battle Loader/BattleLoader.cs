@@ -67,7 +67,7 @@ namespace TitleUI
 
         public bool CheckSlot(int slot)
         {
-            return saveSlotContents[slot].log != null;
+            return saveSlotContents[slot].effects != null;
         }
 
         public void ClearSlot(int slot)

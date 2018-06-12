@@ -11,143 +11,28 @@ namespace Gameplay
 {
     public class Battle : BattleBehaviour
     {
-        public struct TurnInfo
-        {
-            public Player attacker;
-            public Player defender;
-            public List<Tile> artilleryImpacts;
-            public List<Tile> torpedoImpacts;
-            public List<Tile> damagedTiles;
-            public List<Ship> damagedShips;
-            public List<Ship> destroyedShips;
-            public bool aircraftTargetChanged;
-
-            public TurnInfo(int r)
-            {
-                this.attacker = Battle.main.attacker;
-                this.defender = Battle.main.defender;
-                artilleryImpacts = new List<Tile>();
-                torpedoImpacts = new List<Tile>();
-                damagedTiles = new List<Tile>();
-                damagedShips = new List<Ship>();
-                destroyedShips = new List<Ship>();
-                aircraftTargetChanged = false;
-            }
-
-            public static implicit operator TurnInfo(TurnInfoData data)
-            {
-                TurnInfo result = new TurnInfo(1);
-                result.attacker = Battle.main.attacker.index == data.attacker ? Battle.main.attacker : Battle.main.defender;
-                result.defender = Battle.main.defender.index == data.defender ? Battle.main.defender : Battle.main.attacker;
-                result.artilleryImpacts = ConvertTileArray(data.artilleryImpacts, result.defender);
-                result.torpedoImpacts = ConvertTileArray(data.torpedoImpacts, result.defender);
-                result.damagedTiles = ConvertTileArray(data.damagedTiles, result.defender);
-                result.damagedShips = ConvertShipArray(data.damagedShips, result.defender);
-                result.destroyedShips = ConvertShipArray(data.destroyedShips, result.defender);
-                result.aircraftTargetChanged = data.aircraftTargetChanged;
-                return result;
-            }
-
-            static List<Tile> ConvertTileArray(int[,] array, Player owner)
-            {
-                List<Tile> result = new List<Tile>();
-                for (int i = 0; i < array.GetLength(0); i++)
-                {
-                    result.Add(owner.board.tiles[array[i, 0], array[i, 1]]);
-                }
-
-                return result;
-            }
-
-            static List<Ship> ConvertShipArray(int[] array, Player owner)
-            {
-                List<Ship> result = new List<Ship>();
-                for (int i = 0; i < array.Length; i++)
-                {
-                    result.Add(owner.board.ships[array[i]]);
-                }
-
-                return result;
-            }
-        }
-
-        [Serializable]
-        public struct TurnInfoData
-        {
-            public int attacker;
-            public int defender;
-            public int[,] artilleryImpacts;
-            public int[,] torpedoImpacts;
-            public int[,] damagedTiles;
-            public int[] damagedShips;
-            public int[] destroyedShips;
-            public bool aircraftTargetChanged;
-
-            public static implicit operator TurnInfoData(TurnInfo info)
-            {
-                TurnInfoData result = new TurnInfoData();
-                result.attacker = info.attacker.index;
-                result.defender = info.defender.index;
-                result.artilleryImpacts = ConvertTileArray(info.artilleryImpacts.ToArray());
-                result.torpedoImpacts = ConvertTileArray(info.torpedoImpacts.ToArray());
-                result.damagedTiles = ConvertTileArray(info.damagedTiles.ToArray());
-                result.damagedShips = ConvertShipArray(info.damagedShips.ToArray());
-                result.destroyedShips = ConvertShipArray(info.destroyedShips.ToArray());
-                result.aircraftTargetChanged = info.aircraftTargetChanged;
-                return result;
-            }
-
-            static int[,] ConvertTileArray(Tile[] array)
-            {
-                int[,] result = new int[array.Length, 2];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    result[i, 0] = (int)array[i].coordinates.x;
-                    result[i, 1] = (int)array[i].coordinates.y;
-                }
-
-                return result;
-            }
-
-            static int[] ConvertShipArray(Ship[] array)
-            {
-                int[] result = new int[array.Length];
-                for (int i = 0; i < array.Length; i++)
-                {
-                    result[i] = array[i].index;
-                }
-
-                return result;
-            }
-        }
-
         [Serializable]
         public struct BattleData
         {
             public Player.PlayerData attacker;
             public Player.PlayerData defender;
+            public int turnCount;
             public int saveSlot;
-            public TurnInfoData[] log;
             public Effect.EffectData[] effects;
-            public int tutorialStage;
 
             public static implicit operator BattleData(Battle battle)
             {
                 BattleData result = new BattleData();
                 result.attacker = battle.attacker;
                 result.defender = battle.defender;
+                result.turnCount = battle.turnCount;
                 result.saveSlot = battle.saveSlot;
-                result.log = new TurnInfoData[battle.log.Count];
-                for (int i = 0; i < battle.log.Count; i++)
-                {
-                    result.log[i] = battle.log[i];
-                }
+
                 result.effects = new Effect.EffectData[battle.effects.Count];
                 for (int i = 0; i < battle.effects.Count; i++)
                 {
                     result.effects[i] = battle.effects[i];
                 }
-                result.tutorialStage = battle.tutorialStage;
                 return result;
             }
         }
@@ -155,15 +40,14 @@ namespace Gameplay
         public static Battle main;
         public Player attacker;
         public Player defender;
-        public List<TurnInfo> log;
         public List<Effect> effects = new List<Effect>(); //Effects change the battle parameters - at the start/end of each turn or when another effect is added/removed. Effects are applied in the order of this list.
+        public int turnCount;
         public int saveSlot;
-        public int tutorialStage;
         public bool fighting
         {
             get
             {
-                return attacker.board.ships != null && defender.board.ships != null;
+                return turnCount >= 2;
             }
         }
         public void SaveToDisk()
@@ -218,8 +102,8 @@ namespace Gameplay
                 effects.Add(initializedEffect);
             }
 
+            turnCount = data.turnCount;
             saveSlot = data.saveSlot;
-            tutorialStage = data.tutorialStage;
         }
 
         public void AssignReferences(BattleData data)
@@ -227,23 +111,10 @@ namespace Gameplay
             attacker.AssignReferences(data.attacker);
             defender.AssignReferences(data.defender);
 
-            log = new List<TurnInfo>();
-            if (data.log != null)
-            {
-                for (int i = 0; i < data.log.Length; i++)
-                {
-                    TurnInfo turn = data.log[i];
-
-                    log.Add(turn);
-                }
-            }
-
             for (int i = 0; i < effects.Count; i++)
             {
                 effects[i].AssignReferences(data.effects[i]);
             }
-
-
 
             attacker.OnTurnResume();
             foreach (Effect effect in effects)
@@ -274,12 +145,17 @@ namespace Gameplay
         public void NextTurn()
         {
             OnTurnEnd();
+            if (fighting) Event.ConsiderEvents();
+
+            if (turnCount == 2) OnBattleStart();
 
             Player lastAttacker = attacker;
             attacker = defender;
             defender = lastAttacker;
 
             OnTurnStart();
+            turnCount++;
+
             SaveToDisk();
         }
 
@@ -291,11 +167,7 @@ namespace Gameplay
             base.OnTurnStart();
             OnTurnResume();
 
-            if (fighting)
-            {
-                log.Insert(0, new TurnInfo(1));
-                Event.ConsiderEvents();
-            }
+            if (fighting) Event.ConsiderEvents();
 
             attacker.OnTurnStart();
 
@@ -404,7 +276,6 @@ namespace Gameplay
             data.defender.heatmap_recon = new Heatmap(boardSideLength, boardSideLength);
             data.defender.aiEnabled = aiOpponent;
 
-            data.tutorialStage = tutorialEnabled ? 1 : 0;
             data.saveSlot = saveSlot;
             data.effects = new Effect.EffectData[0];
 

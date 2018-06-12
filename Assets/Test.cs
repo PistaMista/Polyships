@@ -10,7 +10,7 @@ public class Test : MonoBehaviour
     void Start()
     {
 
-        Debug.Log(Mathf.NegativeInfinity == Mathf.NegativeInfinity);
+
     }
 
     // Update is called once per frame

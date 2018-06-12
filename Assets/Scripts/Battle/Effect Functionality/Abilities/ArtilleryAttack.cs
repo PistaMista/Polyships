@@ -9,8 +9,6 @@ namespace Gameplay.Effects
         public Tile target;
         public override void OnTurnEnd()
         {
-            Battle.main.log[0].artilleryImpacts.Add(target);
-
             if (target.containedShip && target.containedShip.concealedBy)
             {
                 for (int x = (target.coordinates.x == 0 ? 0 : -1); x <= ((target.coordinates.x == target.parentBoard.tiles.GetLength(0) - 1) ? 0 : 1); x++)
