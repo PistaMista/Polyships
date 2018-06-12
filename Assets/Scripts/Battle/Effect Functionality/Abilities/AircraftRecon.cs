@@ -48,17 +48,17 @@ namespace Gameplay.Effects
             editable = false;
             base.OnTurnEnd();
         }
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
-            return Battle.main.attacker.arsenal.aircraft - Effect.GetEffectsInQueue(x => { return x.visibleTo == Battle.main.attacker; }, typeof(AircraftRecon), int.MaxValue).Length;
+            return Battle.main.attacker.arsenal.aircraft - Battle.main.effects.FindAll(x => x is AircraftRecon && x.visibleTo == Battle.main.attacker).Count;
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return target >= 0 && target < (Battle.main.defender.board.tiles.GetLength(0) * 2 - 2); //Has to have a targeted line.
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             return effect is AircraftRecon && (effect as AircraftRecon).target == target && effect.targetedPlayer == targetedPlayer; //Conflicts with aircraft recon targeted at the same line and at the same player.
         }

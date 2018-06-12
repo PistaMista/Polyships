@@ -109,12 +109,11 @@ namespace Gameplay.Effects
         protected override void OnExpire(bool forced)
         {
             base.OnExpire(forced);
-            bool cooldownInitiated = GetEffectsInQueue(x => x.targetedPlayer != targetedPlayer, typeof(TorpedoCooldown), 1).Length == 1;
 
-            if (!cooldownInitiated)
+            if (!Battle.main.effects.Exists(x => x is TorpedoCooldown && x.targetedPlayer != targetedPlayer))
             {
-                int torpedoAttacks = GetEffectsInQueue(x => x.targetedPlayer == targetedPlayer, typeof(TorpedoAttack), int.MaxValue).Length;
-                post_action += () =>
+                int torpedoAttacks = Battle.main.effects.FindAll(x => x is TorpedoAttack && x.targetedPlayer == targetedPlayer).Count;
+                turnEndAction += () =>
                 {
                     TorpedoCooldown cooldown = CreateEffect(typeof(TorpedoCooldown)) as TorpedoCooldown;
                     cooldown.duration = cooldown.durations[torpedoAttacks];
@@ -122,23 +121,22 @@ namespace Gameplay.Effects
                     cooldown.targetedPlayer = visibleTo;
                     cooldown.visibleTo = visibleTo;
 
-                    AddToQueue(cooldown);
+                    AddToStack(cooldown);
                 };
             }
         }
 
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
-            bool onCooldown = GetEffectsInQueue(x => x.targetedPlayer == Battle.main.attacker, typeof(TorpedoCooldown), 1).Length == 1; //If the torpedoes are on cooldown they can never be used.
-            return onCooldown ? 0 : Battle.main.attacker.arsenal.loadedTorpedoes - Effect.GetEffectsInQueue(null, typeof(TorpedoAttack), int.MaxValue).Length;
+            return Battle.main.effects.Exists(x => x is TorpedoCooldown && x.targetedPlayer == Battle.main.attacker) ? 0 : Battle.main.attacker.arsenal.loadedTorpedoes - Battle.main.effects.FindAll(x => x is TorpedoAttack).Count;
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return target.torpedoDropPoint != null && target.torpedoHeading != Vector2Int.zero; //Has to have a target.
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             //Conflicts with this player's torpedo cooldowns(but not reloads) and any other torpedo attacks with the same target player, line and direction.
             return (effect is TorpedoCooldown && effect.targetedPlayer == visibleTo) || (effect.targetedPlayer == targetedPlayer && ((effect is TorpedoAttack && (effect as TorpedoAttack).target == target)));

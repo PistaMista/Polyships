@@ -112,7 +112,7 @@ namespace Gameplay
             if (duration == 0 || forcedToExpire)
             {
                 OnExpire(forcedToExpire);
-                post_action += () => RemoveFromQueue(this);
+                turnEndAction += () => RemoveFromStack(this);
             }
         }
 
@@ -152,51 +152,50 @@ namespace Gameplay
 
         }
 
-        //ADDABILITY CHECKS------------------------------------------------------------------------------------------------------------------------------
+        //ADDABILITY CHECKS-----------------------------------------------------------------------------------------------------------------------------
         /// <summary>
-        /// Gets how many effects of this type are possible to add. Effects themselves may not be added if they conflict with present ones. Cannot use case data and must use all available other data.
+        /// Checks if this effect is addable to the effect stack.
         /// </summary>
-        /// <returns>Default addable amount of this effect type.</returns>
-        public virtual int GetTheoreticalMaximumAddableAmount()
-        {
-            throw new Exception("No max addition calculations for " + name + ". Please add.");
-        }
-        /// <summary>
-        /// Checks if this effect instance has valid data for addition into the queue.
-        /// </summary>
-        /// <returns>Addable to queue.</returns>
-        public bool CanBeAddedIntoQueue()
+        /// <returns>Addable to stack.</returns>
+        public bool Addable()
         {
             foreach (Effect effect in Battle.main.effects)
             {
-                if (IsConflictingWithEffect(effect))
+                if (Conflicts(effect))
                 {
                     return false;
                 }
             }
 
-            return CheckGameplayRulesForAddition();
+            return Legal();
         }
         /// <summary>
-        /// Checks this effect's stored data against the rules of the game to see if it is valid to add.
+        /// Checks if this effect is legal while standalone.
         /// </summary>
         /// <returns></returns>
-        protected virtual bool CheckGameplayRulesForAddition()
+        protected virtual bool Legal()
         {
             throw new Exception("No rule check for " + name + ". Please add rule check.");
         }
         /// <summary>
-        /// Checks if this effect conflicts with another given effect.
+        /// Checks if this effect conflicts with another.
         /// </summary>
         /// <param name="effect">Potentially conflicting effect.</param>
         /// <returns>Whether the effect conflicts.</returns>
-        protected virtual bool IsConflictingWithEffect(Effect effect)
+        protected virtual bool Conflicts(Effect effect)
         {
             return false;
         }
         //ADDABILITY CHECKS------------------------------------------------------------------------------------------------------------------------------
 
-
+        /// <summary>
+        /// Gets how many effects of this type are possible to add. Effects themselves may not be added if they conflict with present ones. Cannot use case data and must use all available other data.
+        /// </summary>
+        /// <returns>Default addable amount of this effect type.</returns>
+        public virtual int Max()
+        {
+            throw new Exception("No max addition calculations for " + name + ". Please add.");
+        }
 
         /// <summary>
         /// Creates an effect object.
@@ -236,13 +235,18 @@ namespace Gameplay
         }
 
         /// <summary>
-        /// If this effect can be added to the queue, adds it.
+        /// If this effect can be added to the queue, adds it, if not the effect is destroyed.
         /// </summary>
         /// <param name="effect">The effect to be added.</param>
         /// <returns>Whether the effect was added.</returns>
-        public static bool AddToQueue(Effect effect)
+        public static bool AddToStack(Effect effect)
         {
-            if (!effect.CanBeAddedIntoQueue()) return false;
+            if (!effect.Addable())
+            {
+                Debug.LogError("Tried to add invalid effect " + effect.name);
+                Destroy(effect.gameObject);
+                return false;
+            }
 
             int insertionIndex = 0;
             foreach (Effect measure in Battle.main.effects)
@@ -271,7 +275,7 @@ namespace Gameplay
         /// Removes an effect from the queue.
         /// </summary>
         /// <param name="effect">Effect to remove.</param>
-        public static void RemoveFromQueue(Effect effect)
+        public static void RemoveFromStack(Effect effect)
         {
             foreach (Effect affected in Battle.main.effects)
             {
@@ -283,8 +287,7 @@ namespace Gameplay
             Destroy(effect.gameObject);
         }
 
-        public static Action pre_action;
-        public static Action post_action;
+        public static Action turnEndAction;
 
 
 
@@ -292,24 +295,24 @@ namespace Gameplay
         /// Finds effects of one type in the queue.
         /// </summary>
         /// <returns>Found effects.</returns>
-        public static Effect[] GetEffectsInQueue(Predicate<Effect> predicate, Type type, int limit)
-        {
-            if (predicate == null)
-            {
-                predicate = x => { return true; };
-            }
+        // public static Effect[] FindEffectsInStack(Predicate<Effect> predicate, Type type, int limit)
+        // {
+        //     if (predicate == null)
+        //     {
+        //         predicate = x => { return true; };
+        //     }
 
-            List<Effect> matches = new List<Effect>();
+        //     List<Effect> matches = new List<Effect>();
 
 
-            foreach (Effect candidate in Battle.main.effects)
-            {
-                if (predicate(candidate) && candidate.GetType() == type) matches.Add(candidate);
-                if (matches.Count == limit) break;
-            }
+        //     foreach (Effect candidate in Battle.main.effects)
+        //     {
+        //         if (predicate(candidate) && candidate.GetType() == type) matches.Add(candidate);
+        //         if (matches.Count == limit) break;
+        //     }
 
-            return matches.ToArray();
-        }
+        //     return matches.ToArray();
+        // }
 
 
     }

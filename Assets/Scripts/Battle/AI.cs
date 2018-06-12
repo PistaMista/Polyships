@@ -344,7 +344,7 @@ namespace Gameplay
         public static void PlayTurnForPlayer(Player player)
         {
             processedPlayer = player;
-            cycloneActive = Effect.GetEffectsInQueue(x => true, typeof(Cyclone), 1).Length == 1;
+            cycloneActive = Battle.main.effects.Find(x => x is Cyclone);
 
             if (player.board.ships == null)
             {
@@ -719,12 +719,12 @@ namespace Gameplay
 
 
                 //Assign gun count and information about torpedoes and aircraft
-                AmmoRegistry ammo = Battle.main.attacker.arsenal;
+                AmmoRegistry ammo = processedPlayer.arsenal;
                 totalArtilleryCount = ammo.guns;
 
-                Effect torpedoCooldown = Effect.GetEffectsInQueue(x => x.visibleTo == ammo.targetedPlayer, typeof(TorpedoCooldown), 1).FirstOrDefault();
+                Effect torpedoCooldown = Battle.main.effects.Find(x => x is TorpedoCooldown && x.targetedPlayer == processedPlayer);
                 this.torpedoCooldown = torpedoCooldown ? torpedoCooldown.duration : 0;
-                Effect torpedoReload = Effect.GetEffectsInQueue(x => x.visibleTo == ammo.targetedPlayer, typeof(TorpedoReload), 1).FirstOrDefault();
+                Effect torpedoReload = Battle.main.effects.Find(x => x is TorpedoReload && x.targetedPlayer == processedPlayer);
                 this.torpedoReload = torpedoReload ? torpedoReload.duration : 0;
 
                 this.totalTorpedoCount = ammo.torpedoes;
@@ -998,7 +998,7 @@ namespace Gameplay
 
             //Execute the plan with the highest rating
             Plan best = plans.OrderByDescending(x => x.rating).First();
-            if (processedPlayer.arsenal.aircraft > 0 && Effect.GetEffectsInQueue(x => x.targetedPlayer != processedPlayer, typeof(AircraftRecon), int.MaxValue).Length == 0) best.TargetAircraft(processedPlayer.arsenal.aircraft);
+            if (processedPlayer.arsenal.aircraft > 0 && !Battle.main.effects.Exists(x => x is AircraftRecon && x.targetedPlayer != processedPlayer)) best.TargetAircraft(processedPlayer.arsenal.aircraft);
             ExecutePlan(best);
         }
 
@@ -1063,7 +1063,7 @@ namespace Gameplay
                 attack.targetedPlayer = Battle.main.defender;
                 attack.visibleTo = processedPlayer;
 
-                if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
+                Effect.AddToStack(attack);
             }
 
             for (int i = 0; i < plan.torpedoes.Length; i++)
@@ -1073,7 +1073,7 @@ namespace Gameplay
                 attack.targetedPlayer = Battle.main.defender;
                 attack.visibleTo = processedPlayer;
 
-                if (!Effect.AddToQueue(attack)) Destroy(attack.gameObject);
+                Effect.AddToStack(attack);
             }
 
             for (int i = 0; i < plan.aircraft.Length; i++)
@@ -1083,7 +1083,7 @@ namespace Gameplay
                 r.targetedPlayer = Battle.main.defender;
                 r.visibleTo = processedPlayer;
 
-                if (!Effect.AddToQueue(r)) Destroy(r.gameObject);
+                Effect.AddToStack(r);
             }
         }
 

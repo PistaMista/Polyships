@@ -145,6 +145,7 @@ namespace Gameplay
         public void NextTurn()
         {
             OnTurnEnd();
+            turnCount++;
             if (fighting) Event.ConsiderEvents();
 
             if (turnCount == 2) OnBattleStart();
@@ -154,9 +155,13 @@ namespace Gameplay
             defender = lastAttacker;
 
             OnTurnStart();
-            turnCount++;
-
             SaveToDisk();
+        }
+
+        public override void OnBattleStart()
+        {
+            base.OnBattleStart();
+
         }
 
         /// <summary>
@@ -171,11 +176,6 @@ namespace Gameplay
 
             attacker.OnTurnStart();
 
-            if (Effect.pre_action != null)
-            {
-                Effect.pre_action();
-                Effect.pre_action = null;
-            }
             foreach (Effect effect in effects)
             {
                 effect.OnTurnStart();
@@ -207,10 +207,10 @@ namespace Gameplay
                 effect.OnTurnEnd();
             }
 
-            if (Effect.post_action != null)
+            if (Effect.turnEndAction != null)
             {
-                Effect.post_action();
-                Effect.post_action = null;
+                Effect.turnEndAction();
+                Effect.turnEndAction = null;
             }
         }
 
@@ -230,8 +230,8 @@ namespace Gameplay
                 defenderAmmo.targetedPlayer = battle.defender;
                 defenderAmmo.visibleTo = battle.defender;
 
-                Effect.AddToQueue(attackerAmmo);
-                Effect.AddToQueue(defenderAmmo);
+                Effect.AddToStack(attackerAmmo);
+                Effect.AddToStack(defenderAmmo);
             }
 
             battle.SaveToDisk();

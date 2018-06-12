@@ -11,17 +11,17 @@ namespace Gameplay.Effects
             return targetedPlayer.arsenal.radars <= 0;
         }
 
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
             return 2;
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return targetedPlayer.arsenal.radars > 0;
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             return effect.targetedPlayer == targetedPlayer && effect is RadarRecharge;
         }

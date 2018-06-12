@@ -30,14 +30,8 @@ namespace Gameplay
                         Event createdEvent = Effect.CreateEffect(eventPrefab.GetType()) as Event;
                         createdEvent.SetupEvent();
 
-                        if (createdEvent.CanBeAddedIntoQueue())
-                        {
-                            Effect.AddToQueue(createdEvent);
-                        }
-                        else
-                        {
-                            Destroy(createdEvent.gameObject);
-                        }
+
+                        Effect.AddToStack(createdEvent);
                     }
                 }
             }

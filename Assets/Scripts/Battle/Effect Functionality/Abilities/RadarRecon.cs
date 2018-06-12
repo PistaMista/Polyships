@@ -35,30 +35,28 @@ namespace Gameplay.Effects
             base.OnExpire(forced);
             if (!forced)
             {
-                post_action += () =>
+                turnEndAction += () =>
                 {
                     Effect radarRecharge = CreateEffect(typeof(RadarRecharge));
 
                     radarRecharge.targetedPlayer = visibleTo;
                     radarRecharge.visibleTo = visibleTo;
 
-                    AddToQueue(radarRecharge);
+                    AddToStack(radarRecharge);
                 };
             }
         }
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
-            int radarRechargeCount = Effect.GetEffectsInQueue(x => x.targetedPlayer == Battle.main.attacker, typeof(RadarRecharge), int.MaxValue).Length;
-            int radarReconCount = Effect.GetEffectsInQueue(x => x.targetedPlayer == Battle.main.defender, typeof(RadarRecon), int.MaxValue).Length;
-            return radarReconCount == 0 && radarRechargeCount == 0 && Battle.main.attacker.arsenal.radars > 0 ? 1 : 0;
+            return (Battle.main.attacker.arsenal.radars > 0 && !Battle.main.effects.Exists(x => x is RadarRecharge && x.targetedPlayer == Battle.main.attacker) && !Battle.main.effects.Exists(x => x is RadarRecon && x.targetedPlayer == Battle.main.defender)) ? 1 : 0;
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return true;
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             return effect is RadarRecon && effect.targetedPlayer == targetedPlayer || effect is RadarRecharge && effect.targetedPlayer == visibleTo; //Conflicts with radar targeted at the same player or the radar recharging
         }

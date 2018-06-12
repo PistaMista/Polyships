@@ -108,7 +108,7 @@ namespace BattleUIAgents.UI
 
             Vector3 step = Vector3.back * (abilityTokenSegmentSize.y / abilityTokenTypes.Length);
 
-            int highestTokenCount = abilityTokenTypes.Max(x => x.GetTheoreticalMaximumAddableAmount());
+            int highestTokenCount = abilityTokenTypes.Max(x => x.Max());
 
             for (int i = 0; i < abilityTokenTypes.Length; i++)
             {
@@ -211,7 +211,7 @@ namespace BattleUIAgents.UI
             for (int i = 0; i < abilityTokenTypes.Length; i++)
             {
                 int currentTokenCount = Token.FindTokens(true, false, abilityTokenTypes[i].GetType(), int.MaxValue).Length;
-                int extraTokens = currentTokenCount - abilityTokenTypes[i].GetTheoreticalMaximumAddableAmount();
+                int extraTokens = currentTokenCount - abilityTokenTypes[i].Max();
                 if (extraTokens > 0)
                 {
                     Array.ForEach(Token.FindTokens(true, false, abilityTokenTypes[i].GetType(), extraTokens), x => { x.Delinker(); });

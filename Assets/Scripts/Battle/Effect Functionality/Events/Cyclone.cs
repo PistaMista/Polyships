@@ -10,7 +10,7 @@ namespace Gameplay.Effects
         public int dispersionRadius;
         public override void OnTurnEnd()
         {
-            Effect[] artilleryAttacks = GetEffectsInQueue(null, typeof(ArtilleryAttack), int.MaxValue);
+            Effect[] artilleryAttacks = Battle.main.effects.FindAll(x => x is ArtilleryAttack).ToArray();
             float[] minimumDistances = new float[artilleryAttacks.Length];
 
             for (int i = 0; i < artilleryAttacks.Length; i++) //Measure the minimum distance to another target for all targets
@@ -45,17 +45,17 @@ namespace Gameplay.Effects
             base.OnTurnEnd();
         }
 
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
             return 1;
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             return effect is Cyclone;
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return true;
         }

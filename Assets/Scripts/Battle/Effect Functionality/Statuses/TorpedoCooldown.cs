@@ -18,14 +18,14 @@ namespace Gameplay.Effects
             AmmoRegistry arsenal = targetedPlayer.arsenal;
             if (!forced && arsenal.torpedoes - arsenal.loadedTorpedoes > 0 && arsenal.loadedTorpedoes < arsenal.loadedTorpedoCap)
             {
-                post_action += () =>
+                turnEndAction += () =>
                 {
                     Effect torpedoReload = CreateEffect(typeof(TorpedoReload));
 
                     torpedoReload.targetedPlayer = targetedPlayer;
                     torpedoReload.visibleTo = visibleTo;
 
-                    AddToQueue(torpedoReload);
+                    AddToStack(torpedoReload);
                 };
             }
         }
@@ -49,17 +49,17 @@ namespace Gameplay.Effects
         //     }
         // }
 
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
             return 2;
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return true;
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             return effect.targetedPlayer == targetedPlayer && effect is TorpedoCooldown;
         }

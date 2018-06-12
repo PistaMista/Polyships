@@ -48,17 +48,17 @@ namespace Gameplay.Effects
             return "Munitions - Torpedo x" + torpedoes;
         }
 
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
             return 2;
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             return effect is AmmoRegistry && effect.targetedPlayer == targetedPlayer;
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return true;
         }

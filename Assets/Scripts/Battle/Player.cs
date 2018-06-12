@@ -51,7 +51,7 @@ namespace Gameplay
         {
             get
             {
-                return Effect.GetEffectsInQueue(x => { return x.targetedPlayer == this; }, typeof(AmmoRegistry), 1)[0] as AmmoRegistry;
+                return Battle.main.effects.Find(x => x is AmmoRegistry && x.targetedPlayer == this) as AmmoRegistry;
             }
         }
 
@@ -90,11 +90,11 @@ namespace Gameplay
         public override void OnTurnStart()
         {
             base.OnTurnStart();
-            AircraftRecon[] reconEffects = Array.ConvertAll(Effect.GetEffectsInQueue(x => x.targetedPlayer != this, typeof(AircraftRecon), int.MaxValue), x => x as AircraftRecon);
+            Effect[] reconEffects = Battle.main.effects.FindAll(x => x is AircraftRecon && x.targetedPlayer != this).ToArray();
 
             for (int i = 0; i < reconEffects.Length; i++)
             {
-                AircraftRecon line = reconEffects[i];
+                AircraftRecon line = reconEffects[i] as AircraftRecon;
 
                 int linePosition = (line.target % (Battle.main.defender.board.tiles.GetLength(0) - 1));
                 bool lineVertical = line.target == linePosition;

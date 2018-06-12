@@ -19,25 +19,25 @@ namespace Gameplay.Effects
 
                 if (TorpedoesReloadableForPlayer(targetedPlayer))
                 {
-                    post_action += () =>
+                    turnEndAction += () =>
                     {
                         Effect reload = CreateEffect(typeof(TorpedoReload));
 
                         reload.targetedPlayer = targetedPlayer;
                         reload.visibleTo = visibleTo;
 
-                        AddToQueue(reload);
+                        AddToStack(reload);
                     };
                 }
             }
         }
 
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
             return 2;
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return TorpedoesReloadableForPlayer(Battle.main.attacker);
         }
@@ -48,7 +48,7 @@ namespace Gameplay.Effects
             return arsenal.torpedoes - arsenal.loadedTorpedoes > 0 && arsenal.loadedTorpedoes < arsenal.loadedTorpedoCap;
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             return effect.targetedPlayer == targetedPlayer && (effect is TorpedoReload || effect is TorpedoCooldown);
         }

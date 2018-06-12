@@ -38,17 +38,17 @@ namespace Gameplay.Effects
             return base.IsTriggered() && (Battle.main.defender.arsenal.guns - Battle.main.attacker.arsenal.guns >= triggerGunCountThreshold && Battle.main.attacker.arsenal.torpedoes <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
         }
 
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
             return 1;
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             return effect is LastStand;
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return true;
         }

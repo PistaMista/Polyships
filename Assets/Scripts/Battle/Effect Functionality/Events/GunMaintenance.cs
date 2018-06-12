@@ -40,17 +40,17 @@ namespace Gameplay.Effects
             }
         }
 
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
             return 2;
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             return effect is GunMaintenance && effect.targetedPlayer == targetedPlayer;
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return targetedPlayer.arsenal.guns > artilleryAttackDecrease;
         }

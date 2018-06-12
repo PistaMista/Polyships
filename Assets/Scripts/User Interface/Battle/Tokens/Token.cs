@@ -136,7 +136,7 @@ namespace BattleUIAgents.Tokens
             heldToken = this;
             if (effect != null)
             {
-                Effect.RemoveFromQueue(effect);
+                Effect.RemoveFromStack(effect);
                 effect = null;
             }
         }
@@ -158,16 +158,12 @@ namespace BattleUIAgents.Tokens
 
             if (effect != null)
             {
-                if (Effect.AddToQueue(effect))
+                if (Effect.AddToStack(effect))
                 {
                     transform.SetAsLastSibling();
                     return;
                 }
-                else
-                {
-                    Destroy(effect.gameObject);
-                    effect = null;
-                }
+                else effect = null;
             }
 
             transform.SetAsFirstSibling();

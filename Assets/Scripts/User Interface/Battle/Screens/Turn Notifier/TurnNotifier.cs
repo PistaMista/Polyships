@@ -47,9 +47,10 @@ namespace BattleUIAgents.UI
 
         void DoAITurn()
         {
+            bool fighting = Battle.main.fighting;
             AI.PlayTurnForPlayer(player);
             gameObject.SetActive(false);
-            if (Battle.main.fighting)
+            if (fighting)
             {
                 FindAgent(x => { return x.player != player; }, typeof(Damagereport)).gameObject.SetActive(true);
             }

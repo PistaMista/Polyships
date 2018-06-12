@@ -51,17 +51,17 @@ namespace Gameplay.Effects
             target = Battle.main.defender.board.tiles[data.metadata[0], data.metadata[1]];
         }
 
-        public override int GetTheoreticalMaximumAddableAmount()
+        public override int Max()
         {
-            return Mathf.Clamp(Battle.main.attacker.arsenal.guns - Effect.GetEffectsInQueue(null, typeof(ArtilleryAttack), int.MaxValue).Length, 0, int.MaxValue);
+            return Mathf.Clamp(Battle.main.attacker.arsenal.guns - Battle.main.effects.FindAll(x => x is ArtilleryAttack).Count, 0, int.MaxValue);
         }
 
-        protected override bool CheckGameplayRulesForAddition()
+        protected override bool Legal()
         {
             return target != null && !target.hit; //Target tile is required. Targeted tile has to not be hit. 
         }
 
-        protected override bool IsConflictingWithEffect(Effect effect)
+        protected override bool Conflicts(Effect effect)
         {
             return ((effect is TorpedoAttack) || (effect is ArtilleryAttack && (effect as ArtilleryAttack).target == target)) && effect.targetedPlayer == targetedPlayer; //Conflicts with any artillery attacks targeted at the same tile as this one or also with torpedo attacks.
         }
