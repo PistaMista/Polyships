@@ -121,8 +121,6 @@ namespace Gameplay
             {
                 effect.OnTurnResume();
             }
-
-            //BattleUIMaster.EnablePrimaryBUI(BattleUIType.TURN_NOTIFIER);
         }
 
         void OnApplicationPause(bool pauseStatus)
@@ -161,7 +159,10 @@ namespace Gameplay
         public override void OnBattleStart()
         {
             base.OnBattleStart();
-
+            foreach (Effect effect in effects)
+            {
+                effect.OnBattleStart();
+            }
         }
 
         /// <summary>
@@ -179,6 +180,12 @@ namespace Gameplay
             foreach (Effect effect in effects)
             {
                 effect.OnTurnStart();
+            }
+
+            if (Effect.turnStartAction != null)
+            {
+                Effect.turnStartAction();
+                Effect.turnStartAction = null;
             }
         }
 

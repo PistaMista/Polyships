@@ -62,5 +62,22 @@ namespace Gameplay.Effects
         {
             return true;
         }
+
+        public override void OnBattleStart()
+        {
+            base.OnBattleStart();
+            if (torpedoes > 0 && loadedTorpedoes == 0)
+            {
+                turnStartAction += () =>
+                {
+                    Effect torpedoReload = CreateEffect(typeof(TorpedoReload));
+
+                    torpedoReload.targetedPlayer = targetedPlayer;
+                    torpedoReload.visibleTo = targetedPlayer;
+
+                    AddToStack(torpedoReload);
+                };
+            }
+        }
     }
 }

@@ -111,8 +111,8 @@ namespace Gameplay
             bool forcedToExpire = IsForcedToExpire();
             if (duration == 0 || forcedToExpire)
             {
-                OnExpire(forcedToExpire);
                 turnEndAction += () => RemoveFromStack(this);
+                OnExpire(forcedToExpire);
             }
         }
 
@@ -286,34 +286,7 @@ namespace Gameplay
 
             Destroy(effect.gameObject);
         }
-
+        public static Action turnStartAction;
         public static Action turnEndAction;
-
-
-
-        /// <summary>
-        /// Finds effects of one type in the queue.
-        /// </summary>
-        /// <returns>Found effects.</returns>
-        // public static Effect[] FindEffectsInStack(Predicate<Effect> predicate, Type type, int limit)
-        // {
-        //     if (predicate == null)
-        //     {
-        //         predicate = x => { return true; };
-        //     }
-
-        //     List<Effect> matches = new List<Effect>();
-
-
-        //     foreach (Effect candidate in Battle.main.effects)
-        //     {
-        //         if (predicate(candidate) && candidate.GetType() == type) matches.Add(candidate);
-        //         if (matches.Count == limit) break;
-        //     }
-
-        //     return matches.ToArray();
-        // }
-
-
     }
 }
