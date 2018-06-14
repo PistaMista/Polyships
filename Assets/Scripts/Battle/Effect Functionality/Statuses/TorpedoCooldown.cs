@@ -30,25 +30,6 @@ namespace Gameplay.Effects
             }
         }
 
-        // protected override bool IsTriggered()
-        // {
-        //     int last = Battle.main.attacker.arsenal.torpedoesFiredLastTurn;
-        //     return last > 0;
-        // }
-
-        // protected override void SetupEvent()
-        // {
-        //     base.SetupEvent();
-        //     targetedPlayer = Battle.main.attacker;
-        //     duration = durations[targetedPlayer.arsenal.torpedoesFiredLastTurn];
-
-        //     Effect[] candidate = GetEffectsInQueue(x => { return x.targetedPlayer == targetedPlayer; }, typeof(TorpedoReload), 1);
-        //     if (candidate.Length > 0)
-        //     {
-        //         RemoveFromQueue(candidate[0]);
-        //     }
-        // }
-
         public override int Max()
         {
             return 2;

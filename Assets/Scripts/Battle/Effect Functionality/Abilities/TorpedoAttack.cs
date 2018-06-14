@@ -109,7 +109,6 @@ namespace Gameplay.Effects
         protected override void OnExpire(bool forced)
         {
             base.OnExpire(forced);
-
             if (!Battle.main.effects.Exists(x => x is TorpedoCooldown && x.targetedPlayer != targetedPlayer))
             {
                 int torpedoAttacks = Battle.main.effects.FindAll(x => x is TorpedoAttack && x.targetedPlayer == targetedPlayer).Count;
