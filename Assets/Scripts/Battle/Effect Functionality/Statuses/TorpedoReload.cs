@@ -8,7 +8,7 @@ namespace Gameplay.Effects
     {
         protected override bool IsForcedToExpire()
         {
-            return targetedPlayer.arsenal.torpedoes <= 0;
+            return !TorpedoesReloadableForPlayer(targetedPlayer) || Battle.main.effects.Exists(x => (x is TorpedoCooldown && x.targetedPlayer == targetedPlayer) || (x is TorpedoAttack && x.targetedPlayer != targetedPlayer));
         }
 
         protected override void OnExpire(bool forced)

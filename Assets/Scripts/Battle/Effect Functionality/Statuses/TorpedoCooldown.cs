@@ -9,7 +9,7 @@ namespace Gameplay.Effects
         public int[] durations;
         protected override bool IsForcedToExpire()
         {
-            return targetedPlayer.arsenal.torpedoes <= 0;
+            return !TorpedoReload.TorpedoesReloadableForPlayer(targetedPlayer);
         }
 
         protected override void OnExpire(bool forced)
@@ -37,7 +37,7 @@ namespace Gameplay.Effects
 
         protected override bool Legal()
         {
-            return true;
+            return TorpedoReload.TorpedoesReloadableForPlayer(targetedPlayer);
         }
 
         protected override bool Conflicts(Effect effect)

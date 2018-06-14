@@ -7,38 +7,41 @@ namespace Gameplay.Effects
     public class ArtilleryAttack : Effect
     {
         public Tile target;
-        public override void OnTurnEnd()
+
+        protected override void OnExpire(bool forced)
         {
-            if (target.containedShip && target.containedShip.concealedBy)
+            base.OnExpire(forced);
+            if (!forced)
             {
-                for (int x = (target.coordinates.x == 0 ? 0 : -1); x <= ((target.coordinates.x == target.parentBoard.tiles.GetLength(0) - 1) ? 0 : 1); x++)
+                if (target.containedShip && target.containedShip.concealedBy)
                 {
-                    for (int y = (target.coordinates.y == 0 ? 0 : -1); y <= ((target.coordinates.y == target.parentBoard.tiles.GetLength(1) - 1) ? 0 : 1); y++)
+                    for (int x = (target.coordinates.x == 0 ? 0 : -1); x <= ((target.coordinates.x == target.parentBoard.tiles.GetLength(0) - 1) ? 0 : 1); x++)
                     {
-                        if (!(y == 0 && x == 0))
+                        for (int y = (target.coordinates.y == 0 ? 0 : -1); y <= ((target.coordinates.y == target.parentBoard.tiles.GetLength(1) - 1) ? 0 : 1); y++)
                         {
-                            Tile candidate = target.parentBoard.tiles[x + (int)target.coordinates.x, y + (int)target.coordinates.y];
-                            if (!candidate.hit && candidate.containedShip == null)
+                            if (!(y == 0 && x == 0))
                             {
-                                target = candidate;
-                                break;
+                                Tile candidate = target.parentBoard.tiles[x + (int)target.coordinates.x, y + (int)target.coordinates.y];
+                                if (!candidate.hit && candidate.containedShip == null)
+                                {
+                                    target = candidate;
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            if (!target.hit)
-            {
-                target.hit = true;
-
-                if (target.containedShip)
+                if (!target.hit)
                 {
-                    target.containedShip.Damage(1);
+                    target.hit = true;
+
+                    if (target.containedShip)
+                    {
+                        target.containedShip.Damage(1);
+                    }
                 }
             }
-
-            base.OnTurnEnd();
         }
 
         protected override int[] GetMetadata()
@@ -63,7 +66,7 @@ namespace Gameplay.Effects
 
         protected override bool Conflicts(Effect effect)
         {
-            return ((effect is TorpedoAttack) || (effect is ArtilleryAttack && (effect as ArtilleryAttack).target == target)) && effect.targetedPlayer == targetedPlayer; //Conflicts with any artillery attacks targeted at the same tile as this one or also with torpedo attacks.
+            return (effect is ArtilleryAttack && (effect as ArtilleryAttack).target == target) && effect.targetedPlayer == targetedPlayer; //Conflicts with any artillery attacks targeted at the same tile as this one.
         }
 
         public override string GetDescription()

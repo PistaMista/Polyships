@@ -113,6 +113,7 @@ namespace Gameplay
             {
                 turnEndAction += () => RemoveFromStack(this);
                 OnExpire(forcedToExpire);
+                return;
             }
         }
 
@@ -135,7 +136,7 @@ namespace Gameplay
         }
 
         /// <summary>
-        /// Determines whether this effect is forced to expire before it times out.
+        /// Determines whether this effect is forced to expire.
         /// </summary>
         /// <returns>Whether this effect has expired.</returns>
         protected virtual bool IsForcedToExpire()
@@ -159,15 +160,7 @@ namespace Gameplay
         /// <returns>Addable to stack.</returns>
         public bool Addable()
         {
-            foreach (Effect effect in Battle.main.effects)
-            {
-                if (Conflicts(effect))
-                {
-                    return false;
-                }
-            }
-
-            return Legal();
+            return Legal() && !Battle.main.effects.Exists(x => Conflicts(x));
         }
         /// <summary>
         /// Checks if this effect is legal while standalone.

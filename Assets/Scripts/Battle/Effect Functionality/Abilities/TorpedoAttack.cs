@@ -48,80 +48,80 @@ namespace Gameplay.Effects
             target.torpedoDropPoint = Battle.main.defender.board.tiles[data.metadata[0], data.metadata[1]];
             target.torpedoHeading = new Vector2Int(data.metadata[2], data.metadata[3]);
         }
-        public override void OnTurnEnd()
-        {
-            Board board = Battle.main.defender.board;
-            Tile impact = null;
-
-            Tile currentPosition = target.torpedoDropPoint;
-            int traveledDistance = 0;
-            while (currentPosition != null)
-            {
-                if (currentPosition.containedShip)
-                {
-                    impact = currentPosition;
-                    break;
-                }
-                else
-                {
-                    currentPosition.hit = true;
-                }
-
-                Vector2Int newCoordinates = currentPosition.coordinates + target.torpedoHeading;
-                currentPosition = (newCoordinates.x >= 0 && newCoordinates.x < board.tiles.GetLength(0) && newCoordinates.y >= 0 && newCoordinates.y < board.tiles.GetLength(1)) ? board.tiles[newCoordinates.x, newCoordinates.y] : null;
-                traveledDistance++;
-
-                if (traveledDistance >= range)
-                {
-                    break;
-                }
-            }
-
-            List<Tile> damagedTiles = new List<Tile>();
-            if (impact)
-            {
-                if (impact.containedShip.health < impact.containedShip.maxHealth)
-                {
-                    damagedTiles.AddRange(impact.containedShip.tiles);
-                }
-                else
-                {
-                    damagedTiles.Add(impact);
-                }
-            }
-
-            foreach (Tile tile in damagedTiles)
-            {
-                if (!tile.hit && tile.containedShip.health > 0)
-                {
-                    tile.hit = true;
-                    tile.containedShip.Damage(1);
-                }
-            }
-
-            //Consume a torpedo 
-            Battle.main.attacker.arsenal.torpedoes--;
-            Battle.main.attacker.arsenal.loadedTorpedoes--;
-
-            base.OnTurnEnd();
-        }
 
         protected override void OnExpire(bool forced)
         {
             base.OnExpire(forced);
-            if (!Battle.main.effects.Exists(x => x is TorpedoCooldown && x.targetedPlayer != targetedPlayer))
+            if (!forced)
             {
-                int torpedoAttacks = Battle.main.effects.FindAll(x => x is TorpedoAttack && x.targetedPlayer == targetedPlayer).Count;
-                turnEndAction += () =>
+                Board board = Battle.main.defender.board;
+                Tile impact = null;
+
+                Tile currentPosition = target.torpedoDropPoint;
+                int traveledDistance = 0;
+                while (currentPosition != null)
                 {
-                    TorpedoCooldown cooldown = CreateEffect(typeof(TorpedoCooldown)) as TorpedoCooldown;
-                    cooldown.duration = cooldown.durations[torpedoAttacks];
+                    if (currentPosition.containedShip)
+                    {
+                        impact = currentPosition;
+                        break;
+                    }
+                    else
+                    {
+                        currentPosition.hit = true;
+                    }
 
-                    cooldown.targetedPlayer = visibleTo;
-                    cooldown.visibleTo = visibleTo;
+                    Vector2Int newCoordinates = currentPosition.coordinates + target.torpedoHeading;
+                    currentPosition = (newCoordinates.x >= 0 && newCoordinates.x < board.tiles.GetLength(0) && newCoordinates.y >= 0 && newCoordinates.y < board.tiles.GetLength(1)) ? board.tiles[newCoordinates.x, newCoordinates.y] : null;
+                    traveledDistance++;
 
-                    AddToStack(cooldown);
-                };
+                    if (traveledDistance >= range)
+                    {
+                        break;
+                    }
+                }
+
+                List<Tile> damagedTiles = new List<Tile>();
+                if (impact)
+                {
+                    if (impact.containedShip.health < impact.containedShip.maxHealth)
+                    {
+                        damagedTiles.AddRange(impact.containedShip.tiles);
+                    }
+                    else
+                    {
+                        damagedTiles.Add(impact);
+                    }
+                }
+
+                foreach (Tile tile in damagedTiles)
+                {
+                    if (!tile.hit && tile.containedShip.health > 0)
+                    {
+                        tile.hit = true;
+                        tile.containedShip.Damage(1);
+                    }
+                }
+
+                //Consume a torpedo 
+                Battle.main.attacker.arsenal.torpedoes--;
+                Battle.main.attacker.arsenal.loadedTorpedoes--;
+
+                //Start the cooldown
+                if (!Battle.main.effects.Exists(x => x is TorpedoCooldown && x.targetedPlayer != targetedPlayer))
+                {
+                    int torpedoAttacks = Battle.main.effects.FindAll(x => x is TorpedoAttack && x.targetedPlayer == targetedPlayer).Count;
+                    turnEndAction += () =>
+                    {
+                        TorpedoCooldown cooldown = CreateEffect(typeof(TorpedoCooldown)) as TorpedoCooldown;
+                        cooldown.duration = cooldown.durations[torpedoAttacks];
+
+                        cooldown.targetedPlayer = visibleTo;
+                        cooldown.visibleTo = visibleTo;
+
+                        AddToStack(cooldown);
+                    };
+                }
             }
         }
 
@@ -132,7 +132,7 @@ namespace Gameplay.Effects
 
         protected override bool Legal()
         {
-            return target.torpedoDropPoint != null && target.torpedoHeading != Vector2Int.zero; //Has to have a target.
+            return target.torpedoDropPoint != null && (target.torpedoHeading.x + target.torpedoHeading.y == 1); //Has to have a target.
         }
 
         protected override bool Conflicts(Effect effect)
