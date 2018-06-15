@@ -11,7 +11,7 @@ namespace BattleUIAgents.UI
     public class TurnNotifier : ScreenBattleUIAgent
     {
         [Header("Turn Notification Configuration")]
-        public float AITurnWaitTime;
+        public float AITurnWaitTime; //AI DEBUG
         Flag flag;
         protected override void PerformLinkageOperations()
         {

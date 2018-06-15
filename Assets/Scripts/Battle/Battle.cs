@@ -265,6 +265,7 @@ namespace Gameplay
             data.attacker.board = boardData;
             data.attacker.heatmap_recon = new Heatmap(boardSideLength, boardSideLength);
             data.attacker.flag = flags[0];
+            data.attacker.aiEnabled = true; //AI DEBUG
 
             boardData = new Board.BoardData();
             boardData.tiles = new Tile.TileData[boardSideLength, boardSideLength];
