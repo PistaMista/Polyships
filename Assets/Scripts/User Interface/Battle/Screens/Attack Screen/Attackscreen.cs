@@ -148,7 +148,7 @@ namespace BattleUIAgents.UI
                 {
                     firebutton.TryPush(initialInputPosition.world);
                 }
-                else
+                else if (pressed || tap)
                 {
                     BattleUIAgent[] allTokens = FindAgents(x => { return x.linked; }, typeof(Token), int.MaxValue);
                     for (int i = 0; i < allTokens.Length; i++)
