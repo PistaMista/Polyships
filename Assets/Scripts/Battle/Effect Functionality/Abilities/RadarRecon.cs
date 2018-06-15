@@ -19,20 +19,16 @@ namespace Gameplay.Effects
                 result = AI.GetTargetmap(AI.GetStatisticalHeatmap(datamap).normalized + Battle.main.attacker.heatmap_recon * 0.65f, datamap);
             }
         }
-        public override void OnTurnEnd()
+        public override void OnTurnStart()
         {
-            base.OnTurnEnd();
+            if (visibleTo.arsenal.radars <= 0) Expire(true, true);
+            base.OnTurnStart();
             editable = false;
         }
 
-        protected override bool IsForcedToExpire()
+        protected override void Expire(bool forced, bool removeAtStart)
         {
-            return visibleTo.arsenal.radars <= 0;
-        }
-
-        protected override void OnExpire(bool forced)
-        {
-            base.OnExpire(forced);
+            base.Expire(forced, removeAtStart);
             if (!forced)
             {
                 turnEndAction += () =>

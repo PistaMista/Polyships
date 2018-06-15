@@ -72,6 +72,7 @@ namespace Gameplay
                 return displayDuration + " " + (displayDuration > 1 ? "turns" : "turn");
             }
         }
+        public bool expired = false;
         public int priority; //The priority this effect takes over others
         public bool editable;
         public int prefabIndex;
@@ -91,6 +92,7 @@ namespace Gameplay
         public override void OnTurnStart()
         {
             base.OnTurnStart();
+            if (expired) return;
         }
 
         /// <summary>
@@ -108,13 +110,13 @@ namespace Gameplay
         {
             base.OnTurnEnd();
             duration--;
-            bool forcedToExpire = IsForcedToExpire();
-            if (duration == 0 || forcedToExpire)
+            if (duration == 0 && !expired)
             {
-                turnEndAction += () => RemoveFromStack(this);
-                OnExpire(forcedToExpire);
+                Expire(false, false);
                 return;
             }
+
+            if (expired) return;
         }
 
         /// <summary>
@@ -136,21 +138,14 @@ namespace Gameplay
         }
 
         /// <summary>
-        /// Determines whether this effect is forced to expire.
-        /// </summary>
-        /// <returns>Whether this effect has expired.</returns>
-        protected virtual bool IsForcedToExpire()
-        {
-            return false;
-        }
-
-        /// <summary>
         /// Executes when this effect expires.
         /// </summary>
         /// <param name="forced">Whether this effect was forced to expire before timing out normally.</param>
-        protected virtual void OnExpire(bool forced)
+        protected virtual void Expire(bool forced, bool removeAtStart)
         {
-
+            expired = true;
+            if (removeAtStart) turnStartAction += () => RemoveFromStack(this);
+            else turnEndAction += () => RemoveFromStack(this);
         }
 
         /// <summary>

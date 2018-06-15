@@ -8,9 +8,9 @@ namespace Gameplay.Effects
     {
         public Tile target;
 
-        protected override void OnExpire(bool forced)
+        protected override void Expire(bool forced, bool removeAtStart)
         {
-            base.OnExpire(forced);
+            base.Expire(forced, removeAtStart);
             if (!forced)
             {
                 if (target.containedShip && target.containedShip.concealedBy)

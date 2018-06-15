@@ -7,14 +7,15 @@ namespace Gameplay.Effects
     public class TorpedoCooldown : Effect
     {
         public int[] durations;
-        protected override bool IsForcedToExpire()
+        public override void OnTurnStart()
         {
-            return !TorpedoReload.TorpedoesReloadableForPlayer(targetedPlayer);
+            if (!TorpedoReload.TorpedoesReloadableForPlayer(targetedPlayer)) Expire(true, true);
+            base.OnTurnStart();
         }
 
-        protected override void OnExpire(bool forced)
+        protected override void Expire(bool forced, bool removeAtStart)
         {
-            base.OnExpire(forced);
+            base.Expire(forced, removeAtStart);
             AmmoRegistry arsenal = targetedPlayer.arsenal;
             if (!forced && arsenal.torpedoes - arsenal.loadedTorpedoes > 0 && arsenal.loadedTorpedoes < arsenal.loadedTorpedoCap)
             {

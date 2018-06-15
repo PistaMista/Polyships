@@ -6,9 +6,10 @@ namespace Gameplay.Effects
 {
     public class RadarRecharge : Effect
     {
-        protected override bool IsForcedToExpire()
+        public override void OnTurnStart()
         {
-            return targetedPlayer.arsenal.radars <= 0;
+            if (targetedPlayer.arsenal.radars <= 0) Expire(true, true);
+            base.OnTurnStart();
         }
 
         public override int Max()

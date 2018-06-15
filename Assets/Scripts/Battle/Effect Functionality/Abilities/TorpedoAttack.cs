@@ -49,9 +49,9 @@ namespace Gameplay.Effects
             target.torpedoHeading = new Vector2Int(data.metadata[2], data.metadata[3]);
         }
 
-        protected override void OnExpire(bool forced)
+        protected override void Expire(bool forced, bool removeAtStart)
         {
-            base.OnExpire(forced);
+            base.Expire(forced, removeAtStart);
             if (!forced)
             {
                 Board board = Battle.main.defender.board;

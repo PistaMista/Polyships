@@ -6,13 +6,20 @@ namespace Gameplay.Effects
 {
     public class TorpedoReload : Effect
     {
-        protected override bool IsForcedToExpire()
+        public override void OnTurnStart()
         {
-            return !TorpedoesReloadableForPlayer(targetedPlayer) || Battle.main.effects.Exists(x => (x is TorpedoCooldown && x.targetedPlayer == targetedPlayer) || (x is TorpedoAttack && x.targetedPlayer != targetedPlayer));
+            bool torpedoesOnCooldown = Battle.main.effects.Exists(x => x is TorpedoCooldown && x.targetedPlayer == targetedPlayer);
+            if (torpedoesOnCooldown) Expire(true, true);
+            base.OnTurnStart();
         }
+        // protected override bool IsForcedToExpire()
+        // {
+        //     return !TorpedoesReloadableForPlayer(targetedPlayer) || Battle.main.effects.Exists(x => (x is TorpedoCooldown && x.targetedPlayer == targetedPlayer) || (x is TorpedoAttack && x.targetedPlayer != targetedPlayer));
+        // }
 
-        protected override void OnExpire(bool forced)
+        protected override void Expire(bool forced, bool removeAtStart)
         {
+            base.Expire(forced, removeAtStart);
             if (!forced)
             {
                 targetedPlayer.arsenal.loadedTorpedoes++;
