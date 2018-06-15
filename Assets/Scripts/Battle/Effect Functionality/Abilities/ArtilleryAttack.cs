@@ -61,12 +61,9 @@ namespace Gameplay.Effects
 
         protected override bool Legal()
         {
-            return target != null && !target.hit; //Target tile is required. Targeted tile has to not be hit. 
-        }
-
-        protected override bool Conflicts(Effect effect)
-        {
-            return (effect is ArtilleryAttack && (effect as ArtilleryAttack).target == target) && effect.targetedPlayer == targetedPlayer; //Conflicts with any artillery attacks targeted at the same tile as this one.
+            bool hasValidTarget = target != null && !target.hit;
+            bool sameTargetExists = Battle.main.effects.Exists(x => x is ArtilleryAttack && x.targetedPlayer == targetedPlayer && (x as ArtilleryAttack).target == target);
+            return hasValidTarget && !sameTargetExists;
         }
 
         public override string GetDescription()

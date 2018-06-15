@@ -18,14 +18,10 @@ namespace Gameplay.Effects
 
         protected override bool Legal()
         {
-            return targetedPlayer.arsenal.radars > 0;
+            bool playerHasRadar = targetedPlayer.arsenal.radars > 0;
+            bool playerRadarRecharging = Battle.main.effects.Exists(x => x is RadarRecharge && x.targetedPlayer == targetedPlayer);
+            return playerHasRadar && !playerRadarRecharging;
         }
-
-        protected override bool Conflicts(Effect effect)
-        {
-            return effect.targetedPlayer == targetedPlayer && effect is RadarRecharge;
-        }
-
         public override string GetDescription()
         {
             return "Radar recharging for " + FormattedDuration + ".";

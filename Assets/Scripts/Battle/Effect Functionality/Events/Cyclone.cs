@@ -50,14 +50,10 @@ namespace Gameplay.Effects
             return 1;
         }
 
-        protected override bool Conflicts(Effect effect)
-        {
-            return effect is Cyclone;
-        }
-
         protected override bool Legal()
         {
-            return true;
+            bool cycloneAlreadyPresent = Battle.main.effects.Exists(x => x is Cyclone);
+            return !cycloneAlreadyPresent;
         }
 
         public override string GetDescription()

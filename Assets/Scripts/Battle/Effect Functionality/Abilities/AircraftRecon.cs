@@ -55,12 +55,9 @@ namespace Gameplay.Effects
 
         protected override bool Legal()
         {
-            return target >= 0 && target < (Battle.main.defender.board.tiles.GetLength(0) * 2 - 2); //Has to have a targeted line.
-        }
-
-        protected override bool Conflicts(Effect effect)
-        {
-            return effect is AircraftRecon && (effect as AircraftRecon).target == target && effect.targetedPlayer == targetedPlayer; //Conflicts with aircraft recon targeted at the same line and at the same player.
+            bool hasValidTarget = target >= 0 && target < (Battle.main.defender.board.tiles.GetLength(0) * 2 - 2);
+            bool sameTargetExists = Battle.main.effects.Exists(x => x is AircraftRecon && x.targetedPlayer == targetedPlayer && (x as AircraftRecon).target == target);
+            return hasValidTarget && !sameTargetExists;
         }
 
         public override string GetDescription()

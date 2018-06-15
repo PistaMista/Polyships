@@ -153,33 +153,14 @@ namespace Gameplay
 
         }
 
-        //ADDABILITY CHECKS-----------------------------------------------------------------------------------------------------------------------------
         /// <summary>
-        /// Checks if this effect is addable to the effect stack.
-        /// </summary>
-        /// <returns>Addable to stack.</returns>
-        public bool Addable()
-        {
-            return Legal() && !Battle.main.effects.Exists(x => Conflicts(x));
-        }
-        /// <summary>
-        /// Checks if this effect is legal while standalone.
+        /// Checks if this effect is legal to add to the stack.
         /// </summary>
         /// <returns></returns>
         protected virtual bool Legal()
         {
             throw new Exception("No rule check for " + name + ". Please add rule check.");
         }
-        /// <summary>
-        /// Checks if this effect conflicts with another.
-        /// </summary>
-        /// <param name="effect">Potentially conflicting effect.</param>
-        /// <returns>Whether the effect conflicts.</returns>
-        protected virtual bool Conflicts(Effect effect)
-        {
-            return false;
-        }
-        //ADDABILITY CHECKS------------------------------------------------------------------------------------------------------------------------------
 
         /// <summary>
         /// Gets how many effects of this type are possible to add. Effects themselves may not be added if they conflict with present ones. Cannot use case data and must use all available other data.
@@ -234,9 +215,9 @@ namespace Gameplay
         /// <returns>Whether the effect was added.</returns>
         public static bool AddToStack(Effect effect)
         {
-            if (!effect.Addable())
+            if (!effect.Legal())
             {
-                Debug.LogError("Tried to add invalid effect " + effect.name);
+                Debug.LogError("Tried to add illegal effect " + effect.name);
                 Destroy(effect.gameObject);
                 return false;
             }

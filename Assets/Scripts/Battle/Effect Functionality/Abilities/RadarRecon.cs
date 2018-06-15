@@ -53,12 +53,10 @@ namespace Gameplay.Effects
 
         protected override bool Legal()
         {
-            return true;
-        }
-
-        protected override bool Conflicts(Effect effect)
-        {
-            return effect is RadarRecon && effect.targetedPlayer == targetedPlayer || effect is RadarRecharge && effect.targetedPlayer == visibleTo; //Conflicts with radar targeted at the same player or the radar recharging
+            bool playerHasRadar = visibleTo.arsenal.radars > 0;
+            bool radarAlreadyRunning = Battle.main.effects.Exists(x => x is RadarRecon && x.targetedPlayer == targetedPlayer);
+            bool radarRecharging = Battle.main.effects.Exists(x => x is RadarRecharge && x.targetedPlayer == visibleTo);
+            return !radarAlreadyRunning && !radarRecharging;
         }
 
         public override string GetDescription()

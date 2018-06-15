@@ -37,12 +37,9 @@ namespace Gameplay.Effects
 
         protected override bool Legal()
         {
-            return TorpedoReload.TorpedoesReloadableForPlayer(targetedPlayer);
-        }
-
-        protected override bool Conflicts(Effect effect)
-        {
-            return effect.targetedPlayer == targetedPlayer && effect is TorpedoCooldown;
+            bool playerCanLoadTorpedoes = TorpedoReload.TorpedoesReloadableForPlayer(targetedPlayer);
+            bool playerTorpedoesOnCooldown = Battle.main.effects.Exists(x => x is TorpedoCooldown && x.targetedPlayer == targetedPlayer);
+            return playerCanLoadTorpedoes && !playerTorpedoesOnCooldown;
         }
 
         public override string GetDescription()

@@ -43,14 +43,10 @@ namespace Gameplay.Effects
             return 1;
         }
 
-        protected override bool Conflicts(Effect effect)
-        {
-            return effect is LastStand;
-        }
-
         protected override bool Legal()
         {
-            return true;
+            bool oneOfThePlayersHasLastStand = Battle.main.effects.Exists(x => x is LastStand);
+            return !oneOfThePlayersHasLastStand;
         }
 
         public override string GetDescription()

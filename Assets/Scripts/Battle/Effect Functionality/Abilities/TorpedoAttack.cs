@@ -132,13 +132,10 @@ namespace Gameplay.Effects
 
         protected override bool Legal()
         {
-            return target.torpedoDropPoint != null && (target.torpedoHeading.x + target.torpedoHeading.y == 1); //Has to have a target.
-        }
-
-        protected override bool Conflicts(Effect effect)
-        {
-            //Conflicts with this player's torpedo cooldowns(but not reloads) and any other torpedo attacks with the same target player, line and direction.
-            return (effect is TorpedoCooldown && effect.targetedPlayer == visibleTo) || (effect.targetedPlayer == targetedPlayer && ((effect is TorpedoAttack && (effect as TorpedoAttack).target == target)));
+            bool hasValidTarget = target.torpedoDropPoint != null && (target.torpedoHeading.x + target.torpedoHeading.y == 1);
+            bool sameTargetExists = Battle.main.effects.Exists(x => x is TorpedoAttack && x.targetedPlayer == targetedPlayer && (x as TorpedoAttack).target == target);
+            bool torpedoesOnCooldown = Battle.main.effects.Exists(x => x is TorpedoCooldown && x.targetedPlayer == visibleTo);
+            return !torpedoesOnCooldown && hasValidTarget && !sameTargetExists;
         }
 
         public override string GetDescription()

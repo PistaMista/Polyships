@@ -10,24 +10,13 @@ namespace Gameplay.Effects
         public int torpedoes;
         public int loadedTorpedoes;
         public int loadedTorpedoCap;
-        public int torpedoesFiredLastTurn;
         public int aircraft;
         public int radars;
-        public bool radarUsed;
 
         int[] startingMetadata;
         void Start()
         {
             startingMetadata = new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, aircraft, radars };
-        }
-        public override void OnTurnStart()
-        {
-            base.OnTurnStart();
-            if (Battle.main.attacker == targetedPlayer)
-            {
-                torpedoesFiredLastTurn = 0;
-                radarUsed = false;
-            }
         }
         protected override int[] GetMetadata()
         {
@@ -53,14 +42,10 @@ namespace Gameplay.Effects
             return 2;
         }
 
-        protected override bool Conflicts(Effect effect)
-        {
-            return effect is AmmoRegistry && effect.targetedPlayer == targetedPlayer;
-        }
-
         protected override bool Legal()
         {
-            return true;
+            bool playerAlreadyHasHisAmmoRegistry = Battle.main.effects.Exists(x => x is AmmoRegistry && x.targetedPlayer == targetedPlayer);
+            return !playerAlreadyHasHisAmmoRegistry;
         }
 
         public override void OnBattleStart()

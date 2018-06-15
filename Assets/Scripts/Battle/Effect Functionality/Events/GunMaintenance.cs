@@ -45,14 +45,11 @@ namespace Gameplay.Effects
             return 2;
         }
 
-        protected override bool Conflicts(Effect effect)
-        {
-            return effect is GunMaintenance && effect.targetedPlayer == targetedPlayer;
-        }
-
         protected override bool Legal()
         {
-            return targetedPlayer.arsenal.guns > artilleryAttackDecrease;
+            bool playerAlreadyHasGunMaintenance = Battle.main.effects.Exists(x => x is GunMaintenance && x.targetedPlayer == targetedPlayer);
+            bool playerHasEnoughGunsToStillFireAfterDecrease = targetedPlayer.arsenal.guns > artilleryAttackDecrease;
+            return !playerAlreadyHasGunMaintenance && playerHasEnoughGunsToStillFireAfterDecrease;
         }
 
         protected override void SetupEvent()
