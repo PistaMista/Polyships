@@ -60,4 +60,22 @@ public class Utilities
 
         return bestIndices.ToArray();
     }
+
+    public struct PerspectiveProjection
+    {
+        public Vector2 planarPosition;
+        public Vector3 projectedPosition;
+        public float scalar;
+    }
+
+    public static PerspectiveProjection GetPositionOnElevationFromPerspective(Vector3 position, Vector3 observer, float elevation)
+    {
+        PerspectiveProjection result;
+        Vector3 relativePosition = position - observer;
+        result.scalar = (elevation - observer.y) / relativePosition.y;
+        result.projectedPosition = relativePosition * result.scalar + observer;
+        result.planarPosition = new Vector2(result.projectedPosition.x, result.projectedPosition.z);
+
+        return result;
+    }
 }

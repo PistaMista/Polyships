@@ -12,6 +12,7 @@ public enum UIState
 
 public class BasicUI : UIAgent
 {
+    [Header("BasicUI Properties")]
     public RectTransform rect;
     public bool enableOnStart;
 

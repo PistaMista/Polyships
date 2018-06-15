@@ -5,7 +5,6 @@ using UnityEngine;
 public class CameraControl : MonoBehaviour
 {
     public static Waypoint currentWaypoint;
-    static float transitionTime;
     public static float TransitionProgress
     {
         get
@@ -18,7 +17,7 @@ public class CameraControl : MonoBehaviour
 
     static Vector3 transitionVelocity;
     static Vector3 initialPosition;
-    static RotationCalculator rotationCalculator = () => { return Mathf.Pow(Quaternion.Angle(Camera.main.transform.rotation, currentWaypoint.transform.rotation), 1.5f) / Mathf.Pow(transitionTime, 1.5f) * Time.deltaTime; };
+    static RotationCalculator rotationCalculator = () => { return Mathf.Pow(Quaternion.Angle(Camera.main.transform.rotation, currentWaypoint.transform.rotation), 1.5f) / Mathf.Pow(1.0f, 1.5f) * Time.deltaTime; };
 
     public delegate float RotationCalculator();
 
@@ -26,24 +25,21 @@ public class CameraControl : MonoBehaviour
     {
         if (currentWaypoint != null)
         {
-            transform.position = Vector3.SmoothDamp(transform.position, currentWaypoint.transform.position, ref transitionVelocity, transitionTime);
+            transform.position = Vector3.SmoothDamp(transform.position, currentWaypoint.transform.position, ref transitionVelocity, currentWaypoint.transitionTime);
             transform.rotation = Quaternion.RotateTowards(Camera.main.transform.rotation, currentWaypoint.transform.rotation, rotationCalculator());
         }
     }
 
-    public static void GoToWaypoint(Waypoint waypoint, float transitionTime, RotationCalculator rotationProgressCalculator)
+    public static void GoToWaypoint(Waypoint waypoint, RotationCalculator rotationProgressCalculator)
     {
-        CameraControl.rotationCalculator = rotationProgressCalculator;
-        CameraControl.transitionTime = transitionTime;
-        CameraControl.currentWaypoint = waypoint;
+        rotationCalculator = rotationProgressCalculator;
+        currentWaypoint = waypoint;
         initialPosition = Camera.main.transform.position;
     }
 
-    public static void GoToWaypoint(Waypoint waypoint, float transitionTime)
+    public static void GoToWaypoint(Waypoint waypoint)
     {
-        //rotationCalculator = () => { return (targetRotationDelta.w - Camera.main.transform.rotation.w); };
-        CameraControl.transitionTime = transitionTime;
-        CameraControl.currentWaypoint = waypoint;
+        currentWaypoint = waypoint;
         initialPosition = Camera.main.transform.position;
     }
 

@@ -9,8 +9,11 @@
 	}
 	SubShader
 	{
-		Tags { "RenderType"="Opaque" }
+		Tags {"Queue"="Transparent" "RenderType"="Transparent" }
 		LOD 100
+
+		ZWrite Off
+        Blend SrcAlpha OneMinusSrcAlpha
 
 		Pass
 		{
@@ -52,6 +55,7 @@
 				float4 finalCol = _Color;
 				finalCol = finalCol * ((1 - _EffectDip) + sin(_Time * _EffectSpeed + i.vertex.x * _EffectSlope.x + i.vertex.y * _EffectSlope.y) * _EffectDip);
 				
+				finalCol.a = _Color.a;
 				return finalCol;
 			}
 			ENDCG

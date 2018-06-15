@@ -1,14 +1,17 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using BattleUIAgents.Base;
+
+using Gameplay;
 
 public class MiscellaneousVariables : MonoBehaviour
 {
     public int[] boardSizes;
+    public GameObject playerPrefab;
     public GameObject[] shipPrefabs;
+    public Effect[] effectPrefabs;
     public GameObject[] defaultShipLoadout;
-    public float playerCameraTransitionTime;
-    [Range(0.00f, 1.00f)]
     public float boardTileSideLength;
     public float boardUIRenderHeight;
     public float boardCameraHeightModifier;
@@ -17,9 +20,7 @@ public class MiscellaneousVariables : MonoBehaviour
     public float flagRenderHeight;
     public Vector2Int flagResolution;
     public int maximumTorpedoAttacksPerTurn;
-    public TitleUI titleUI;
-    public bool showAISituationHeat;
-    public Vector2 referenceUIResolution;
+    public TitleUI.Title titleUI;
     public static MiscellaneousVariables it;
 
     void Start()

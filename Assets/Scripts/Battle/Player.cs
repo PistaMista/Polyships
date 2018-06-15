@@ -2,136 +2,150 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-public class Player : MonoBehaviour
+using BattleUIAgents.Base;
+
+using Gameplay.Effects;
+
+namespace Gameplay
 {
-    [Serializable]
-    public struct PlayerData
+    public class Player : BattleBehaviour
     {
-        public int index;
-        public Board.BoardData board;
-        public bool aiEnabled;
-        public AIModule.AIModuleData aIModuleData;
-        public float[,,] flag;
-        public int[,] hitTiles;
-        public static implicit operator PlayerData(Player player)
+        [Serializable]
+        public struct PlayerData
         {
-            PlayerData result = new PlayerData();
-            result.index = player.index;
-            result.board = player.board;
-            result.aiEnabled = player.aiEnabled;
-            result.aIModuleData = player.aiEnabled ? player.aiModule : new AIModule.AIModuleData();
-            result.flag = new float[player.flag.GetLength(0), player.flag.GetLength(1), 3];
-            for (int x = 0; x < player.flag.GetLength(0); x++)
+            public int index;
+            public Board.BoardData board;
+            public bool aiEnabled;
+            public Heatmap heatmap_recon;
+            public float[,,] flag;
+            public static implicit operator PlayerData(Player player)
             {
-                for (int y = 0; y < player.flag.GetLength(1); y++)
+                PlayerData result = new PlayerData();
+                result.index = player.index;
+                result.board = player.board;
+                result.aiEnabled = player.aiEnabled;
+                result.heatmap_recon = player.heatmap_recon;
+                result.flag = new float[player.flag.GetLength(0), player.flag.GetLength(1), 3];
+                for (int x = 0; x < player.flag.GetLength(0); x++)
                 {
-                    Color color = player.flag[x, y];
-                    result.flag[x, y, 0] = color.r;
-                    result.flag[x, y, 1] = color.g;
-                    result.flag[x, y, 2] = color.b;
+                    for (int y = 0; y < player.flag.GetLength(1); y++)
+                    {
+                        Color color = player.flag[x, y];
+                        result.flag[x, y, 0] = color.r;
+                        result.flag[x, y, 1] = color.g;
+                        result.flag[x, y, 2] = color.b;
+                    }
+                }
+
+
+
+                return result;
+            }
+        }
+        public int index;
+        public Board board;
+        public bool aiEnabled;
+        public Heatmap heatmap_recon;
+        public Color[,] flag;
+        public AmmoRegistry arsenal
+        {
+            get
+            {
+                return Battle.main.effects.Find(x => x is AmmoRegistry && x.targetedPlayer == this) as AmmoRegistry;
+            }
+        }
+
+        public void Initialize(PlayerData data)
+        {
+            index = data.index;
+            board = new GameObject("Board").AddComponent<Board>();
+            board.transform.SetParent(transform);
+            board.Initialize(data.board);
+
+            aiEnabled = data.aiEnabled;
+            heatmap_recon = data.heatmap_recon;
+
+            flag = new Color[data.flag.GetLength(0), data.flag.GetLength(1)];
+            for (int x = 0; x < flag.GetLength(0); x++)
+            {
+                for (int y = 0; y < flag.GetLength(1); y++)
+                {
+                    flag[x, y] = new Color(data.flag[x, y, 0], data.flag[x, y, 1], data.flag[x, y, 2]);
                 }
             }
 
-            result.hitTiles = new int[player.hitTiles.Count, 2];
-            for (int i = 0; i < player.hitTiles.Count; i++)
+            //hitTiles - REF
+        }
+
+
+
+        public void AssignReferences(PlayerData data)
+        {
+            board.AssignReferences(data.board);
+        }
+
+        /// <summary>
+        /// Executes every time a new turn starts.
+        /// </summary>
+        public override void OnTurnStart()
+        {
+            base.OnTurnStart();
+            Effect[] reconEffects = Battle.main.effects.FindAll(x => x is AircraftRecon && x.targetedPlayer != this).ToArray();
+
+            for (int i = 0; i < reconEffects.Length; i++)
             {
-                Tile tile = player.hitTiles[i];
-                result.hitTiles[i, 0] = (int)tile.coordinates.x;
-                result.hitTiles[i, 1] = (int)tile.coordinates.y;
+                AircraftRecon line = reconEffects[i] as AircraftRecon;
+
+                int linePosition = (line.target % (Battle.main.defender.board.tiles.GetLength(0) - 1));
+                bool lineVertical = line.target == linePosition;
+
+                for (int x = lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; x < (lineVertical ? (line.result != 1 ? linePosition + 1 : heatmap_recon.tiles.GetLength(0)) : heatmap_recon.tiles.GetLength(0)); x++)
+                {
+                    for (int y = !lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; y < (lineVertical ? (line.result != 1 ? linePosition + 1 : heatmap_recon.tiles.GetLength(1)) : heatmap_recon.tiles.GetLength(1)); y++)
+                    {
+                        heatmap_recon.Heat(new Vector2Int(x, y), AI.reconChangeRate, 1);
+                    }
+                }
             }
 
+            heatmap_recon = heatmap_recon.normalized;
 
-            return result;
-        }
-    }
-    public int index;
-    public Board board;
-    public bool aiEnabled;
-    public Color[,] flag;
-    public List<Tile> hitTiles;
-
-
-
-    public AIModule aiModule;
-    public Waypoint boardCameraPoint;
-    public Waypoint flagCameraPoint;
-    public void Initialize(PlayerData data)
-    {
-        index = data.index;
-        board = new GameObject("Board").AddComponent<Board>();
-        board.transform.SetParent(transform);
-        board.Initialize(data.board);
-
-        aiEnabled = data.aiEnabled;
-        if (aiEnabled)
-        {
-            aiModule = (AIModule)ScriptableObject.CreateInstance("AIModule");
-            aiModule.owner = this;
-            aiModule.Initialize(data.aIModuleData);
-        }
-
-        flag = new Color[data.flag.GetLength(0), data.flag.GetLength(1)];
-        for (int x = 0; x < flag.GetLength(0); x++)
-        {
-            for (int y = 0; y < flag.GetLength(1); y++)
+            if (board.ships != null)
             {
-                flag[x, y] = new Color(data.flag[x, y, 0], data.flag[x, y, 1], data.flag[x, y, 2]);
+                for (int i = 0; i < board.ships.Length; i++)
+                {
+                    board.ships[i].OnTurnStart();
+                }
             }
         }
 
-        //hitTiles - REF
-
-        boardCameraPoint = new GameObject("Camera Point").AddComponent<Waypoint>();
-        boardCameraPoint.transform.SetParent(transform);
-        boardCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(new Vector2(board.tiles.GetLength(0) + 3, board.tiles.GetLength(1) + 3)) * MiscellaneousVariables.it.boardCameraHeightModifier + MiscellaneousVariables.it.boardUIRenderHeight);
-        boardCameraPoint.transform.LookAt(transform);
-
-        flagCameraPoint = new GameObject("Flag Camera Point").AddComponent<Waypoint>();
-        flagCameraPoint.transform.SetParent(transform);
-        flagCameraPoint.transform.localPosition = Vector3.up * (CameraControl.CalculateCameraWaypointHeight(MiscellaneousVariables.it.flagVoxelScale * new Vector2(flag.GetLength(0) + 3, flag.GetLength(1) + 3)) + MiscellaneousVariables.it.flagRenderHeight);
-        flagCameraPoint.transform.LookAt(transform);
-    }
-
-
-
-    public void AssignReferences(PlayerData data)
-    {
-        board.AssignReferences(data.board);
-
-        Board targetBoard = board == Battle.main.attacker.board ? Battle.main.defender.board : Battle.main.attacker.board;
-        hitTiles = new List<Tile>();
-        if (data.hitTiles != null)
+        /// <summary>
+        /// Executes every time a game is loaded and the current turn is therefore resumed.
+        /// </summary>
+        public override void OnTurnResume()
         {
-            for (int i = 0; i < data.hitTiles.GetLength(0); i++)
+            base.OnTurnResume();
+            if (board.ships != null)
             {
-                hitTiles.Add(targetBoard.tiles[data.hitTiles[i, 0], data.hitTiles[i, 1]]);
+                for (int i = 0; i < board.ships.Length; i++)
+                {
+                    board.ships[i].OnTurnResume();
+                }
             }
         }
 
-        if (aiEnabled)
+        /// <summary>
+        /// Executes every time a turn ends.
+        /// </summary>
+        public override void OnTurnEnd()
         {
-            aiModule.AssignReferences(data.aIModuleData);
-        }
-    }
-
-    public void OnTurnStart()
-    {
-        if (board.ships != null)
-        {
-            for (int i = 0; i < board.ships.Length; i++)
+            base.OnTurnEnd();
+            if (board.ships != null)
             {
-                board.ships[i].OnTurnStart();
-            }
-        }
-    }
-
-    public void OnTurnEnd()
-    {
-        if (board.ships != null)
-        {
-            for (int i = 0; i < board.ships.Length; i++)
-            {
-                board.ships[i].OnTurnEnd();
+                for (int i = 0; i < board.ships.Length; i++)
+                {
+                    board.ships[i].OnTurnEnd();
+                }
             }
         }
     }
