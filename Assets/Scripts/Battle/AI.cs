@@ -86,13 +86,8 @@ namespace Gameplay
             //2.Tactic - Camouflage
             float concealmentAccuracyValue = 1.0f - (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 4);
             List<int> cruiserIDs = new List<int>();
-            for (int i = 0; i < player.board.ships.Length; i++)
-            {
-                if (player.board.ships[i] is Cruiser)
-                {
-                    cruiserIDs.Add(i);
-                }
-            }
+            for (int i = 0; i < player.board.ships.Length; i++) if (player.board.ships[i] is Cruiser) cruiserIDs.Add(i);
+
 
             int[] shipsToConcealIDs = new int[cruiserIDs.Count];
             for (int s = 0; s < shipsToConcealIDs.Length; s++)
@@ -131,10 +126,7 @@ namespace Gameplay
 
             for (int i = 0; i < player.board.ships.Length; i++)
             {
-                if (!sortedShipIDs.Contains(i))
-                {
-                    sortedShipIDs.Add(i);
-                }
+                if (!sortedShipIDs.Contains(i)) sortedShipIDs.Add(i);
             }
 
 
