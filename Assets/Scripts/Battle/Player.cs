@@ -86,25 +86,6 @@ namespace Gameplay
         public override void OnTurnStart()
         {
             base.OnTurnStart();
-            Effect[] reconEffects = Battle.main.effects.FindAll(x => x is AircraftRecon && x.targetedPlayer != this).ToArray();
-
-            for (int i = 0; i < reconEffects.Length; i++)
-            {
-                AircraftRecon line = reconEffects[i] as AircraftRecon;
-
-                int linePosition = (line.target % (Battle.main.defender.board.tiles.GetLength(0) - 1));
-                bool lineVertical = line.target == linePosition;
-
-                for (int x = lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; x < (lineVertical ? (line.result != 1 ? linePosition + 1 : heatmap_recon.tiles.GetLength(0)) : heatmap_recon.tiles.GetLength(0)); x++)
-                {
-                    for (int y = !lineVertical ? (line.result == 1 ? linePosition + 1 : 0) : 0; y < (lineVertical ? (line.result != 1 ? linePosition + 1 : heatmap_recon.tiles.GetLength(1)) : heatmap_recon.tiles.GetLength(1)); y++)
-                    {
-                        heatmap_recon.Heat(new Vector2Int(x, y), AI.reconChangeRate, 1);
-                    }
-                }
-            }
-
-            heatmap_recon = heatmap_recon.normalized;
 
             if (board.ships != null)
             {

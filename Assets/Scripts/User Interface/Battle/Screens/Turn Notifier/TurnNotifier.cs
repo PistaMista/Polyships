@@ -48,7 +48,7 @@ namespace BattleUIAgents.UI
         void DoAITurn()
         {
             bool fighting = Battle.main.fighting;
-            AI.PlayTurnForPlayer(player);
+            AI.Process(player);
             gameObject.SetActive(false);
             if (fighting)
             {

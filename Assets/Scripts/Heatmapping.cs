@@ -8,8 +8,32 @@ namespace Heatmapping
 {
     public static class Extensions
     {
-        public delegate float Heatspreader(float amount, int axial_distance);
         public delegate void Injector<TSubject, TInjected>(ref TSubject subject, TInjected injection);
+        public static TOutput[,] ExtractArray<TInput, TOutput>(this TInput[,] input, Converter<TInput, TOutput> converter)
+        {
+            TOutput[,] output = new TOutput[input.GetLength(0), input.GetLength(1)];
+            for (int x = 0; x < input.GetLength(0); x++)
+            {
+                for (int y = 0; y < input.GetLength(1); y++)
+                {
+                    output[x, y] = converter(input[x, y]);
+                }
+            }
+
+            return output;
+        }
+
+        public static void InjectArray<TSubject, TInjected>(this TSubject[,] subject, TInjected[,] injection, Injector<TSubject, TInjected> injector)
+        {
+            for (int x = 0; x < subject.GetLength(0); x++)
+            {
+                for (int y = 0; y < subject.GetLength(1); y++)
+                {
+                    injector(ref subject[x, y], injection[x, y]);
+                }
+            }
+        }
+        public delegate float Heatspreader(float amount, int axial_distance);
         public static float[,] AddHeat(this float[,] array, Vector2Int position, float amount, Heatspreader spreader)
         {
             float[] values = new float[Mathf.Max(position.x, position.y, array.GetLength(0) - position.x, array.GetLength(1) - position.y)];
@@ -142,30 +166,7 @@ namespace Heatmapping
             return array;
         }
 
-        public static TOutput[,] ExtractArray<TInput, TOutput>(this TInput[,] input, Converter<TInput, TOutput> converter)
-        {
-            TOutput[,] output = new TOutput[input.GetLength(0), input.GetLength(1)];
-            for (int x = 0; x < input.GetLength(0); x++)
-            {
-                for (int y = 0; y < input.GetLength(1); y++)
-                {
-                    output[x, y] = converter(input[x, y]);
-                }
-            }
 
-            return output;
-        }
-
-        public static void InjectArray<TSubject, TInjected>(this TSubject[,] subject, TInjected[,] injection, Injector<TSubject, TInjected> injector)
-        {
-            for (int x = 0; x < subject.GetLength(0); x++)
-            {
-                for (int y = 0; y < subject.GetLength(1); y++)
-                {
-                    injector(ref subject[x, y], injection[x, y]);
-                }
-            }
-        }
 
     }
 }
