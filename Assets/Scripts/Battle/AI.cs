@@ -6,6 +6,7 @@ using System.Linq;
 
 using Gameplay.Effects;
 using Gameplay.Ships;
+using Heatmapping;
 
 
 
@@ -35,24 +36,6 @@ namespace Gameplay
                 }
             }
             bool ratingsToDate;
-            public void AddGauss(Vector2Int position, float amount, float persistence)
-            {
-                ratingsToDate = false;
-                float[] coefficients = new float[Mathf.Max(position.x, position.y, tiles.GetLength(0) - position.x, tiles.GetLength(1) - position.y)];
-                for (int i = 0; i < coefficients.Length; i++)
-                {
-                    coefficients[i] = Mathf.Pow(persistence, i);
-                }
-
-                for (int x = 0; x < tiles.GetLength(0); x++)
-                {
-                    for (int y = 0; y < tiles.GetLength(1); y++)
-                    {
-                        int distance = Mathf.Abs(x - position.x) + Mathf.Abs(y - position.y);
-                        tiles[x, y].gauss += amount * coefficients[distance];
-                    }
-                }
-            }
         }
 
         struct Tile
@@ -86,10 +69,10 @@ namespace Gameplay
             }
 
             //Each ship gets a heatmap of best placement spots
-            Map[] shipLocationHeatmaps = new Map[player.board.ships.Length];
+            float[][,] shipLocationHeatmaps = new float[player.board.ships.Length][,];
             for (int i = 0; i < player.board.ships.Length; i++)
             {
-                shipLocationHeatmaps[i] = new Map(player.board.tiles.GetLength(0), player.board.tiles.GetLength(1));
+                shipLocationHeatmaps[i] = new float[player.board.tiles.GetLength(0), player.board.tiles.GetLength(1)];
             }
 
             //Determine heatmaps by individual tactical choices
@@ -97,7 +80,7 @@ namespace Gameplay
             float dispersionValue = UnityEngine.Random.Range(0.000f, 1.000f);
             for (int i = 0; i < player.board.ships.Length; i++)
             {
-                shipLocationHeatmaps[i].AddGauss(new Vector2Int(UnityEngine.Random.Range(0, player.board.tiles.GetLength(0)), UnityEngine.Random.Range(0, player.board.tiles.GetLength(1))), 8.0f * dispersionValue, 0.15f);
+                shipLocationHeatmaps[i].AddHeat(new Vector2Int(UnityEngine.Random.Range(0, player.board.tiles.GetLength(0)), UnityEngine.Random.Range(0, player.board.tiles.GetLength(1))), 8.0f * dispersionValue, (x, d) => x * Mathf.Pow(0.15f, d));
             }
 
             //2.Tactic - Camouflage
@@ -136,7 +119,7 @@ namespace Gameplay
             {
                 int shipID = shipsToConcealIDs[i];
                 int cruiserID = cruiserIDs[i];
-                shipLocationHeatmaps[cruiserID] = shipLocationHeatmaps[cruiserID] + shipLocationHeatmaps[shipID] * 3.0f;
+                shipLocationHeatmaps[cruiserID] = shipLocationHeatmaps[cruiserID].Add(shipLocationHeatmaps[shipID].Scale(3.0f));
             }
 
 
@@ -146,7 +129,7 @@ namespace Gameplay
             sortedShipIDs.AddRange(shipsToConcealIDs);
             sortedShipIDs.AddRange(cruiserIDs);
 
-            for (int i = 0; i < processedPlayer.board.ships.Length; i++)
+            for (int i = 0; i < player.board.ships.Length; i++)
             {
                 if (!sortedShipIDs.Contains(i))
                 {
@@ -159,24 +142,24 @@ namespace Gameplay
             //Place ships in whatever the best available spot left is
             foreach (int shipID in sortedShipIDs)
             {
-                Ship ship = processedPlayer.board.ships[shipID];
+                Ship ship = player.board.ships[shipID];
                 ship.Pickup();
 
-                float[,] heatmap = shipLocationHeatmaps[shipID].tiles;
+                float[,] map = shipLocationHeatmaps[shipID];
 
                 for (int x = 0; x < ship.maxHealth; x++)
                 {
-                    Tile bestChoice = processedPlayer.board.placementInfo.selectableTiles[0];
+                    Gameplay.Tile bestChoice = player.board.placementInfo.selectableTiles[0];
 
-                    foreach (Tile tile in processedPlayer.board.placementInfo.selectableTiles)
+                    foreach (Gameplay.Tile tile in player.board.placementInfo.selectableTiles)
                     {
-                        if ((heatmap[tile.coordinates.x, tile.coordinates.y] > heatmap[bestChoice.coordinates.x, bestChoice.coordinates.y]) || (heatmap[tile.coordinates.x, tile.coordinates.y] == heatmap[bestChoice.coordinates.x, bestChoice.coordinates.y] && UnityEngine.Random.Range(0, 2) == 0))
+                        if ((map[tile.coordinates.x, tile.coordinates.y] > map[bestChoice.coordinates.x, bestChoice.coordinates.y]) || (map[tile.coordinates.x, tile.coordinates.y] == map[bestChoice.coordinates.x, bestChoice.coordinates.y] && UnityEngine.Random.Range(0, 2) == 0))
                         {
                             bestChoice = tile;
                         }
                     }
 
-                    processedPlayer.board.SelectTileForPlacement(bestChoice);
+                    player.board.SelectTileForPlacement(bestChoice);
                 }
 
                 if (ship is Cruiser)
@@ -184,9 +167,9 @@ namespace Gameplay
                     (ship as Cruiser).ConcealAlreadyPlacedShipsInConcealmentArea();
                 }
 
-                if (processedPlayer.board.placementInfo.selectableTiles.Count == 0)
+                if (player.board.placementInfo.selectableTiles.Count == 0)
                 {
-                    PlaceShips();
+                    PlaceFleetFor(player);
                     break;
                 }
 

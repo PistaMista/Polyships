@@ -16,7 +16,6 @@ namespace Gameplay
             public int index;
             public Board.BoardData board;
             public bool aiEnabled;
-            public Heatmap heatmap_recon;
             public float[,,] flag;
             public static implicit operator PlayerData(Player player)
             {
@@ -24,7 +23,6 @@ namespace Gameplay
                 result.index = player.index;
                 result.board = player.board;
                 result.aiEnabled = player.aiEnabled;
-                result.heatmap_recon = player.heatmap_recon;
                 result.flag = new float[player.flag.GetLength(0), player.flag.GetLength(1), 3];
                 for (int x = 0; x < player.flag.GetLength(0); x++)
                 {
@@ -45,7 +43,6 @@ namespace Gameplay
         public int index;
         public Board board;
         public bool aiEnabled;
-        public Heatmap heatmap_recon;
         public Color[,] flag;
         public AmmoRegistry arsenal
         {
@@ -63,7 +60,6 @@ namespace Gameplay
             board.Initialize(data.board);
 
             aiEnabled = data.aiEnabled;
-            heatmap_recon = data.heatmap_recon;
 
             flag = new Color[data.flag.GetLength(0), data.flag.GetLength(1)];
             for (int x = 0; x < flag.GetLength(0); x++)
