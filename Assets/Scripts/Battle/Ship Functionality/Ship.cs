@@ -51,6 +51,7 @@ namespace Gameplay
         public int concealmentAIValue;
         [Range(0, 10)]
         public int importanceAIValue;
+        public int placementPriority;
 
         public virtual void Initialize(ShipData data)
         {
