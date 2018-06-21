@@ -165,6 +165,19 @@ namespace Heatmapping
 
             return array;
         }
+        
+        public static float[,] Multiply(this float[,] a, float[,] b)
+        {
+            for(int x = 0; x < a.GetLength(0); x++) 
+            {
+                for(int y = 0; y < a.GetLength(1); y++)
+                {
+                    a[x, y] *= b[x, y];
+                }
+            }
+            
+            return a;
+        }
 
 
 
