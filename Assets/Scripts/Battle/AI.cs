@@ -79,15 +79,23 @@ namespace Gameplay
                 {
                     float baseConcealChance = 1 / player.board.ships.Sum(x => x.concealmentAIValue);
 
-                    foreach (int concealee_index in order)
+                    for(int concealee_order = 0; concealee_order < order.Length; concealee_order++)
                     {
+                        int concealee_index = order[concealee_order];
                         Ship concealee = player.board.ships[concealee_index];
+                        float[,] concealee_map = maps[concealee_index];
+                        
                         if (concealee != ship && UnityEngine.Random.Range(0.00f, 1.00f) < baseConcealChance * concealee.concealmentAIValue)
                         {
-
+                                
+                            ship.placementPriority = int.MaxValue - concealee_order * 2;
+                            concealee.placementPriority = int.MaxValue - 1 - concealee_order * 2; 
+                            break;
                         }
                     }
                 }
+                
+                maps[index] = map;
             }
 
             order = Array.ConvertAll<Ship, int>(player.board.ships.OrderByDescending<Ship, int>(x => x.placementPriority).ToArray(), x => x.index);
