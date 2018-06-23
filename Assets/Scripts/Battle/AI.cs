@@ -86,11 +86,9 @@ namespace Gameplay
                 Ship ship = board.ships[ship_index];
                 float[,] map = maps[ship_index];
 
-                for (int p = 0; p < ship.maxHealth; p++)
-                {
-                    Gameplay.Tile best = board.placementInfo.selectableTiles.OrderByDescending(x => map[x.coordinates.x, x.coordinates.y]).First();
-                    board.SelectTileForPlacement(best);
-                }
+                ship.Pickup();
+                for (int p = 0; p < ship.maxHealth; p++) board.SelectTileForPlacement(board.placementInfo.selectableTiles.OrderByDescending(x => map[x.coordinates.x, x.coordinates.y]).First());
+
 
                 if (board.placementInfo.selectableTiles.Count == 0) { PlaceFleetFor(player); break; }
             }
@@ -98,14 +96,26 @@ namespace Gameplay
 
         public static float[,] GetPreferredMap(this Ship ship)
         {
-            return null;
+            float[,] map = new float[ship.parentBoard.tiles.GetLength(0), ship.parentBoard.tiles.GetLength(1)];
+
+            if (!(ship is Cruiser))
+                for (int i = 0; i < 2; i++)
+                {
+                    map = map.AddHeat
+                   (new Vector2Int(UnityEngine.Random.Range(0, map.GetLength(0)), UnityEngine.Random.Range(0, map.GetLength(1))),
+                   1.0f,
+                   (amount, dist) => Mathf.Pow(0.85f, dist) * amount);
+                }
+
+            return map;
         }
 
 
         public static void ConsiderConcealmentOfShipsInOrder(this Cruiser ship, int[] order, ref float[][,] maps)
         {
             Board board = ship.parentBoard;
-            float baseConcealChance = 1 / board.ships.Sum(x => x.concealmentAIValue);
+            float baseConcealChance = 1.00f / board.ships.Sum(x => x.concealmentAIValue);
+            float[,] cruiser_map = maps[ship.index];
 
             for (int concealee_order = 0; concealee_order < order.Length; concealee_order++)
             {
@@ -115,6 +125,8 @@ namespace Gameplay
 
                 if (concealee != ship && UnityEngine.Random.Range(0.00f, 1.00f) < baseConcealChance * concealee.concealmentAIValue)
                 {
+                    cruiser_map = cruiser_map.AddHeat(concealee_map.Max(), concealee_map.Average(), (amount, dist) => Mathf.Pow(0.85f, dist) * amount);
+                    cruiser_map = cruiser_map.AddHeat(concealee_map.Max(), -concealee_map.Average(), (amount, dist) => dist < 2 ? amount : 0);
 
                     ship.placementPriority = int.MaxValue - concealee_order * 2;
                     concealee.placementPriority = int.MaxValue - 1 - concealee_order * 2;
@@ -122,6 +134,7 @@ namespace Gameplay
                 }
             }
 
+            maps[ship.index] = cruiser_map;
         }
     }
 

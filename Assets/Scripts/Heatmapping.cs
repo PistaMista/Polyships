@@ -36,7 +36,7 @@ namespace Heatmapping
         public delegate float Heatspreader(float amount, int axial_distance);
         public static float[,] AddHeat(this float[,] array, Vector2Int position, float amount, Heatspreader spreader)
         {
-            float[] values = new float[Mathf.Max(position.x, position.y, array.GetLength(0) - position.x, array.GetLength(1) - position.y)];
+            float[] values = new float[Mathf.Max(array.GetLength(0) - position.x, position.x) + Mathf.Max(array.GetLength(1) - position.y, position.y) + 1];
             for (int i = 0; i < values.Length; i++)
             {
                 values[i] = spreader(amount, i);
@@ -165,17 +165,17 @@ namespace Heatmapping
 
             return array;
         }
-        
+
         public static float[,] Multiply(this float[,] a, float[,] b)
         {
-            for(int x = 0; x < a.GetLength(0); x++) 
+            for (int x = 0; x < a.GetLength(0); x++)
             {
-                for(int y = 0; y < a.GetLength(1); y++)
+                for (int y = 0; y < a.GetLength(1); y++)
                 {
                     a[x, y] *= b[x, y];
                 }
             }
-            
+
             return a;
         }
 

@@ -50,6 +50,8 @@ namespace BattleUIAgents.UI
             bool fighting = Battle.main.fighting;
             AI.Process(player);
             gameObject.SetActive(false);
+            Battle.main.NextTurn();
+
             if (fighting)
             {
                 FindAgent(x => { return x.player != player; }, typeof(Damagereport)).gameObject.SetActive(true);
