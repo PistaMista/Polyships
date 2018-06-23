@@ -54,8 +54,6 @@ namespace Gameplay
         static void FightFor(Player player)
         {
 
-
-
         }
 
         static void PlaceFleetFor(Player player)
