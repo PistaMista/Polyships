@@ -94,7 +94,7 @@
                 "scope": "entity.name.function",
                 "settings": {
                     "foreground": "#b3ff00",
-                    "fontStyle": "underline"
+                    "fontStyle": "italic"
                 }
             },
             {

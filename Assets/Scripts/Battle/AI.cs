@@ -16,11 +16,80 @@ namespace Gameplay
     {
         struct Map
         {
-            public Map(int width, int height)
+            public Map(Board board)
             {
-                tiles = new Tile[width, height];
-                ratings = new float[width, height];
+                ratings = new float[board.tiles.GetLength(0), board.tiles.GetLength(1)];
                 ratingsToDate = false;
+
+                tiles = new Tile[board.tiles.GetLength(0), board.tiles.GetLength(1)];
+
+                float[,] gaussian_map = tiles.ExtractArray(x => x.gauss);
+                bool[,] permablock_map = new bool[tiles.GetLength(0), tiles.GetLength(1)];
+
+                for (int x = 0; x < tiles.GetLength(0); x++)
+                {
+                    for (int y = 0; y < tiles.GetLength(1); y++)
+                    {
+                        Gameplay.Tile tile = board.tiles[x, y];
+                        if (tile.hit)
+                        {
+                            if (tile.containedShip != null)
+                            {
+                                bool shipInTileDestroyed = tile.containedShip.health <= 0;
+                                permablock_map[x, y] = shipInTileDestroyed;
+                                for (int i = 0; i < 8; i += shipInTileDestroyed ? 1 : 2)
+                                {
+                                    int x_toblock = x + Math.Sign((i - 1) * (5 - i));
+                                    int y_toblock = y + Math.Sign((3 - i) * (7 - i));
+                                    if (x_toblock >= 0 && x_toblock < permablock_map.GetLength(0) && y_toblock >= 0 && y_toblock < permablock_map.GetLength(1)) permablock_map[x_toblock, y_toblock] = true;
+                                }
+
+                                gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.6f, dist) * 3.0f);
+                            }
+                            else
+                            {
+                                gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.35f, dist) * UnityEngine.Random.Range(-1.0f, 0.5f));
+                                permablock_map[x, y] = true;
+                            }
+                        }
+                    }
+                }
+
+                tiles.InjectArray(gaussian_map, (ref Tile a, float b) => a.gauss = b);
+
+
+                for (int i = 0; i < 2; i++)
+                {
+                    for (int a = 0; a < tiles.GetLength(i); a++)
+                    {
+                        int sequence_start = 0;
+                        int sequence = 0;
+                        for (int b = 0; b < tiles.GetLength(1 - i); b++)
+                        {
+                            int x = i == 0 ? a : b;
+                            int y = i == 0 ? b : a;
+                            bool permablocked = permablock_map[x, y];
+
+                            if (!permablocked)
+                            {
+                                if (sequence == 0) sequence_start = b;
+                                sequence++;
+                            }
+
+                            if (b == tiles.GetLength(1 - i) - 1 || permablocked)
+                            {
+                                for (int depth = 0; depth < sequence; depth++)
+                                {
+
+                                }
+                                sequence = 0;
+                            }
+                        }
+                    }
+                }
+
+
+
             }
             public Tile[,] tiles;
             float[,] ratings;
@@ -42,7 +111,6 @@ namespace Gameplay
         {
             public float gauss;
             public float importance;
-            public int space;
             public int[] possibleShips;
         }
 
@@ -53,6 +121,7 @@ namespace Gameplay
 
         static void FightFor(Player player)
         {
+            Map map = new Map(player.board);
 
         }
 
@@ -103,8 +172,7 @@ namespace Gameplay
                 {
                     map = map.AddHeat
                    (new Vector2Int(UnityEngine.Random.Range(0, map.GetLength(0)), UnityEngine.Random.Range(0, map.GetLength(1))),
-                   1.0f,
-                   (amount, dist) => Mathf.Pow(0.85f, dist) * amount);
+                   dist => Mathf.Pow(0.85f, dist));
                 }
 
             return map;
@@ -125,8 +193,11 @@ namespace Gameplay
 
                 if (concealee != ship && UnityEngine.Random.Range(0.00f, 1.00f) < baseConcealChance * concealee.concealmentAIValue)
                 {
-                    cruiser_map = cruiser_map.AddHeat(concealee_map.Max(), concealee_map.Average(), (amount, dist) => Mathf.Pow(0.85f, dist) * amount);
-                    cruiser_map = cruiser_map.AddHeat(concealee_map.Max(), -concealee_map.Average(), (amount, dist) => dist < 2 ? amount : 0);
+                    Vector2Int concealee_map_max = concealee_map.Max();
+                    float concealee_map_average = concealee_map.Average();
+
+                    cruiser_map = cruiser_map.AddHeat(concealee_map_max, dist => Mathf.Pow(0.85f, dist) * concealee_map_average);
+                    cruiser_map = cruiser_map.AddHeat(concealee_map_max, dist => dist < 2 ? -concealee_map_average : 0);
 
                     ship.placementPriority = int.MaxValue - concealee_order * 2;
                     concealee.placementPriority = int.MaxValue - 1 - concealee_order * 2;

@@ -33,13 +33,13 @@ namespace Heatmapping
                 }
             }
         }
-        public delegate float Heatspreader(float amount, int axial_distance);
-        public static float[,] AddHeat(this float[,] array, Vector2Int position, float amount, Heatspreader spreader)
+        public delegate float Heater(int axial_distance);
+        public static float[,] AddHeat(this float[,] array, Vector2Int position, Heater function)
         {
             float[] values = new float[Mathf.Max(array.GetLength(0) - position.x, position.x) + Mathf.Max(array.GetLength(1) - position.y, position.y) + 1];
             for (int i = 0; i < values.Length; i++)
             {
-                values[i] = spreader(amount, i);
+                values[i] = function(i);
             }
 
             for (int x = 0; x < array.GetLength(0); x++)
