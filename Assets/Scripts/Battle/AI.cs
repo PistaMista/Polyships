@@ -19,7 +19,6 @@ namespace Gameplay
             public Map(Board board)
             {
                 ratings = new float[board.tiles.GetLength(0), board.tiles.GetLength(1)];
-                ratingsToDate = false;
 
                 tiles = new Tile[board.tiles.GetLength(0), board.tiles.GetLength(1)];
 
@@ -55,6 +54,7 @@ namespace Gameplay
                     }
                 }
 
+                gaussian_map = gaussian_map.Normalize();
                 tiles.InjectArray(gaussian_map, (ref Tile a, float b) => a.gauss = b);
 
 
@@ -80,7 +80,8 @@ namespace Gameplay
                             {
                                 for (int depth = 0; depth < sequence; depth++)
                                 {
-
+                                    //!FIX
+                                    tiles[i == 0 ? a : sequence_start + depth, i == 0 ? sequence_start + depth : a].possibleShips = board.ships.Where(ship => ship.maxHealth <= sequence && ship.health > 0).ToArray();
                                 }
                                 sequence = 0;
                             }
@@ -88,30 +89,25 @@ namespace Gameplay
                     }
                 }
 
-
-
-            }
-            public Tile[,] tiles;
-            float[,] ratings;
-            public float[,] Ratings
-            {
-                get
+                int combined_ship_health = board.ships.Sum(ship => ship.health);
+                for (int x = 0; x < ratings.GetLength(0); x++)
                 {
-                    if (!ratingsToDate)
+                    for (int y = 0; y < ratings.GetLength(1); y++)
                     {
-
+                        Tile tile = tiles[x, y];
+                        ratings[x, y] = tile.gauss + (tile.importance + 1.0f) * (tile.possibleShips.Sum(ship => ship.health) / (float)combined_ship_health);
                     }
-                    return ratings;
                 }
             }
-            bool ratingsToDate;
+            public Tile[,] tiles;
+            public float[,] ratings;
         }
 
         struct Tile
         {
             public float gauss;
             public float importance;
-            public int[] possibleShips;
+            public Ship[] possibleShips;
         }
 
         public static void Process(Player player)
@@ -121,7 +117,7 @@ namespace Gameplay
 
         static void FightFor(Player player)
         {
-            Map map = new Map(player.board);
+            Map map = new Map((Battle.main.attacker == player ? Battle.main.defender : Battle.main.attacker).board);
 
         }
 
