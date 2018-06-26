@@ -22,7 +22,7 @@ namespace Gameplay
 
                 tiles = new Tile[board.tiles.GetLength(0), board.tiles.GetLength(1)];
 
-                float[,] gaussian_map = tiles.ExtractArray(x => x.gauss);
+                float[,] gaussian_map = new float[board.tiles.GetLength(0), board.tiles.GetLength(1)];
                 bool[,] permablock_map = new bool[tiles.GetLength(0), tiles.GetLength(1)];
 
                 for (int x = 0; x < tiles.GetLength(0); x++)
@@ -57,6 +57,7 @@ namespace Gameplay
                 gaussian_map = gaussian_map.Normalize();
                 tiles.InjectArray(gaussian_map, (ref Tile a, float b) => a.gauss = b);
 
+                int[,] space_map = new int[board.tiles.GetLength(0), board.tiles.GetLength(1)];
 
                 for (int i = 0; i < 2; i++)
                 {
@@ -80,8 +81,8 @@ namespace Gameplay
                             {
                                 for (int depth = 0; depth < sequence; depth++)
                                 {
-                                    //!FIX
-                                    tiles[i == 0 ? a : sequence_start + depth, i == 0 ? sequence_start + depth : a].possibleShips = board.ships.Where(ship => ship.maxHealth <= sequence && ship.health > 0).ToArray();
+                                    Vector2Int pos = new Vector2Int(i == 0 ? a : sequence_start + depth, i == 0 ? sequence_start + depth : a);
+                                    if (sequence > space_map[pos.x, pos.y]) space_map[pos.x, pos.y] = sequence;
                                 }
                                 sequence = 0;
                             }
@@ -89,13 +90,15 @@ namespace Gameplay
                     }
                 }
 
-                int combined_ship_health = board.ships.Sum(ship => ship.health);
+                tiles.InjectArray(space_map, (ref Tile x, int y) => x.possibleShips = board.ships.Where(ship => ship.health > 0 && ship.maxHealth <= y).ToArray());
+
+                int combined_ship_health = board.ships.Sum(ship => ship.health > 0 ? ship.maxHealth : 0);
                 for (int x = 0; x < ratings.GetLength(0); x++)
                 {
                     for (int y = 0; y < ratings.GetLength(1); y++)
                     {
                         Tile tile = tiles[x, y];
-                        ratings[x, y] = tile.gauss + (tile.importance + 1.0f) * (tile.possibleShips.Sum(ship => ship.health) / (float)combined_ship_health);
+                        ratings[x, y] = tile.gauss + (tile.importance + 1.0f) * (tile.possibleShips.Sum(ship => ship.maxHealth) / (float)combined_ship_health);
                     }
                 }
             }
