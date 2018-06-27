@@ -53,7 +53,7 @@
         "Temp/": true
     },
     "editor.renderIndentGuides": true,
-    "workbench.colorTheme": "Material Theme Darker High Contrast",
+    "workbench.colorTheme": "Material Theme Darker",
     "editor.tabCompletion": true,
     "editor.quickSuggestionsDelay": 0,
     "editor.formatOnType": true,
@@ -134,5 +134,6 @@
     "gitlens.hovers.currentLine.over": "line",
     "gitlens.hovers.annotations.enabled": false,
     "gitlens.hovers.enabled": false,
-    "gitlens.statusBar.enabled": false
+    "gitlens.statusBar.enabled": false,
+    "editor.fontFamily": "Fira Code, Consolas, 'Courier New', monospace"
 }

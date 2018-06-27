@@ -120,7 +120,30 @@ namespace Gameplay
 
         static void FightFor(Player player)
         {
-            Map map = new Map((Battle.main.attacker == player ? Battle.main.defender : Battle.main.attacker).board);
+            Player attacked_player = Battle.main.attacker == player ? Battle.main.defender : Battle.main.attacker;
+            Map map = new Map(attacked_player.board);
+
+            int gun_targetcount = player.arsenal.guns;
+            int torpedo_targetcount;
+            int aircraft_targetcount;
+
+            float[,] priority_map = map.ratings.Normalize();
+
+            for (int i = 0; i < gun_targetcount; i++)
+            {
+                Vector2Int target = priority_map.Max();
+
+                ArtilleryAttack attack = Effect.CreateEffect(typeof(ArtilleryAttack)) as ArtilleryAttack;
+                attack.target = attacked_player.board.tiles[target.x, target.y];
+
+                attack.visibleTo = player;
+                attack.targetedPlayer = attacked_player;
+
+                Effect.AddToStack(attack);
+
+                float average = priority_map.Average();
+                priority_map.AddHeat(target, dist => -Mathf.Pow(0.3f, dist) * average);
+            }
 
         }
 
