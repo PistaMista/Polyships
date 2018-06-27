@@ -123,8 +123,11 @@ namespace Gameplay
             Player attacked_player = Battle.main.attacker == player ? Battle.main.defender : Battle.main.attacker;
             Map map = new Map(attacked_player.board);
 
+            float advantage = player.board.ships.Sum(x => x.health) / attacked_player.board.ships.Sum(x => x.health > 0 ? x.maxHealth : 0);
+            int prefered_torpedocount = Mathf.FloorToInt(Mathf.Clamp(player.arsenal.torpedoes, 0, player.arsenal.loadedTorpedoCap) * ((Mathf.Cos(advantage * Mathf.PI) + 1.0f) / 2.0f));
+
             int gun_targetcount = player.arsenal.guns;
-            int torpedo_targetcount;
+            int torpedo_targetcount = player.arsenal.loadedTorpedoes >= prefered_torpedocount || player.arsenal.loadedTorpedoes == player.arsenal.torpedoes ? prefered_torpedocount : 0;
             int aircraft_targetcount;
 
             float[,] priority_map = map.ratings.Normalize();
@@ -142,9 +145,16 @@ namespace Gameplay
                 Effect.AddToStack(attack);
 
                 float average = priority_map.Average();
-                priority_map.AddHeat(target, dist => -Mathf.Pow(0.3f, dist) * average);
+                priority_map = priority_map.AddHeat(target, dist => -Mathf.Pow(0.3f, dist) * average);
             }
 
+            for (int i = 0; i < torpedo_targetcount; i++)
+            {
+                int best_lane = 0;
+                float best_lane_rating = Mathf.NegativeInfinity;
+
+
+            }
         }
 
         static void PlaceFleetFor(Player player)
