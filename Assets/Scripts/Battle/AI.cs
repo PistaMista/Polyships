@@ -92,6 +92,50 @@ namespace Gameplay
 
                 tiles.InjectArray(space_map, (ref Tile x, int y) => x.possibleShips = board.ships.Where(ship => ship.health > 0 && ship.maxHealth <= y).ToArray());
 
+
+                for (int x = 0; x < tiles.GetLength(0); x++)
+                {
+                    for (int y = 0; y < tiles.GetLength(1); y++)
+                    {
+                        Gameplay.Tile tile = board.tiles[x, y];
+
+                        if (tile.hit && tile.containedShip != null)
+                        {
+                            Gameplay.Tile[] neighbours = new Gameplay.Tile[4];
+                            for (int i = 0; i < 4; i++)
+                            {
+                                int nx = x + (1 - i) % 2;
+                                int ny = y + (2 - i) % 2;
+                                if (nx >= 0 && nx < tiles.GetLength(0) && ny >= 0 && ny < tiles.GetLength(1)) neighbours[i] = board.tiles[nx, ny];
+                            }
+
+                            int hit_neighbours = neighbours.Count(c => c != null && c.containedShip != null);
+
+                            if (hit_neighbours == 0)
+                            {
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    Gameplay.Tile neighbour = neighbours[i];
+                                    if (neighbour != null) tiles[neighbour.coordinates.x, neighbour.coordinates.y].importance = 2.0f;
+                                }
+                            }
+                            else if (hit_neighbours == 1)
+                            {
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    Gameplay.Tile neighbour = neighbours[i];
+                                    if (neighbour != null && neighbour.containedShip != null)
+                                    {
+                                        Gameplay.Tile opposite = neighbours[(i + 2) % 4];
+                                        if (opposite != null) tiles[opposite.coordinates.x, opposite.coordinates.y].importance = 3.5f;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 int combined_ship_health = board.ships.Sum(ship => ship.health > 0 ? ship.maxHealth : 0);
                 for (int x = 0; x < ratings.GetLength(0); x++)
                 {
