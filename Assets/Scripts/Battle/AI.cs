@@ -132,7 +132,7 @@ namespace Gameplay
 
             float[,] priority_map = map.ratings.Normalize();
 
-            for (int i = 0; i < gun_targetcount; i++)
+            for (int ti = 0; ti < gun_targetcount; ti++)
             {
                 Vector2Int target = priority_map.Max();
 
@@ -148,12 +148,44 @@ namespace Gameplay
                 priority_map = priority_map.AddHeat(target, dist => -Mathf.Pow(0.3f, dist) * average);
             }
 
-            for (int i = 0; i < torpedo_targetcount; i++)
+            for (int ti = 0; ti < torpedo_targetcount; ti++)
             {
-                int best_lane = 0;
                 float best_lane_rating = Mathf.NegativeInfinity;
+                TorpedoAttack.Target best_target = new TorpedoAttack.Target();
 
+                for (int i = 0; i < 4; i++)
+                {
+                    for (int a = 0; a < priority_map.GetLength(i % 2); a++)
+                    {
+                        float rating = 0;
+                        for (int b = 0; b < priority_map.GetLength((i + 1) % 2) / 2; b++)
+                        {
+                            int x = i % 2 == 0 ? a : (i == 1 ? b : priority_map.GetLength(0) - b - 1);
+                            int y = i % 2 == 1 ? a : (i == 0 ? b : priority_map.GetLength(1) - b - 1);
 
+                            rating += priority_map[x, y];
+                        }
+
+                        if (rating > best_lane_rating)
+                        {
+                            best_lane_rating = rating;
+
+                            best_target.torpedoDropPoint = attacked_player.board.tiles[i % 2 == 0 ? a : (i == 1 ? 0 : (priority_map.GetLength(0) - 1)), i % 2 == 1 ? a : (i == 0 ? 0 : (priority_map.GetLength(1) - 1))];
+                            best_target.torpedoHeading = new Vector2Int((2 - i) % 2, (1 - i) % 2);
+                        }
+                    }
+                }
+
+                TorpedoAttack attack = Effect.CreateEffect(typeof(TorpedoAttack)) as TorpedoAttack;
+                attack.target = best_target;
+
+                attack.visibleTo = player;
+                attack.targetedPlayer = attacked_player;
+
+                Effect.AddToStack(attack);
+
+                float average = priority_map.Average();
+                priority_map = priority_map.AddHeat(best_target.torpedoDropPoint.coordinates, dist => -Mathf.Pow(0.5f, dist) * average);
             }
         }
 
