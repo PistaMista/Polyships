@@ -44,12 +44,67 @@ namespace Gameplay
                                 }
 
                                 gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.6f, dist) * 3.0f);
+
+                                Gameplay.Tile[] neighbours = new Gameplay.Tile[4];
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    int nx = x + (1 - i) % 2;
+                                    int ny = y + (2 - i) % 2;
+                                    if (nx >= 0 && nx < tiles.GetLength(0) && ny >= 0 && ny < tiles.GetLength(1)) neighbours[i] = board.tiles[nx, ny];
+                                }
+
+                                int hit_neighbours = neighbours.Count(c => c != null && c.containedShip != null);
+
+                                if (hit_neighbours == 0)
+                                {
+                                    for (int i = 0; i < 4; i++)
+                                    {
+                                        Gameplay.Tile neighbour = neighbours[i];
+                                        if (neighbour != null) tiles[neighbour.coordinates.x, neighbour.coordinates.y].importance = 2.0f;
+                                    }
+                                }
+                                else if (hit_neighbours == 1)
+                                {
+                                    for (int i = 0; i < 4; i++)
+                                    {
+                                        Gameplay.Tile neighbour = neighbours[i];
+                                        if (neighbour != null && neighbour.containedShip != null)
+                                        {
+                                            Gameplay.Tile opposite = neighbours[(i + 2) % 4];
+                                            if (opposite != null) tiles[opposite.coordinates.x, opposite.coordinates.y].importance = 3.5f;
+                                            break;
+                                        }
+                                    }
+                                }
                             }
                             else
                             {
                                 gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.35f, dist) * UnityEngine.Random.Range(-1.0f, 0.5f));
                                 permablock_map[x, y] = true;
                             }
+                        }
+                    }
+                }
+
+                AircraftRecon[] recon = Array.ConvertAll(Battle.main.effects.Where(x => x is AircraftRecon && x.targetedPlayer == board.owner).ToArray(), x => x as AircraftRecon);
+
+                for (int i = 0; i < recon.Length; i++)
+                {
+                    int result = recon[i].result;
+                    int line = recon[i].target;
+                    int line_position = line % (board.tiles.GetLength(0) - 1);
+                    bool line_vertical = line == line_position;
+
+                    int start = result > 0 ? line_position + 1 : 0;
+                    int end = result > 0 ? board.tiles.GetLength(line_vertical ? 0 : 1) : line_position + 1;
+
+                    for (int a = start; a < end; a++)
+                    {
+                        for (int b = 0; b < board.tiles.GetLength(line_vertical ? 1 : 0); b++)
+                        {
+                            int x = line_vertical ? a : b;
+                            int y = line_vertical ? b : a;
+                            gaussian_map[x, y] *= 1.5f;
                         }
                     }
                 }
@@ -92,50 +147,6 @@ namespace Gameplay
 
                 tiles.InjectArray(space_map, (ref Tile x, int y) => x.possibleShips = board.ships.Where(ship => ship.health > 0 && ship.maxHealth <= y).ToArray());
 
-
-                for (int x = 0; x < tiles.GetLength(0); x++)
-                {
-                    for (int y = 0; y < tiles.GetLength(1); y++)
-                    {
-                        Gameplay.Tile tile = board.tiles[x, y];
-
-                        if (tile.hit && tile.containedShip != null)
-                        {
-                            Gameplay.Tile[] neighbours = new Gameplay.Tile[4];
-                            for (int i = 0; i < 4; i++)
-                            {
-                                int nx = x + (1 - i) % 2;
-                                int ny = y + (2 - i) % 2;
-                                if (nx >= 0 && nx < tiles.GetLength(0) && ny >= 0 && ny < tiles.GetLength(1)) neighbours[i] = board.tiles[nx, ny];
-                            }
-
-                            int hit_neighbours = neighbours.Count(c => c != null && c.containedShip != null);
-
-                            if (hit_neighbours == 0)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                {
-                                    Gameplay.Tile neighbour = neighbours[i];
-                                    if (neighbour != null) tiles[neighbour.coordinates.x, neighbour.coordinates.y].importance = 2.0f;
-                                }
-                            }
-                            else if (hit_neighbours == 1)
-                            {
-                                for (int i = 0; i < 4; i++)
-                                {
-                                    Gameplay.Tile neighbour = neighbours[i];
-                                    if (neighbour != null && neighbour.containedShip != null)
-                                    {
-                                        Gameplay.Tile opposite = neighbours[(i + 2) % 4];
-                                        if (opposite != null) tiles[opposite.coordinates.x, opposite.coordinates.y].importance = 3.5f;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
                 int combined_ship_health = board.ships.Sum(ship => ship.health > 0 ? ship.maxHealth : 0);
                 for (int x = 0; x < ratings.GetLength(0); x++)
                 {
@@ -176,7 +187,7 @@ namespace Gameplay
             int torpedo_targetcount = player.arsenal.loadedTorpedoes >= prefered_torpedocount || player.arsenal.loadedTorpedoes == player.arsenal.torpedoes ? prefered_torpedocount : 0;
             int aircraft_targetcount = Mathf.CeilToInt(Mathf.Clamp(player.arsenal.aircraft - Battle.main.effects.Count(x => x is AircraftRecon && x.visibleTo == player), 0, int.MaxValue) * priority_map.Average());
 
-
+            bool cyclone_active = Battle.main.effects.Exists(x => x is Cyclone);
 
             for (int ti = 0; ti < gun_targetcount; ti++)
             {
@@ -191,7 +202,7 @@ namespace Gameplay
                 Effect.AddToStack(attack);
 
                 float average = priority_map.Average();
-                priority_map = priority_map.AddHeat(target, dist => -Mathf.Pow(0.3f, dist) * average);
+                priority_map = priority_map.AddHeat(target, dist => -Mathf.Pow(cyclone_active ? 0.6f : 0.3f, dist) * average);
             }
 
             for (int ti = 0; ti < torpedo_targetcount; ti++)
