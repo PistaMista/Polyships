@@ -116,7 +116,7 @@ namespace Heatmapping
         public static float[,] Normalize(this float[,] array)
         {
             Vector2Int minCoord = array.Min();
-            float min = array[minCoord.x, minCoord.y] - float.MinValue;
+            float min = array[minCoord.x, minCoord.y] - Mathf.Epsilon;
 
             for (int x = 0; x < array.GetLength(0); x++)
             {

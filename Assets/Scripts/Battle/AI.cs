@@ -43,7 +43,7 @@ namespace Gameplay
                                     if (x_toblock >= 0 && x_toblock < permablock_map.GetLength(0) && y_toblock >= 0 && y_toblock < permablock_map.GetLength(1)) permablock_map[x_toblock, y_toblock] = true;
                                 }
 
-                                gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.6f, dist) * 3.0f);
+                                gaussian_map = gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.6f, dist) * 3.0f);
 
                                 Gameplay.Tile[] neighbours = new Gameplay.Tile[4];
                                 for (int i = 0; i < 4; i++)
@@ -79,7 +79,7 @@ namespace Gameplay
                             }
                             else
                             {
-                                gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.35f, dist) * UnityEngine.Random.Range(-1.0f, 0.5f));
+                                gaussian_map = gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.35f, dist) * UnityEngine.Random.Range(-1.0f, 0.5f));
                                 permablock_map[x, y] = true;
                             }
                         }
