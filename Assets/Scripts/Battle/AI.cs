@@ -167,14 +167,16 @@ namespace Gameplay
             Player attacked_player = Battle.main.attacker == player ? Battle.main.defender : Battle.main.attacker;
             Map map = new Map(attacked_player.board);
 
+            float[,] priority_map = map.ratings.Normalize();
+
             float advantage = player.board.ships.Sum(x => x.health) / attacked_player.board.ships.Sum(x => x.health > 0 ? x.maxHealth : 0);
             int prefered_torpedocount = Mathf.FloorToInt(Mathf.Clamp(player.arsenal.torpedoes, 0, player.arsenal.loadedTorpedoCap) * ((Mathf.Cos(advantage * Mathf.PI) + 1.0f) / 2.0f));
 
             int gun_targetcount = player.arsenal.guns;
             int torpedo_targetcount = player.arsenal.loadedTorpedoes >= prefered_torpedocount || player.arsenal.loadedTorpedoes == player.arsenal.torpedoes ? prefered_torpedocount : 0;
-            int aircraft_targetcount;
+            int aircraft_targetcount = Mathf.CeilToInt(Mathf.Clamp(player.arsenal.aircraft - Battle.main.effects.Count(x => x is AircraftRecon && x.visibleTo == player), 0, int.MaxValue) * priority_map.Average());
 
-            float[,] priority_map = map.ratings.Normalize();
+
 
             for (int ti = 0; ti < gun_targetcount; ti++)
             {
@@ -230,6 +232,58 @@ namespace Gameplay
 
                 float average = priority_map.Average();
                 priority_map = priority_map.AddHeat(best_target.torpedoDropPoint.coordinates, dist => -Mathf.Pow(0.5f, dist) * average);
+            }
+
+            for (int ti = 0; ti < aircraft_targetcount; ti++)
+            {
+                float best_line_rating = Mathf.NegativeInfinity;
+                int best_line = 0;
+                int line_count = attacked_player.board.tiles.GetLength(0) + attacked_player.board.tiles.GetLength(1) - 2;
+
+                for (int line = 0; line < line_count; line++)
+                {
+                    int line_position = line % (attacked_player.board.tiles.GetLength(0) - 1);
+                    bool lineVertical = line_position == line;
+                    float line_rating = 0;
+
+                    for (int a = 0; a < 2; a++)
+                    {
+                        for (int b = 0; b < attacked_player.board.tiles.GetLength(lineVertical ? 1 : 0); b++)
+                        {
+                            int x = lineVertical ? a + line_position : b;
+                            int y = lineVertical ? b : a + line_position;
+                            line_rating += priority_map[x, y];
+                        }
+                    }
+
+                    if (line_rating > best_line_rating)
+                    {
+                        best_line = line;
+                        best_line_rating = line_rating;
+                    }
+                }
+
+                AircraftRecon recon = Effect.CreateEffect(typeof(AircraftRecon)) as AircraftRecon;
+                recon.target = best_line;
+
+                recon.visibleTo = player;
+                recon.targetedPlayer = attacked_player;
+
+                Effect.AddToStack(recon);
+
+                bool line_vertical = best_line < attacked_player.board.tiles.GetLength(0);
+                best_line %= attacked_player.board.tiles.GetLength(0) - 1;
+
+                for (int a = 0; a < 2; a++)
+                {
+                    for (int b = 0; b < attacked_player.board.tiles.GetLength(line_vertical ? 1 : 0); b++)
+                    {
+                        int x = line_vertical ? a + best_line : b;
+                        int y = line_vertical ? b : a + best_line;
+                        priority_map[x, y] = 0;
+                    }
+                }
+
             }
         }
 
