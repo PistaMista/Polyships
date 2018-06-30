@@ -6,1213 +6,382 @@ using System.Linq;
 
 using Gameplay.Effects;
 using Gameplay.Ships;
-
-[Serializable]
-public struct Heatmap : ICloneable
-{
-    public object Clone()
-    {
-        Heatmap result = new Heatmap();
-        result.tiles = (float[,])tiles.Clone();
-
-        return result;
-    }
-    public float[,] tiles;
-    public float[] verticalLanes
-    {
-        get
-        {
-            float[] result = new float[tiles.GetLength(0)];
-
-            for (int x = 0; x < result.Length; x++)
-            {
-                float sum = 0;
-                for (int y = 0; y < tiles.GetLength(1); y++)
-                {
-                    float heat = tiles[x, y];
-                    if (heat > float.MinValue) sum += heat;
-                }
-
-                result[x] = sum;
-            }
-
-            return result;
-        }
-    }
-    public float[] horizontalLanes
-    {
-        get
-        {
-            float[] result = new float[tiles.GetLength(1)];
-
-            for (int y = 0; y < result.Length; y++)
-            {
-                float sum = 0;
-                for (int x = 0; x < tiles.GetLength(0); x++)
-                {
-                    float heat = tiles[x, y];
-                    if (heat > float.MinValue) sum += heat;
-                }
-
-                result[y] = sum;
-            }
-
-            return result;
-        }
-    }
-    public float[] gridLanes
-    {
-        get
-        {
-            float[] vertical = verticalLanes;
-            float[] horizontal = horizontalLanes;
-
-            float[] results = new float[tiles.GetLength(0) + tiles.GetLength(1)];
-            System.Array.Copy(vertical, 0, results, 0, vertical.Length);
-            System.Array.Copy(horizontal, 0, results, tiles.GetLength(0), horizontal.Length);
-
-            return results;
-        }
-    }
-    public float[] gridLines
-    {
-        get
-        {
-            float[] result = new float[tiles.GetLength(0) + tiles.GetLength(1) - 2];
-            float[] horizontalLines = this.horizontalLanes;
-            float[] verticalLines = this.verticalLanes;
-
-            for (int i = 0; i < result.Length; i++)
-            {
-                float[] inspectedArray = i < (tiles.GetLength(0) - 1) ? verticalLines : horizontalLines;
-                int index = i % (tiles.GetLength(0) - 1);
-
-                result[i] = inspectedArray[index] + inspectedArray[index + 1];
-            }
-            return result;
-        }
-    }
-
-    public float totalHeat
-    {
-        get
-        {
-            float result = 0;
-            for (int x = 0; x < tiles.GetLength(0); x++)
-            {
-                for (int y = 0; y < tiles.GetLength(1); y++)
-                {
-                    float heat = tiles[x, y];
-                    if (heat > float.MinValue) result += heat;
-                }
-            }
-
-            return result;
-        }
-    }
-
-    public float averageHeat
-    {
-        get
-        {
-            int validTiles = 0;
-            for (int x = 0; x < tiles.GetLength(0); x++)
-            {
-                for (int y = 0; y < tiles.GetLength(1); y++)
-                {
-                    if (tiles[x, y] > float.MinValue) validTiles++;
-                }
-            }
-
-            return totalHeat / validTiles;
-        }
-    }
-
-    public Heatmap(int dimX, int dimY)
-    {
-        tiles = new float[dimX, dimY];
-    }
-
-    public static Heatmap operator *(Heatmap map, float mult)
-    {
-        Heatmap result = new Heatmap(map.tiles.GetLength(0), map.tiles.GetLength(1));
-
-        for (int x = 0; x < result.tiles.GetLength(0); x++)
-        {
-            for (int y = 0; y < result.tiles.GetLength(1); y++)
-            {
-                result.tiles[x, y] = map.tiles[x, y] * mult;
-            }
-        }
-
-        return result;
-    }
-
-    public static Heatmap operator +(Heatmap map1, Heatmap map2)
-    {
-        Heatmap result = new Heatmap(map1.tiles.GetLength(0), map1.tiles.GetLength(1));
-
-        for (int x = 0; x < result.tiles.GetLength(0); x++)
-        {
-            for (int y = 0; y < result.tiles.GetLength(1); y++)
-            {
-                result.tiles[x, y] = map1.tiles[x, y] + map2.tiles[x, y];
-            }
-        }
-
-        return result;
-    }
-
-    public void Heat(Vector2Int source, float heat, float dropoff)
-    {
-        if (dropoff >= 1.0f)
-        {
-            tiles[source.x, source.y] += heat;
-        }
-        else
-        {
-            for (int x = 0; x < tiles.GetLength(0); x++)
-            {
-                for (int y = 0; y < tiles.GetLength(1); y++)
-                {
-                    Vector2Int relative = new Vector2Int(x, y) - source;
-                    int distance = Mathf.Abs(relative.x) + Mathf.Abs(relative.y);
-                    float increase = heat * Mathf.Pow(1.0f - dropoff, distance);
-
-                    tiles[x, y] += increase;
-                }
-            }
-        }
-    }
-
-    public Heatmap GetBlurredMap(float intensity)
-    {
-        Heatmap result = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
-
-        for (int axis = 0; axis < 2; axis++)
-        {
-            for (int column = 0; column < (axis == 0 ? tiles.GetLength(0) : tiles.GetLength(1)); column++)
-            {
-                int lineLength = axis == 0 ? tiles.GetLength(0) : tiles.GetLength(1);
-
-                for (int direction = 0; direction < 2; direction++)
-                {
-                    float storedHeat = 0;
-                    for (int tile = direction == 0 ? 0 : (lineLength - 1); direction == 0 ? tile < lineLength : tile >= 0; tile += direction == 0 ? 1 : -1)
-                    {
-                        Vector2Int coord = new Vector2Int(axis == 0 ? tile : column, axis == 0 ? column : tile);
-                        storedHeat *= intensity;
-
-                        result.tiles[coord.x, coord.y] = storedHeat;
-
-                        float heat = tiles[coord.x, coord.y];
-                        storedHeat += heat;
-                    }
-                }
-            }
-        }
-
-        return result;
-    }
-
-    public Heatmap normalized
-    {
-        get
-        {
-            Heatmap result = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
-
-            Heatmap intermediate = new Heatmap(tiles.GetLength(0), tiles.GetLength(1));
-            Vector2Int coldestTile = ColdestTile;
-            float lowestHeat = tiles[coldestTile.x, coldestTile.y];
-
-            for (int x = 0; x < tiles.GetLength(0); x++)
-            {
-                for (int y = 0; y < tiles.GetLength(1); y++)
-                {
-                    float heat = tiles[x, y];
-                    intermediate.tiles[x, y] = heat < float.MinValue ? 0 : heat - lowestHeat + 0.000001f;
-                }
-            }
+using Heatmapping;
 
 
-            Vector2Int hottestTile = intermediate.HottestTile;
-            float highestHeat = intermediate.tiles[hottestTile.x, hottestTile.y];
-
-            if (highestHeat == 0)
-            {
-                return result;
-            }
-
-            for (int x = 0; x < tiles.GetLength(0); x++)
-            {
-                for (int y = 0; y < tiles.GetLength(1); y++)
-                {
-                    result.tiles[x, y] = intermediate.tiles[x, y] / highestHeat;
-                }
-            }
-
-            return result;
-        }
-    }
-
-    public Vector2Int HottestTile
-    {
-        get
-        {
-            Vector2Int pos = Vector2Int.zero;
-            float highest = Mathf.NegativeInfinity;
-
-            for (int x = 0; x < tiles.GetLength(0); x++)
-            {
-                for (int y = 0; y < tiles.GetLength(1); y++)
-                {
-                    float heat = tiles[x, y];
-                    if (heat >= highest) { pos = new Vector2Int(x, y); highest = heat; }
-                }
-            }
-
-            return pos;
-        }
-    }
-
-    public Vector2Int ColdestTile
-    {
-        get
-        {
-            Vector2Int pos = Vector2Int.zero;
-            float lowest = Mathf.Infinity;
-
-            for (int x = 0; x < tiles.GetLength(0); x++)
-            {
-                for (int y = 0; y < tiles.GetLength(1); y++)
-                {
-                    float heat = tiles[x, y];
-                    if (heat <= lowest && heat > float.MinValue) { pos = new Vector2Int(x, y); lowest = heat; }
-                }
-            }
-
-            return pos;
-        }
-    }
-
-    public int[] GetExtremeGridLines(int count = int.MaxValue, float threshold = float.MaxValue, bool coldest = false)
-    {
-        return Utilities.GetExtremeArrayElements(gridLines, count, coldest, threshold);
-    }
-
-    public int[] GetExtremeLanes(int count = int.MaxValue, float threshold = float.MaxValue, bool coldest = false)
-    {
-        return Utilities.GetExtremeArrayElements(gridLanes, count, coldest, threshold);
-    }
-}
 
 namespace Gameplay
 {
-    public class AI : UnityEngine.Object
+    public static class AI
     {
-        public static Player processedPlayer;
-        public static bool cycloneActive;
-        /*
-            Transcript
-        Process
-        I. Package the current situation into its data structure.
-        II. Get several strategies for that situation.
-            1. Are there any unfinished plans?
-            YES:
-                1. Create a new plan.
-                    1.Copy the situation onto the plan to let it manipulate it freely.
-                    2.Pick the ideal target from the targeting map.
-                    3.Is it possible to blacklist?
-                    YES:
-                     4.Blacklist it and any other considered invalid tiles in the transmap - set their value to -infinity.
-                     5.Discard the target and start again.
-                    NO:
-                     4.Confirm the target.
-                     5.Apply contextual transmap heat - ranging from -1 to 1.
-                    6. Branch the plan further - get strategy for the resulting situation (II.)
-                2. Go to II. -> 1.
-            NO:
-                1. Rate each plan.
-        */
-        public const float reconModifier = 0.2f;
-        public const float reconChangeRate = 0.5f;
-        public const float missHeat = -1.0f;
-        public const float hitHeat = 5.0f;
-        public const float destructionHeat = 1.5f;
-        public const float heatDropoff = 0.55f;
-        public const float hitConfidenceThreshold = 4.0f;
-        public static void PlayTurnForPlayer(Player player)
+        struct Map
         {
-            processedPlayer = player;
-            cycloneActive = Battle.main.effects.Find(x => x is Cyclone);
-
-            if (player.board.ships == null)
+            public Map(Board board)
             {
-                player.board.SpawnShips();
-                PlaceShips();
+                ratings = new float[board.tiles.GetLength(0), board.tiles.GetLength(1)];
 
-                if (player.aiEnabled)
+                tiles = new Tile[board.tiles.GetLength(0), board.tiles.GetLength(1)];
+
+                float[,] gaussian_map = new float[board.tiles.GetLength(0), board.tiles.GetLength(1)];
+                bool[,] permablock_map = new bool[tiles.GetLength(0), tiles.GetLength(1)];
+
+                for (int x = 0; x < tiles.GetLength(0); x++)
                 {
-                    for (int i = 0; i < player.board.ships.Length; i++)
+                    for (int y = 0; y < tiles.GetLength(1); y++)
                     {
-                        player.board.ships[i].gameObject.SetActive(false);
-                    }
-                }
-            }
-            else
-            {
-                Attack();
-            }
-
-            if (player.aiEnabled) Battle.main.NextTurn();
-        }
-
-        public struct Maptile : ICloneable
-        {
-            public object Clone()
-            {
-                Maptile result;
-                result.parent = parent;
-                result.coordinates = coordinates;
-
-                result.definitelyContainsShip = definitelyContainsShip;
-                result.definitelyDoesntContainShip = definitelyDoesntContainShip;
-
-                result.hit = hit;
-
-                result.considered = considered;
-                result.containedShipID = ContainedShipID;
-                result.space = space;
-
-                return result;
-            }
-            public Maptile(Datamap parent, Vector2Int coordinates)
-            {
-                this.parent = parent;
-                this.coordinates = coordinates;
-
-                hit = false;
-                definitelyContainsShip = false;
-                definitelyDoesntContainShip = false;
-
-                considered = false;
-
-                containedShipID = -1;
-                space = Vector2Int.one * -1;
-            }
-            Vector2Int coordinates;
-            Datamap parent;
-            /// <summary>
-            /// Whether this tile was considered by the spacing calculator.
-            /// </summary>
-            public bool considered;
-            /// <summary>
-            /// Whether this tile has been damaged/hit.
-            /// </summary>
-            public bool hit;
-            /// <summary>
-            /// Whether this tile definitely DOES contain a ship.
-            /// </summary>
-            public bool definitelyContainsShip;
-            /// <summary>
-            /// Whether this tile definitely DOES NOT contain a ship.
-            /// </summary>
-            public bool definitelyDoesntContainShip;
-            /// <summary>
-            /// The ship in this tile.
-            /// </summary>
-            int containedShipID;
-
-            public int ContainedShipID
-            {
-                get
-                {
-                    if (definitelyContainsShip)
-                    {
-                        if (containedShipID < 0)
+                        Gameplay.Tile tile = board.tiles[x, y];
+                        if (tile.hit)
                         {
-                            int longest = 0;
-
-                            Ship[] ships = Battle.main.defender.board.ships;
-
-                            for (int i = 0; i < ships.Length; i++)
+                            if (tile.containedShip != null)
                             {
-                                if (parent.health[i] > 0 && ships[i].maxHealth <= MaxSpace && ships[i].maxHealth > longest)
+                                bool shipInTileDestroyed = tile.containedShip.health <= 0;
+                                permablock_map[x, y] = shipInTileDestroyed;
+                                for (int i = 0; i < 8; i += shipInTileDestroyed ? 1 : 2)
                                 {
-                                    containedShipID = i;
-                                    longest = ships[i].maxHealth;
+                                    int x_toblock = x + Math.Sign((i - 1) * (5 - i));
+                                    int y_toblock = y + Math.Sign((3 - i) * (7 - i));
+                                    if (x_toblock >= 0 && x_toblock < permablock_map.GetLength(0) && y_toblock >= 0 && y_toblock < permablock_map.GetLength(1)) permablock_map[x_toblock, y_toblock] = true;
                                 }
-                            }
-                        }
-                    }
-                    else containedShipID = -1;
 
-                    return containedShipID;
-                }
-                set
-                {
-                    containedShipID = value;
-                }
-            }
-            /// <summary>
-            /// The remaining health of the contained ship.
-            /// </summary>
-            /// <returns></returns>
-            public int ContainedShipHealth
-            {
-                get
-                {
-                    int id = ContainedShipID;
-                    return id >= 0 ? parent.health[id] : -1;
-                }
-            }
+                                gaussian_map = gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.4f, dist) * 3.0f);
 
-            public Vector2Int[] NeighbouringHits
-            {
-                get
-                {
-                    List<Vector2Int> result = new List<Vector2Int>();
-                    for (int i = 0; i < 4; i++)
-                    {
-                        Vector2Int potentialNeighbour = coordinates + new Vector2Int(i < 2 ? (i == 0 ? 1 : -1) : 0, i >= 2 ? (i == 2 ? 1 : -1) : 0);
-                        if (potentialNeighbour.x >= 0 && potentialNeighbour.y >= 0 && potentialNeighbour.x < parent.tiledata.GetLength(0) && potentialNeighbour.y < parent.tiledata.GetLength(1) && parent.tiledata[potentialNeighbour.x, potentialNeighbour.y].ContainedShipID >= 0)
-                        {
-                            result.Add(potentialNeighbour);
-                        }
-                    }
-
-                    return result.ToArray();
-                }
-            }
-
-            /// <summary>
-            /// The longest ship length this tile can contain horizontally and vertically.
-            /// </summary>
-            public Vector2Int space;
-            /// <summary>
-            /// The longest ship length this tile can contain.
-            /// </summary>
-            /// <returns></returns>
-            public int MaxSpace
-            {
-                get
-                {
-                    return definitelyDoesntContainShip ? 0 : Mathf.Max(space.x, space.y);
-                }
-            }
-
-            /// <summary>
-            /// Whether this tile is not worth shooting at.
-            /// </summary>
-            /// <returns></returns>
-            public bool IsBlack
-            {
-                get
-                {
-                    return parent.smallestShipLength > MaxSpace || hit;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Provides information about health of enemy ships, tile predictions and how long of a ship each tile can contain.
-        /// </summary>
-        public struct Datamap : ICloneable
-        {
-            public Datamap(Board board)
-            {
-                //Record what we know about the health of enemy ships
-                health = Array.ConvertAll(board.ships, x => x.health == 0 ? 0 : x.maxHealth);
-
-                //Force the tile space data to update
-                spaceDataToDate = false;
-
-                //Convert the board to a 2D struct array
-                tiledata = new Maptile[board.tiles.GetLength(0), board.tiles.GetLength(1)];
-
-
-                for (int x = 0; x < tiledata.GetLength(0); x++)
-                {
-                    for (int y = 0; y < tiledata.GetLength(1); y++)
-                    {
-                        Tile actual = board.tiles[x, y];
-
-                        Maptile tile = new Maptile(this, new Vector2Int(x, y));
-
-                        tile.hit = actual.hit;
-
-                        if (actual.containedShip != null && actual.hit)
-                        {
-                            tile.definitelyContainsShip = true;
-                            if (actual.containedShip.health == 0) tile.ContainedShipID = actual.containedShip.index;
-                        }
-
-                        tile.space = new Vector2Int(tiledata.GetLength(0), tiledata.GetLength(1));
-
-                        tiledata[x, y] = tile;
-                    }
-                }
-
-                //Predict the damage caused to intact ships
-                for (int x = 0; x < Tiledata.GetLength(0); x++)
-                {
-                    for (int y = 0; y < Tiledata.GetLength(1); y++)
-                    {
-                        Maptile tile = Tiledata[x, y];
-                        if (tile.definitelyContainsShip && health[tile.ContainedShipID] > 0)
-                        {
-                            health[tile.ContainedShipID]--;
-                        }
-                    }
-                }
-            }
-            public object Clone()
-            {
-                Datamap result;
-                result.health = (int[])health.Clone();
-                result.tiledata = (Maptile[,])tiledata.Clone();
-                result.spaceDataToDate = spaceDataToDate;
-
-                return result;
-            }
-            /// <summary>
-            /// Expected remaining health of enemy ships.
-            /// </summary>
-            public int[] health;
-            /// <summary>
-            /// Information about all the tiles on the board.
-            /// </summary>
-            public Maptile[,] tiledata;
-            /// <summary>
-            /// The length of the smallest ship left intact.
-            /// </summary>
-            /// <returns></returns>
-            public int smallestShipLength
-            {
-                get
-                {
-                    int result = 200;
-                    for (int i = 0; i < health.Length; i++)
-                    {
-                        int shipLength = Battle.main.defender.board.ships[i].maxHealth;
-                        if (health[i] > 0 && shipLength < result) result = shipLength;
-                    }
-
-
-                    return result < 200 ? result : 0;
-                }
-            }
-
-            public bool spaceDataToDate;
-            /// <summary>
-            /// Gets the tilemap and ensures all space availability information is up to date.
-            /// </summary>
-            /// <returns></returns>
-            public Maptile[,] Tiledata
-            {
-                get
-                {
-                    //If the space data is not updated update it
-                    if (!spaceDataToDate)
-                    {
-                        //Records the IDs of tile lanes that have to be recalculated
-                        List<int> lanesToUpdate = new List<int>();
-
-                        //Calculate the blocking tiles and what lanes have to be updated
-                        for (int x = 0; x < tiledata.GetLength(0); x++)
-                        {
-                            for (int y = 0; y < tiledata.GetLength(1); y++)
-                            {
-                                Maptile tile = tiledata[x, y];
-
-                                if (tile.hit && !tile.considered)
+                                Gameplay.Tile[] neighbours = new Gameplay.Tile[4];
+                                for (int i = 0; i < 4; i++)
                                 {
-                                    tile.considered = true;
+                                    int nx = x + (1 - i) % 2;
+                                    int ny = y + (2 - i) % 2;
+                                    if (nx >= 0 && nx < tiles.GetLength(0) && ny >= 0 && ny < tiles.GetLength(1)) neighbours[i] = board.tiles[nx, ny];
+                                }
 
-                                    tile.definitelyDoesntContainShip = !tile.definitelyContainsShip;
+                                int hit_neighbours = neighbours.Count(c => c != null && c.hit && c.containedShip != null);
 
-                                    if (!lanesToUpdate.Contains(x)) lanesToUpdate.Add(x);
-                                    int horizontal = tiledata.GetLength(0) + y;
-                                    if (!lanesToUpdate.Contains(horizontal)) lanesToUpdate.Add(horizontal);
-
-                                    //Block all diagonal neighbouring tiles
-                                    if (tile.definitelyContainsShip)
+                                if (hit_neighbours == 0)
+                                {
+                                    for (int i = 0; i < 4; i++)
                                     {
-                                        for (int i = 0; i < 4; i++)
+                                        Gameplay.Tile neighbour = neighbours[i];
+                                        if (neighbour != null) tiles[neighbour.coordinates.x, neighbour.coordinates.y].importance = 2.0f;
+                                    }
+                                }
+                                else if (hit_neighbours == 1)
+                                {
+                                    for (int i = 0; i < 4; i++)
+                                    {
+                                        Gameplay.Tile neighbour = neighbours[i];
+                                        if (neighbour != null && neighbour.hit && neighbour.containedShip != null)
                                         {
-                                            Vector2Int pos = new Vector2Int(x + (i < 2 ? 1 : -1), y + (i % 2 == 0 ? 1 : -1));
-                                            if (pos.x >= 0 && pos.y >= 0 && pos.x < tiledata.GetLength(0) && pos.y < tiledata.GetLength(1))
-                                            {
-                                                tiledata[pos.x, pos.y].considered = true;
-
-                                                tiledata[pos.x, pos.y].definitelyDoesntContainShip = true;
-
-                                                if (!lanesToUpdate.Contains(pos.x)) lanesToUpdate.Add(pos.x);
-                                                horizontal = tiledata.GetLength(0) + pos.y;
-                                                if (!lanesToUpdate.Contains(horizontal)) lanesToUpdate.Add(horizontal);
-                                            }
+                                            Gameplay.Tile opposite = neighbours[(i + 2) % 4];
+                                            if (opposite != null) tiles[opposite.coordinates.x, opposite.coordinates.y].importance = 3.5f;
+                                            break;
                                         }
                                     }
                                 }
-
-                                tiledata[x, y] = tile;
                             }
-                        }
-
-                        //Update the lanes
-                        foreach (int lane in lanesToUpdate)
-                        {
-                            int coordinate = lane % tiledata.GetLength(0);
-                            bool horizontal = coordinate < lane;
-                            int targetDepth = tiledata.GetLength(horizontal ? 0 : 1);
-
-                            int space = 0;
-                            List<Vector2Int> consecutiveTiles = new List<Vector2Int>();
-
-                            //Go along the lane
-                            for (int depth = 0; depth < targetDepth; depth++)
+                            else
                             {
-                                Vector2Int tile = new Vector2Int(horizontal ? depth : coordinate, horizontal ? coordinate : depth);
-                                bool blocking = tiledata[tile.x, tile.y].definitelyDoesntContainShip;
-
-                                //If this tile is free, add its provided space to the consecutive space
-                                if (!blocking)
-                                {
-                                    space++;
-                                    Vector2Int startingSpace = tiledata[tile.x, tile.y].space;
-                                    consecutiveTiles.Add(tile);
-                                }
-
-                                //If this tile is blocked or we reached the end of the lane, assign the consecutive space to the tiles that provided it and are not locked
-                                if (blocking || depth == targetDepth - 1)
-                                {
-                                    foreach (Vector2Int u in consecutiveTiles)
-                                    {
-                                        if (horizontal) tiledata[u.x, u.y].space.x = space; else tiledata[u.x, u.y].space.y = space;
-                                    }
-
-                                    consecutiveTiles.Clear();
-                                    space = 0;
-                                }
+                                gaussian_map = gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.3f, dist) * UnityEngine.Random.Range(-3.0f, 0.5f));
+                                permablock_map[x, y] = true;
                             }
                         }
-
-                        spaceDataToDate = true;
                     }
-                    return tiledata;
                 }
-            }
-        }
 
-        struct Situation : ICloneable
-        {
-            public Situation(Board board)
-            {
-                //Create a new datamap from the enemy's board
-                datamap = new Datamap(board);
+                AircraftRecon[] recon = Array.ConvertAll(Battle.main.effects.Where(x => x is AircraftRecon && x.targetedPlayer == board.owner).ToArray(), x => x as AircraftRecon);
 
-                //Initialize the heatmaps
-                heatmap_statistical = new Heatmap(board.tiles.GetLength(0), board.tiles.GetLength(1));
-                heatmap_transitional = new Heatmap(board.tiles.GetLength(0), board.tiles.GetLength(1));
-
-                targetmap = new Heatmap(board.tiles.GetLength(0), board.tiles.GetLength(1));
-
-
-                //Assign gun count and information about torpedoes and aircraft
-                AmmoRegistry ammo = processedPlayer.arsenal;
-                totalArtilleryCount = ammo.guns;
-
-                Effect torpedoCooldown = Battle.main.effects.Find(x => x is TorpedoCooldown && x.targetedPlayer == processedPlayer);
-                this.torpedoCooldown = torpedoCooldown ? torpedoCooldown.duration : 0;
-                Effect torpedoReload = Battle.main.effects.Find(x => x is TorpedoReload && x.targetedPlayer == processedPlayer);
-                this.torpedoReload = torpedoReload ? torpedoReload.duration : 0;
-
-                this.totalTorpedoCount = ammo.torpedoes;
-                this.loadedTorpedoCount = ammo.loadedTorpedoes;
-            }
-            public object Clone()
-            {
-                Situation result;
-                result.datamap = (Datamap)datamap.Clone();
-                result.heatmap_statistical = new Heatmap(heatmap_statistical.tiles.GetLength(0), heatmap_statistical.tiles.GetLength(1));
-                result.heatmap_transitional = new Heatmap(heatmap_statistical.tiles.GetLength(0), heatmap_statistical.tiles.GetLength(1));
-                result.targetmap = new Heatmap(heatmap_statistical.tiles.GetLength(0), heatmap_statistical.tiles.GetLength(1));
-
-                result.totalArtilleryCount = totalArtilleryCount;
-
-                result.torpedoReload = torpedoReload;
-                result.torpedoCooldown = torpedoCooldown;
-                result.loadedTorpedoCount = loadedTorpedoCount;
-                result.totalTorpedoCount = totalTorpedoCount;
-
-                return result;
-            }
-
-            /// <summary>
-            /// Used to determine heatmap - provides information about current board status.
-            /// </summary>
-            public Datamap datamap;
-            /// <summary>
-            /// Used to determine targetmap - provides transitional information about what tiles are prefered for targeting. Uses values from -1 to 1.
-            /// </summary>
-            public Heatmap heatmap_transitional;
-
-            /// <summary>
-            /// Used to determine targetmap - provides ABSOLUTE values about the likelyhood of a ship occupying any given tile. DOES NOT take placement rules into account. Shouldn't be modified by anything.
-            /// </summary>
-            public Heatmap heatmap_statistical;
-
-            public void ConstructStatisticalHeatmap()
-            {
-                heatmap_statistical = GetStatisticalHeatmap(datamap);
-            }
-
-            /// <summary>
-            /// Used to determine best attack options - provides NORMALIZED values about the likelyhood of a ship occupying any given tile. DOES take placement rules into account.
-            /// </summary>
-            public Heatmap targetmap;
-
-            public void ConstructTargetmap()
-            {
-                ConstructStatisticalHeatmap();
-                targetmap = GetTargetmap(heatmap_statistical.normalized + heatmap_transitional + AI.processedPlayer.heatmap_recon * reconModifier, datamap);
-
-            }
-
-
-            public int totalArtilleryCount;
-            public int totalTorpedoCount;
-
-            public int loadedTorpedoCount;
-            public int torpedoReload;
-            public int torpedoCooldown;
-
-
-            public Plan[] GetStrategy(int[] sequence)
-            {
-                //Load the first number of the sequence and make that many plans
-                Plan[] results = new Plan[sequence[0] * 2];
-
-                //Discard the first number
-                sequence = sequence.Skip(1).ToArray();
-
-                //Create the plans and provide each with the remaining sequence
-                for (int i = 0; i < results.Length; i++)
+                for (int i = 0; i < recon.Length; i++)
                 {
-                    int torpedoCount = Mathf.CeilToInt(Mathf.Clamp01((i - results.Length / 2 + 1) / (float)results.Length) * loadedTorpedoCount);
-                    results[i] = new Plan(this, ref heatmap_transitional, torpedoCount, sequence);
-                }
-                return results;
-            }
-        }
+                    int result = recon[i].result;
+                    int line = recon[i].target;
+                    int line_position = line % (board.tiles.GetLength(0) - 1);
+                    bool line_vertical = line == line_position;
 
-        public static Heatmap GetStatisticalHeatmap(Datamap datamap)
-        {
-            Heatmap result = new Heatmap(datamap.Tiledata.GetLength(0), datamap.Tiledata.GetLength(1));
+                    int start = result > 0 ? line_position + 1 : 0;
+                    int end = result > 0 ? board.tiles.GetLength(line_vertical ? 0 : 1) : line_position + 1;
 
-            for (int x = 0; x < datamap.Tiledata.GetLength(0); x++)
-            {
-                for (int y = 0; y < datamap.Tiledata.GetLength(1); y++)
-                {
-                    Maptile tile = datamap.Tiledata[x, y];
-                    if (tile.hit) result.Heat(new Vector2Int(x, y), tile.ContainedShipID >= 0 ? (tile.ContainedShipHealth <= 0 ? destructionHeat : hitHeat) : missHeat, heatDropoff);
-                }
-            }
-
-            return result;
-        }
-
-        public static Heatmap GetTargetmap(Heatmap heatmap, Datamap datamap)
-        {
-            Heatmap result = (Heatmap)heatmap.Clone();
-
-            for (int x = 0; x < result.tiles.GetLength(0); x++)
-            {
-                for (int y = 0; y < result.tiles.GetLength(1); y++)
-                {
-                    if (datamap.Tiledata[x, y].IsBlack) result.tiles[x, y] = Mathf.NegativeInfinity;
-                }
-            }
-
-            result = result.normalized;
-
-            return result;
-        }
-
-        struct Plan
-        {
-            public float rating
-            {
-                get
-                {
-                    float heat = situation.heatmap_statistical.normalized.averageHeat;
-                    float damage = 0;
-
-                    Ship[] ships = Battle.main.defender.board.ships;
-                    float weights = 0;
-                    for (int i = 0; i < ships.Length; i++)
+                    for (int a = start; a < end; a++)
                     {
-                        damage -= situation.datamap.health[i] / (float)ships[i].maxHealth * ships[i].importanceAIValue;
-                        weights += ships[i].importanceAIValue;
-                    }
-
-                    damage = damage / weights * 1.5f;
-
-                    float result = heat + damage;
-                    for (int i = 0; i < successives.Length; i++)
-                    {
-                        result += successives[i].rating;
-                    }
-
-                    return result;
-                }
-            }
-            public Situation situation;
-            /// <summary>
-            /// Creates a new plan for a source situation.
-            /// </summary>
-            /// <param name="state">Situation to be planned on.</param>
-            /// <param name="heatmap_transitional">References the transmap of the previous layer.</param>
-            /// <param name="sequence">The branching of plans considered ahead.</param>
-            public Plan(Situation state, ref Heatmap heatmap_transitional, int torpedoCount, int[] sequence)
-            {
-                this = new Plan();
-
-                //Copy the original situation
-                situation = (Situation)state.Clone();
-                situation.heatmap_transitional = heatmap_transitional;
-
-                //Initialize targeting maps
-                situation.ConstructTargetmap();
-
-                //Choose the gun targets
-                List<Tile> artilleryTargets = new List<Tile>();
-                for (int i = 0; i < situation.totalArtilleryCount; i++)
-                {
-                    artilleryTargets.Add(GetNextArtilleryTarget());
-                }
-                artillery = artilleryTargets.ToArray();
-
-                torpedoes = new TorpedoAttack.Target[0];
-                aircraft = new int[0];
-
-                //Choose the torpedo targets
-                List<TorpedoAttack.Target> torpedoTargets = new List<TorpedoAttack.Target>();
-                for (int i = 0; i < torpedoCount && i < situation.loadedTorpedoCount; i++)
-                {
-                    torpedoTargets.Add(GetNextTorpedoTarget());
-                }
-                torpedoes = torpedoTargets.ToArray();
-
-                heatmap_transitional = (Heatmap)heatmap_transitional.Clone();
-
-                //If a sequence is provided branch this plan further with it
-                if (sequence.Length > 0) successives = situation.GetStrategy(sequence); else successives = new Plan[0];
-            }
-
-            public Tile GetNextArtilleryTarget()
-            {
-                Vector2Int bestTarget = situation.targetmap.HottestTile;
-                situation.heatmap_transitional.Heat(bestTarget, cycloneActive ? -1.0f : -0.2f, 0.3f);
-
-                situation.datamap.tiledata[bestTarget.x, bestTarget.y].hit = true;
-
-                bool containsShip = situation.targetmap.tiles[bestTarget.x, bestTarget.y] / situation.targetmap.averageHeat > hitConfidenceThreshold;
-                if (containsShip)
-                {
-                    situation.datamap.tiledata[bestTarget.x, bestTarget.y].definitelyContainsShip = true;
-                    situation.datamap.health[situation.datamap.tiledata[bestTarget.x, bestTarget.y].ContainedShipID]--;
-                }
-
-                situation.datamap.spaceDataToDate = false;
-                situation.ConstructTargetmap();
-
-                return Battle.main.defender.board.tiles[bestTarget.x, bestTarget.y];
-            }
-
-            public TorpedoAttack.Target GetNextTorpedoTarget()
-            {
-                //Get the ID of the hottest targeting lane
-                int bestLane = situation.targetmap.GetExtremeLanes(1)[0];
-
-                //Get the x/y position of the lane
-                int position = bestLane % situation.targetmap.tiles.GetLength(0);
-
-                //Determine whether the lane is horizontal
-                bool horizontal = position < bestLane;
-                int maxDepth = situation.targetmap.tiles.GetLength(horizontal ? 0 : 1);
-
-                bool negativeDrop = false;
-                for (int depth = 0; depth < maxDepth; depth++)
-                {
-                    Vector2Int tile = horizontal ? new Vector2Int(depth, position) : new Vector2Int(position, depth);
-
-
-                    bool chosenForTargeting = situation.targetmap.tiles[tile.x, tile.y] / situation.targetmap.averageHeat > hitConfidenceThreshold || situation.datamap.Tiledata[tile.x, tile.y].definitelyContainsShip;
-                    situation.datamap.tiledata[tile.x, tile.y].definitelyContainsShip = chosenForTargeting;
-
-                    if (chosenForTargeting)
-                    {
-                        negativeDrop = depth < maxDepth / 2;
-                        for (int i = negativeDrop ? maxDepth - 1 : 0; negativeDrop ? i >= depth : i <= depth; i = i + (negativeDrop ? -1 : 1))
+                        for (int b = 0; b < board.tiles.GetLength(line_vertical ? 1 : 0); b++)
                         {
-                            Vector2Int x = new Vector2Int(horizontal ? i : position, horizontal ? position : i);
-                            situation.datamap.tiledata[x.x, x.y].hit = true;
-                            situation.heatmap_transitional.Heat(x, -0.2f, 0.3f);
+                            int x = line_vertical ? a : b;
+                            int y = line_vertical ? b : a;
+                            gaussian_map[x, y] *= 1.5f;
                         }
-                        break;
                     }
                 }
 
-                situation.ConstructTargetmap();
+                gaussian_map = gaussian_map.Normalize();
+                tiles.InjectArray(gaussian_map, (ref Tile a, float b) => a.gauss = b);
 
-                int dropDepth = negativeDrop ? maxDepth - 1 : 0;
-                return new TorpedoAttack.Target(Battle.main.defender.board.tiles[horizontal ? dropDepth : position, horizontal ? position : dropDepth], new Vector2Int(horizontal ? (negativeDrop ? -1 : 1) : 0, horizontal ? 0 : (negativeDrop ? -1 : 1)));
-            }
+                int[,] space_map = new int[board.tiles.GetLength(0), board.tiles.GetLength(1)];
 
-            public void TargetAircraft(int count)
-            {
-                aircraft = situation.targetmap.GetExtremeGridLines(count);
-            }
-
-            public Plan[] successives;
-            public Tile[] artillery;
-            public TorpedoAttack.Target[] torpedoes;
-            public int[] aircraft;
-        }
-
-        static void Attack()
-        {
-            //In order to perform a attack we need to know the targets for artillery and torpedoes
-
-            //Convert the current game state into a struct
-            Situation situation = new Situation(Battle.main.defender.board);
-
-            //Create plans for striking the most likely enemy ship positions and rate them based on their consequences
-            Plan[] plans = situation.GetStrategy(new int[] { 3, 1 });
-
-            //Destroy(debugObjectParent);
-
-            //debugObjectParent = new GameObject("Debug Object Parent");
-            //RenderDebugPlanTree(plans, Vector3.up * 40, 280f, 20f);
-
-            //Execute the plan with the highest rating
-            Plan best = plans.OrderByDescending(x => x.rating).First();
-            if (processedPlayer.arsenal.aircraft > 0 && !Battle.main.effects.Exists(x => x is AircraftRecon && x.targetedPlayer != processedPlayer)) best.TargetAircraft(processedPlayer.arsenal.aircraft);
-            ExecutePlan(best);
-        }
-
-        static GameObject debugObjectParent;
-        static void RenderDebugPlanTree(Plan[] plans, Vector3 linkPoint, float space, float layerSpacing)
-        {
-            float spacing = plans.Length > 1 ? space / (plans.Length - 1) : 0;
-            Vector3 startingPosition = linkPoint + new Vector3(layerSpacing, 0, space / 2.0f);
-
-            space /= (float)plans.Length * 1.2f;
-
-            for (int i = 0; i < plans.Length; i++)
-            {
-                Plan plan = plans[i];
-
-                Vector3 centerPosition = startingPosition + Vector3.back * i * spacing;
-                Vector3 boardCornerPosition = centerPosition - new Vector3(Battle.main.defender.board.tiles.GetLength(0), 0, Battle.main.defender.board.tiles.GetLength(1));
-                Situation renderedSituation = plan.situation;
-                Heatmap targetMap = renderedSituation.targetmap;
-
-                Debug.DrawLine(linkPoint, boardCornerPosition, Color.blue, Mathf.Infinity, true);
-
-                for (int x = 0; x < targetMap.tiles.GetLength(0); x++)
+                for (int i = 0; i < 2; i++)
                 {
-                    for (int y = 0; y < targetMap.tiles.GetLength(1); y++)
+                    for (int a = 0; a < tiles.GetLength(i); a++)
                     {
-                        Vector3 lineBeginningPosition = boardCornerPosition + new Vector3(x, 0, y);
-                        float cubeHeight = targetMap.tiles[x, y] * 0.5f + 0.002f;
-                        // Debug.DrawLine(lineBeginningPosition, lineBeginningPosition + Vector3.up * cubeHeight, renderedSituation.map[x, y, 3] != null ? Color.red : Color.black, Mathf.Infinity, true);
+                        int sequence_start = 0;
+                        int sequence = 0;
+                        for (int b = 0; b < tiles.GetLength(1 - i); b++)
+                        {
+                            int x = i == 0 ? a : b;
+                            int y = i == 0 ? b : a;
+                            bool permablocked = permablock_map[x, y];
 
-                        GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                            if (!permablocked)
+                            {
+                                if (sequence == 0) sequence_start = b;
+                                sequence++;
+                            }
 
-                        cube.transform.SetParent(debugObjectParent.transform);
-
-                        cube.transform.position = lineBeginningPosition + Vector3.up * cubeHeight / 2.0f;
-                        cube.transform.localScale = new Vector3(1, cubeHeight, 1);
-
-                        Renderer r = cube.GetComponent<Renderer>();
-
-                        MaterialPropertyBlock block = new MaterialPropertyBlock();
-                        block.SetColor("_Color", renderedSituation.datamap.tiledata[x, y].definitelyContainsShip ? Color.red : (plan.artillery.Any(t => t.coordinates == new Vector2Int(x, y)) ? Color.blue : (renderedSituation.datamap.tiledata[x, y].hit) ? Color.black : Color.white));
-
-                        r.SetPropertyBlock(block);
+                            if (b == tiles.GetLength(1 - i) - 1 || permablocked)
+                            {
+                                for (int depth = 0; depth < sequence; depth++)
+                                {
+                                    Vector2Int pos = new Vector2Int(i == 0 ? a : sequence_start + depth, i == 0 ? sequence_start + depth : a);
+                                    if (sequence > space_map[pos.x, pos.y] && !board.tiles[pos.x, pos.y].hit) space_map[pos.x, pos.y] = sequence;
+                                }
+                                sequence = 0;
+                            }
+                        }
                     }
                 }
 
-                Vector3 lPoint = centerPosition + Vector3.right * Battle.main.defender.board.tiles.GetLength(0) * 1.1f;
-                if (plan.successives.Length > 0) RenderDebugPlanTree(plan.successives, lPoint, space, layerSpacing);
+                tiles.InjectArray(space_map, (ref Tile x, int y) => x.possibleShips = board.ships.Where(ship => ship.health > 0 && ship.maxHealth <= y).ToArray());
+
+                int combined_ship_health = board.ships.Sum(ship => ship.health > 0 ? ship.maxHealth : 0);
+                for (int x = 0; x < ratings.GetLength(0); x++)
+                {
+                    for (int y = 0; y < ratings.GetLength(1); y++)
+                    {
+                        Tile tile = tiles[x, y];
+                        ratings[x, y] = (tile.importance + tile.gauss) * (tile.possibleShips.Sum(ship => ship.maxHealth) / (float)combined_ship_health);
+                    }
+                }
             }
+            public Tile[,] tiles;
+            public float[,] ratings;
         }
 
-        /// <summary>
-        /// Executes a final plan and ends the turn.
-        /// </summary>
-        /// <param name="plan"></param>
-        static void ExecutePlan(Plan plan)
+        struct Tile
         {
-            for (int i = 0; i < plan.artillery.Length; i++)
+            public float gauss;
+            public float importance;
+            public Ship[] possibleShips;
+        }
+
+        public static void Process(Player player)
+        {
+            if (Battle.main.fighting) FightFor(player); else PlaceFleetFor(player);
+        }
+
+        static void FightFor(Player player)
+        {
+            Player attacked_player = Battle.main.attacker == player ? Battle.main.defender : Battle.main.attacker;
+            Map map = new Map(attacked_player.board);
+
+            float[,] priority_map = map.ratings.Normalize();
+
+            float advantage = player.board.ships.Sum(x => x.health) / (float)attacked_player.board.ships.Sum(x => x.health > 0 ? x.maxHealth : 0);
+            int prefered_torpedocount = Mathf.FloorToInt(Mathf.Clamp(player.arsenal.torpedoes, 0, player.arsenal.loadedTorpedoCap) * ((Mathf.Cos(advantage * Mathf.PI) + 1.0f) / 2.0f));
+
+            int gun_targetcount = player.arsenal.guns;
+            int torpedo_targetcount = player.arsenal.loadedTorpedoes >= prefered_torpedocount || player.arsenal.loadedTorpedoes == player.arsenal.torpedoes ? prefered_torpedocount : 0;
+            int aircraft_targetcount = Mathf.CeilToInt(Mathf.Clamp(player.arsenal.aircraft - Battle.main.effects.Count(x => x is AircraftRecon && x.visibleTo == player), 0, int.MaxValue) * priority_map.Average());
+
+            bool cyclone_active = Battle.main.effects.Exists(x => x is Cyclone);
+
+            for (int ti = 0; ti < gun_targetcount; ti++)
             {
+                Vector2Int target = priority_map.Max();
+
                 ArtilleryAttack attack = Effect.CreateEffect(typeof(ArtilleryAttack)) as ArtilleryAttack;
-                attack.target = plan.artillery[i];
-                attack.targetedPlayer = Battle.main.defender;
-                attack.visibleTo = processedPlayer;
+                attack.target = attacked_player.board.tiles[target.x, target.y];
+
+                attack.visibleTo = player;
+                attack.targetedPlayer = attacked_player;
 
                 Effect.AddToStack(attack);
+
+                priority_map = priority_map.AddHeat(target, dist => 1 - Mathf.Pow(0.5f, dist), (original, function) => original * function);
             }
 
-            for (int i = 0; i < plan.torpedoes.Length; i++)
+            for (int ti = 0; ti < torpedo_targetcount; ti++)
             {
-                TorpedoAttack attack = Effect.CreateEffect(typeof(TorpedoAttack)) as TorpedoAttack;
-                attack.target = plan.torpedoes[i];
-                attack.targetedPlayer = Battle.main.defender;
-                attack.visibleTo = processedPlayer;
+                float best_lane_rating = Mathf.NegativeInfinity;
+                TorpedoAttack.Target best_target = new TorpedoAttack.Target();
 
-                Effect.AddToStack(attack);
-            }
-
-            for (int i = 0; i < plan.aircraft.Length; i++)
-            {
-                AircraftRecon r = Effect.CreateEffect(typeof(AircraftRecon)) as AircraftRecon;
-                r.target = plan.aircraft[i];
-                r.targetedPlayer = Battle.main.defender;
-                r.visibleTo = processedPlayer;
-
-                Effect.AddToStack(r);
-            }
-        }
-
-        static void PlaceShips()
-        {
-            //Remove any placed owner.board.ships from the board
-            for (int i = 0; i < processedPlayer.board.ships.Length; i++)
-            {
-                Ship ship = processedPlayer.board.ships[i];
-                ship.Pickup();
-                ship.Place(null);
-            }
-
-            //Each ship gets a heatmap of best placement spots
-            Heatmap[] shipLocationHeatmaps = new Heatmap[processedPlayer.board.ships.Length];
-            for (int i = 0; i < processedPlayer.board.ships.Length; i++)
-            {
-                shipLocationHeatmaps[i] = new Heatmap(processedPlayer.board.tiles.GetLength(0), processedPlayer.board.tiles.GetLength(1));
-            }
-
-            //Determine heatmaps by individual tactical choices
-            //1.Tactic - Dispersion
-            float dispersionValue = UnityEngine.Random.Range(0.000f, 1.000f);
-            for (int i = 0; i < processedPlayer.board.ships.Length; i++)
-            {
-                shipLocationHeatmaps[i].Heat(new Vector2Int(UnityEngine.Random.Range(0, processedPlayer.board.tiles.GetLength(0)), UnityEngine.Random.Range(0, processedPlayer.board.tiles.GetLength(1))), 8.0f * dispersionValue, 0.15f);
-            }
-
-            //2.Tactic - Camouflage
-            float concealmentAccuracyValue = 1.0f - (float)Math.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 4);
-            List<int> cruiserIDs = new List<int>();
-            for (int i = 0; i < processedPlayer.board.ships.Length; i++)
-            {
-                if (processedPlayer.board.ships[i] is Cruiser)
+                for (int i = 0; i < 4; i++)
                 {
-                    cruiserIDs.Add(i);
-                }
-            }
-
-            int[] shipsToConcealIDs = new int[cruiserIDs.Count];
-            for (int s = 0; s < shipsToConcealIDs.Length; s++)
-            {
-                int[] ranges = new int[processedPlayer.board.ships.Length];
-                for (int i = 0; i < processedPlayer.board.ships.Length; i++)
-                {
-                    int lastRange = i > 0 ? ranges[i - 1] : 0;
-                    ranges[i] = lastRange + processedPlayer.board.ships[i].concealmentAIValue;
-                }
-
-                int chosen = UnityEngine.Random.Range(0, ranges[ranges.Length - 1] + 1);
-                for (int i = 0; i < processedPlayer.board.ships.Length; i++)
-                {
-                    if (chosen <= ranges[i])
+                    for (int a = 0; a < priority_map.GetLength(i % 2); a++)
                     {
-                        shipsToConcealIDs[s] = i;
-                        break;
+                        float rating = 0;
+                        for (int b = 0; b < priority_map.GetLength((i + 1) % 2) / 2; b++)
+                        {
+                            int x = i % 2 == 0 ? a : (i == 1 ? b : priority_map.GetLength(0) - b - 1);
+                            int y = i % 2 == 1 ? a : (i == 0 ? b : priority_map.GetLength(1) - b - 1);
+
+                            rating += priority_map[x, y];
+                        }
+
+                        if (rating > best_lane_rating)
+                        {
+                            best_lane_rating = rating;
+
+                            best_target.torpedoDropPoint = attacked_player.board.tiles[i % 2 == 0 ? a : (i == 1 ? 0 : (priority_map.GetLength(0) - 1)), i % 2 == 1 ? a : (i == 0 ? 0 : (priority_map.GetLength(1) - 1))];
+                            best_target.torpedoHeading = new Vector2Int((2 - i) % 2, (1 - i) % 2);
+                        }
                     }
                 }
+
+                TorpedoAttack attack = Effect.CreateEffect(typeof(TorpedoAttack)) as TorpedoAttack;
+                attack.target = best_target;
+
+                attack.visibleTo = player;
+                attack.targetedPlayer = attacked_player;
+
+                Effect.AddToStack(attack);
+
+                float average = priority_map.Average();
+                priority_map = priority_map.AddHeat(best_target.torpedoDropPoint.coordinates, dist => 1 - Mathf.Pow(0.5f, dist), (original, function) => original * function);
             }
 
-            for (int i = 0; i < shipsToConcealIDs.Length; i++)
+            for (int ti = 0; ti < aircraft_targetcount; ti++)
             {
-                int shipID = shipsToConcealIDs[i];
-                int cruiserID = cruiserIDs[i];
-                shipLocationHeatmaps[cruiserID] = shipLocationHeatmaps[cruiserID] + shipLocationHeatmaps[shipID] * 3.0f;
-            }
+                float best_line_rating = Mathf.NegativeInfinity;
+                int best_line = 0;
+                int line_count = attacked_player.board.tiles.GetLength(0) + attacked_player.board.tiles.GetLength(1) - 2;
 
-
-            //Sort the ships so they get placed in the right order
-            List<int> sortedShipIDs = new List<int>();
-
-            sortedShipIDs.AddRange(shipsToConcealIDs);
-            sortedShipIDs.AddRange(cruiserIDs);
-
-            for (int i = 0; i < processedPlayer.board.ships.Length; i++)
-            {
-                if (!sortedShipIDs.Contains(i))
+                for (int line = 0; line < line_count; line++)
                 {
-                    sortedShipIDs.Add(i);
-                }
-            }
+                    int line_position = line % (attacked_player.board.tiles.GetLength(0) - 1);
+                    bool lineVertical = line_position == line;
+                    float line_rating = 0;
 
-
-
-            //Place ships in whatever the best available spot left is
-            foreach (int shipID in sortedShipIDs)
-            {
-                Ship ship = processedPlayer.board.ships[shipID];
-                ship.Pickup();
-
-                float[,] heatmap = shipLocationHeatmaps[shipID].tiles;
-
-                for (int x = 0; x < ship.maxHealth; x++)
-                {
-                    Tile bestChoice = processedPlayer.board.placementInfo.selectableTiles[0];
-
-                    foreach (Tile tile in processedPlayer.board.placementInfo.selectableTiles)
+                    for (int a = 0; a < 2; a++)
                     {
-                        if ((heatmap[tile.coordinates.x, tile.coordinates.y] > heatmap[bestChoice.coordinates.x, bestChoice.coordinates.y]) || (heatmap[tile.coordinates.x, tile.coordinates.y] == heatmap[bestChoice.coordinates.x, bestChoice.coordinates.y] && UnityEngine.Random.Range(0, 2) == 0))
+                        for (int b = 0; b < attacked_player.board.tiles.GetLength(lineVertical ? 1 : 0); b++)
                         {
-                            bestChoice = tile;
+                            int x = lineVertical ? a + line_position : b;
+                            int y = lineVertical ? b : a + line_position;
+                            line_rating += priority_map[x, y];
                         }
                     }
 
-                    processedPlayer.board.SelectTileForPlacement(bestChoice);
+                    if (line_rating > best_line_rating)
+                    {
+                        best_line = line;
+                        best_line_rating = line_rating;
+                    }
                 }
 
-                if (ship is Cruiser)
+                AircraftRecon recon = Effect.CreateEffect(typeof(AircraftRecon)) as AircraftRecon;
+                recon.target = best_line;
+
+                recon.visibleTo = player;
+                recon.targetedPlayer = attacked_player;
+
+                Effect.AddToStack(recon);
+
+                bool line_vertical = best_line < attacked_player.board.tiles.GetLength(0);
+                best_line %= attacked_player.board.tiles.GetLength(0) - 1;
+
+                for (int a = 0; a < 2; a++)
                 {
-                    (ship as Cruiser).ConcealAlreadyPlacedShipsInConcealmentArea();
+                    for (int b = 0; b < attacked_player.board.tiles.GetLength(line_vertical ? 1 : 0); b++)
+                    {
+                        int x = line_vertical ? a + best_line : b;
+                        int y = line_vertical ? b : a + best_line;
+                        priority_map[x, y] = 0;
+                    }
                 }
 
-                if (processedPlayer.board.placementInfo.selectableTiles.Count == 0)
+            }
+        }
+
+        static void PlaceFleetFor(Player player)
+        {
+            Board board = player.board;
+            if (board.ships == null) board.SpawnShips();
+
+            Array.ForEach(board.ships, x => { x.Pickup(); x.Place(null); });
+
+            float[][,] maps = new float[board.ships.Length][,];
+            for (int i = 0; i < maps.Length; i++) maps[i] = new float[board.tiles.GetLength(0), board.tiles.GetLength(1)];
+
+            int[] order = Array.ConvertAll<Ship, int>(board.ships.OrderByDescending<Ship, int>(x => x.placementPriority).ToArray(), x => x.index);
+
+            for (int i = 0; i < order.Length; i++)
+            {
+                int ship_index = order[i];
+                Ship ship = board.ships[ship_index];
+
+                if (ship is Cruiser) (ship as Cruiser).ConsiderConcealmentOfShipsInOrder(order, ref maps); else maps[ship_index] = ship.GetPreferredMap();
+            }
+
+            order = Array.ConvertAll<Ship, int>(board.ships.OrderByDescending<Ship, int>(x => x.placementPriority).ToArray(), x => x.index);
+
+            for (int i = 0; i < order.Length; i++)
+            {
+                int ship_index = order[i];
+                Ship ship = board.ships[ship_index];
+                float[,] map = maps[ship_index];
+
+                ship.Pickup();
+                for (int p = 0; p < ship.maxHealth; p++) board.SelectTileForPlacement(board.placementInfo.selectableTiles.OrderByDescending(x => map[x.coordinates.x, x.coordinates.y]).First());
+
+
+                if (board.placementInfo.selectableTiles.Count == 0) { PlaceFleetFor(player); break; }
+            }
+        }
+
+        public static float[,] GetPreferredMap(this Ship ship)
+        {
+            float[,] map = new float[ship.parentBoard.tiles.GetLength(0), ship.parentBoard.tiles.GetLength(1)];
+
+            for (int i = 0; i < 2; i++)
+            {
+                map = map.AddHeat
+               (new Vector2Int(UnityEngine.Random.Range(0, map.GetLength(0)), UnityEngine.Random.Range(0, map.GetLength(1))),
+               dist => Mathf.Pow(0.85f, dist));
+            }
+
+            return map;
+        }
+
+
+        public static void ConsiderConcealmentOfShipsInOrder(this Cruiser ship, int[] order, ref float[][,] maps)
+        {
+            Board board = ship.parentBoard;
+            float baseConcealChance = 1.00f / board.ships.Sum(x => x.concealmentAIValue);
+            float[,] cruiser_map = maps[ship.index];
+
+            for (int concealee_order = 0; concealee_order < order.Length; concealee_order++)
+            {
+                int concealee_index = order[concealee_order];
+                Ship concealee = board.ships[concealee_index];
+                float[,] concealee_map = maps[concealee_index];
+
+                if (concealee != ship && UnityEngine.Random.Range(0.00f, 1.00f) < baseConcealChance * concealee.concealmentAIValue)
                 {
-                    PlaceShips();
+                    Vector2Int concealee_map_max = concealee_map.Max();
+                    float concealee_map_average = concealee_map.Average();
+
+                    cruiser_map = cruiser_map.AddHeat(concealee_map_max, dist => Mathf.Pow(0.85f, dist) * concealee_map_average);
+                    cruiser_map = cruiser_map.AddHeat(concealee_map_max, dist => dist < 2 ? -concealee_map_average : 0);
+
+                    ship.placementPriority = int.MaxValue - concealee_order * 2;
+                    concealee.placementPriority = int.MaxValue - 1 - concealee_order * 2;
                     break;
                 }
+
+                if (concealee_order == order.Length - 1)
+                {
+                    cruiser_map = ship.GetPreferredMap();
+                }
             }
 
-            // airReconMap = new Heatmap(Battle.main.defender.board.tiles.GetLength(0), Battle.main.defender.board.tiles.GetLength(1));
-
-            // //Determine the personality of this AI when attacking
-            // recklessness = 0.7f * Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 3);
-            // float roll = UnityEngine.Random.Range(0.000f, 1.000f);
-            // agressivity = 0.9f * Mathf.Pow(roll, 0.7f - 0.5f * roll);
-
-
-            // reconValue = 1.0f - Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 4);
-            // reconMemory = Mathf.Pow(UnityEngine.Random.Range(0.000f, 1.000f), 2);
+            maps[ship.index] = cruiser_map;
         }
     }
+
+
 }

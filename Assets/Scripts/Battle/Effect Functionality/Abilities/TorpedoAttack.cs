@@ -132,7 +132,7 @@ namespace Gameplay.Effects
 
         protected override bool Legal()
         {
-            bool hasValidTarget = target.torpedoDropPoint != null && (target.torpedoHeading.x + target.torpedoHeading.y == 1);
+            bool hasValidTarget = target.torpedoDropPoint != null && (Mathf.Abs(target.torpedoHeading.x + target.torpedoHeading.y) == 1);
             bool sameTargetExists = Battle.main.effects.Exists(x => x is TorpedoAttack && x.targetedPlayer == targetedPlayer && (x as TorpedoAttack).target == target);
             bool torpedoesOnCooldown = Battle.main.effects.Exists(x => x is TorpedoCooldown && x.targetedPlayer == visibleTo);
             return !torpedoesOnCooldown && hasValidTarget && !sameTargetExists;
