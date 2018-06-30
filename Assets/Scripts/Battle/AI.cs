@@ -43,7 +43,7 @@ namespace Gameplay
                                     if (x_toblock >= 0 && x_toblock < permablock_map.GetLength(0) && y_toblock >= 0 && y_toblock < permablock_map.GetLength(1)) permablock_map[x_toblock, y_toblock] = true;
                                 }
 
-                                gaussian_map = gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.6f, dist) * 3.0f);
+                                gaussian_map = gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.4f, dist) * 3.0f);
 
                                 Gameplay.Tile[] neighbours = new Gameplay.Tile[4];
                                 for (int i = 0; i < 4; i++)
@@ -53,7 +53,7 @@ namespace Gameplay
                                     if (nx >= 0 && nx < tiles.GetLength(0) && ny >= 0 && ny < tiles.GetLength(1)) neighbours[i] = board.tiles[nx, ny];
                                 }
 
-                                int hit_neighbours = neighbours.Count(c => c != null && c.containedShip != null);
+                                int hit_neighbours = neighbours.Count(c => c != null && c.hit && c.containedShip != null);
 
                                 if (hit_neighbours == 0)
                                 {
@@ -68,7 +68,7 @@ namespace Gameplay
                                     for (int i = 0; i < 4; i++)
                                     {
                                         Gameplay.Tile neighbour = neighbours[i];
-                                        if (neighbour != null && neighbour.containedShip != null)
+                                        if (neighbour != null && neighbour.hit && neighbour.containedShip != null)
                                         {
                                             Gameplay.Tile opposite = neighbours[(i + 2) % 4];
                                             if (opposite != null) tiles[opposite.coordinates.x, opposite.coordinates.y].importance = 3.5f;
@@ -79,7 +79,7 @@ namespace Gameplay
                             }
                             else
                             {
-                                gaussian_map = gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.35f, dist) * UnityEngine.Random.Range(-1.0f, 0.5f));
+                                gaussian_map = gaussian_map.AddHeat(tile.coordinates, dist => Mathf.Pow(0.3f, dist) * UnityEngine.Random.Range(-3.0f, 0.5f));
                                 permablock_map[x, y] = true;
                             }
                         }
@@ -137,7 +137,7 @@ namespace Gameplay
                                 for (int depth = 0; depth < sequence; depth++)
                                 {
                                     Vector2Int pos = new Vector2Int(i == 0 ? a : sequence_start + depth, i == 0 ? sequence_start + depth : a);
-                                    if (sequence > space_map[pos.x, pos.y]) space_map[pos.x, pos.y] = sequence;
+                                    if (sequence > space_map[pos.x, pos.y] && !board.tiles[pos.x, pos.y].hit) space_map[pos.x, pos.y] = sequence;
                                 }
                                 sequence = 0;
                             }
@@ -153,7 +153,7 @@ namespace Gameplay
                     for (int y = 0; y < ratings.GetLength(1); y++)
                     {
                         Tile tile = tiles[x, y];
-                        ratings[x, y] = tile.gauss + (tile.importance + 1.0f) * (tile.possibleShips.Sum(ship => ship.maxHealth) / (float)combined_ship_health);
+                        ratings[x, y] = (tile.importance + tile.gauss) * (tile.possibleShips.Sum(ship => ship.maxHealth) / (float)combined_ship_health);
                     }
                 }
             }
@@ -180,7 +180,7 @@ namespace Gameplay
 
             float[,] priority_map = map.ratings.Normalize();
 
-            float advantage = player.board.ships.Sum(x => x.health) / attacked_player.board.ships.Sum(x => x.health > 0 ? x.maxHealth : 0);
+            float advantage = player.board.ships.Sum(x => x.health) / (float)attacked_player.board.ships.Sum(x => x.health > 0 ? x.maxHealth : 0);
             int prefered_torpedocount = Mathf.FloorToInt(Mathf.Clamp(player.arsenal.torpedoes, 0, player.arsenal.loadedTorpedoCap) * ((Mathf.Cos(advantage * Mathf.PI) + 1.0f) / 2.0f));
 
             int gun_targetcount = player.arsenal.guns;
@@ -201,8 +201,7 @@ namespace Gameplay
 
                 Effect.AddToStack(attack);
 
-                float average = priority_map.Average();
-                priority_map = priority_map.AddHeat(target, dist => -Mathf.Pow(cyclone_active ? 0.6f : 0.3f, dist) * average);
+                priority_map = priority_map.AddHeat(target, dist => 1 - Mathf.Pow(0.5f, dist), (original, function) => original * function);
             }
 
             for (int ti = 0; ti < torpedo_targetcount; ti++)
@@ -242,7 +241,7 @@ namespace Gameplay
                 Effect.AddToStack(attack);
 
                 float average = priority_map.Average();
-                priority_map = priority_map.AddHeat(best_target.torpedoDropPoint.coordinates, dist => -Mathf.Pow(0.5f, dist) * average);
+                priority_map = priority_map.AddHeat(best_target.torpedoDropPoint.coordinates, dist => 1 - Mathf.Pow(0.5f, dist), (original, function) => original * function);
             }
 
             for (int ti = 0; ti < aircraft_targetcount; ti++)
@@ -315,9 +314,7 @@ namespace Gameplay
                 int ship_index = order[i];
                 Ship ship = board.ships[ship_index];
 
-                maps[ship_index] = ship.GetPreferredMap();
-
-                if (ship is Cruiser) (ship as Cruiser).ConsiderConcealmentOfShipsInOrder(order, ref maps);
+                if (ship is Cruiser) (ship as Cruiser).ConsiderConcealmentOfShipsInOrder(order, ref maps); else maps[ship_index] = ship.GetPreferredMap();
             }
 
             order = Array.ConvertAll<Ship, int>(board.ships.OrderByDescending<Ship, int>(x => x.placementPriority).ToArray(), x => x.index);
@@ -340,13 +337,12 @@ namespace Gameplay
         {
             float[,] map = new float[ship.parentBoard.tiles.GetLength(0), ship.parentBoard.tiles.GetLength(1)];
 
-            if (!(ship is Cruiser))
-                for (int i = 0; i < 2; i++)
-                {
-                    map = map.AddHeat
-                   (new Vector2Int(UnityEngine.Random.Range(0, map.GetLength(0)), UnityEngine.Random.Range(0, map.GetLength(1))),
-                   dist => Mathf.Pow(0.85f, dist));
-                }
+            for (int i = 0; i < 2; i++)
+            {
+                map = map.AddHeat
+               (new Vector2Int(UnityEngine.Random.Range(0, map.GetLength(0)), UnityEngine.Random.Range(0, map.GetLength(1))),
+               dist => Mathf.Pow(0.85f, dist));
+            }
 
             return map;
         }
@@ -375,6 +371,11 @@ namespace Gameplay
                     ship.placementPriority = int.MaxValue - concealee_order * 2;
                     concealee.placementPriority = int.MaxValue - 1 - concealee_order * 2;
                     break;
+                }
+
+                if (concealee_order == order.Length - 1)
+                {
+                    cruiser_map = ship.GetPreferredMap();
                 }
             }
 

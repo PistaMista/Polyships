@@ -34,7 +34,8 @@ namespace Heatmapping
             }
         }
         public delegate float Heater(int axial_distance);
-        public static float[,] AddHeat(this float[,] array, Vector2Int position, Heater function)
+        public delegate float Applicator(float heat, float function);
+        public static float[,] AddHeat(this float[,] array, Vector2Int position, Heater function, Applicator applicator)
         {
             float[] values = new float[Mathf.Max(array.GetLength(0) - position.x, position.x) + Mathf.Max(array.GetLength(1) - position.y, position.y) + 1];
             for (int i = 0; i < values.Length; i++)
@@ -47,11 +48,16 @@ namespace Heatmapping
                 for (int y = 0; y < array.GetLength(1); y++)
                 {
                     int distance = Mathf.Abs(position.x - x) + Mathf.Abs(position.y - y);
-                    array[x, y] += values[distance];
+                    array[x, y] = applicator(array[x, y], values[distance]);
                 }
             }
 
             return array;
+        }
+
+        public static float[,] AddHeat(this float[,] array, Vector2Int position, Heater function)
+        {
+            return array.AddHeat(position, function, (original, y) => original + y);
         }
 
         public static Vector2Int Max(this float[,] array)
@@ -116,7 +122,7 @@ namespace Heatmapping
         public static float[,] Normalize(this float[,] array)
         {
             Vector2Int minCoord = array.Min();
-            float min = array[minCoord.x, minCoord.y] - Mathf.Epsilon;
+            float min = array[minCoord.x, minCoord.y] - 0.0000001f;
 
             for (int x = 0; x < array.GetLength(0); x++)
             {

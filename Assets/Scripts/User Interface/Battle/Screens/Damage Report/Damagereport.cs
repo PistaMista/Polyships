@@ -17,8 +17,7 @@ namespace BattleUIAgents.UI
             grid = LinkAgent(FindAgent(x => { return x.player == player; }, typeof(Agents.Grid)), true) as Agents.Grid;
             grid.Delinker += () => { grid = null; };
 
-            //grid.ShowInformation(true, (player == Battle.main.attacker ? Battle.main.defender : Battle.main.attacker).aiEnabled, true, true);
-            grid.ShowInformation(true, true, true, true);
+            grid.ShowInformation(false, (player == Battle.main.attacker ? Battle.main.defender : Battle.main.attacker).aiEnabled, true, true);
         }
 
         protected override void ProcessInput()
