@@ -11,16 +11,18 @@ namespace Gameplay.Effects
         public int loadedTorpedoes;
         public int loadedTorpedoCap;
         public int aircraft;
-        public int radars;
 
-        int[] startingMetadata;
-        void Start()
-        {
-            startingMetadata = new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, aircraft, radars };
-        }
         protected override int[] GetMetadata()
         {
-            return targetedPlayer.board.ShipsPlaced ? new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, aircraft, radars } : startingMetadata;
+            if (targetedPlayer.board.ShipsPlaced)
+            {
+                return new int[] { guns, torpedoes, loadedTorpedoes, loadedTorpedoCap, aircraft };
+            }
+            else
+            {
+                AmmoRegistry prefab = MiscellaneousVariables.it.effectPrefabs[prefabIndex] as AmmoRegistry;
+                return new int[] { prefab.guns, prefab.torpedoes, prefab.loadedTorpedoes, prefab.loadedTorpedoCap, prefab.aircraft };
+            }
         }
         public override void Initialize(EffectData data)
         {
@@ -30,7 +32,6 @@ namespace Gameplay.Effects
             loadedTorpedoes = data.metadata[2];
             loadedTorpedoCap = data.metadata[3];
             aircraft = data.metadata[4];
-            radars = data.metadata[5];
         }
         public override string GetDescription()
         {
