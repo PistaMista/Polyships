@@ -13,10 +13,6 @@ namespace Gameplay.Effects
             if (torpedoesOnCooldown || torpedoesNoLongerReloadable) Expire(true, true);
             base.OnTurnStart();
         }
-        // protected override bool IsForcedToExpire()
-        // {
-        //     return !TorpedoesReloadableForPlayer(targetedPlayer) || Battle.main.effects.Exists(x => (x is TorpedoCooldown && x.targetedPlayer == targetedPlayer) || (x is TorpedoAttack && x.targetedPlayer != targetedPlayer));
-        // }
 
         protected override void Expire(bool forced, bool removeAtStart)
         {

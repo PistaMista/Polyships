@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using System.Linq;
+
 namespace Gameplay.Effects
 {
     public class LastStand : Event
     {
-        public int triggerGunCountThreshold;
-        public int triggerTorpedoCountThreshold;
-        public int triggerLiveShipCountThreshold;
+        [Range(0.1f, 1.0f)]
+        public float attackerAdvantageTriggerThreshold;
         public int artilleryAttackIncrease;
-
         protected override void SetupEvent()
         {
             targetedPlayer = Battle.main.attacker;
@@ -35,7 +35,8 @@ namespace Gameplay.Effects
         }
         protected override bool IsTriggered()
         {
-            return base.IsTriggered() && (Battle.main.defender.arsenal.guns - Battle.main.attacker.arsenal.guns >= triggerGunCountThreshold && Battle.main.attacker.arsenal.torpedoes <= triggerTorpedoCountThreshold && Battle.main.attacker.board.intactShipCount <= triggerLiveShipCountThreshold);
+            float attacker_advantage = Battle.main.attacker.board.ships.Sum(x => x.health) / (float)Battle.main.defender.board.ships.Sum(x => x.health);
+            return attacker_advantage < attackerAdvantageTriggerThreshold;
         }
 
         public override int Max()

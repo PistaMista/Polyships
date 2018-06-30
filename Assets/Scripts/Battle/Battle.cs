@@ -144,7 +144,6 @@ namespace Gameplay
         {
             OnTurnEnd();
             turnCount++;
-            if (fighting) Event.ConsiderEvents();
 
             if (turnCount == 2) OnBattleStart();
 
