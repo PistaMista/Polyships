@@ -187,7 +187,7 @@ namespace Gameplay
             int torpedo_targetcount = player.arsenal.loadedTorpedoes >= prefered_torpedocount || player.arsenal.loadedTorpedoes == player.arsenal.torpedoes ? prefered_torpedocount : 0;
             int aircraft_targetcount = Mathf.CeilToInt(Mathf.Clamp(player.arsenal.aircraft - Battle.main.effects.Count(x => x is AircraftRecon && x.visibleTo == player), 0, int.MaxValue) * priority_map.Average());
 
-            int cyclone_size = Battle.main.effects.Exists(x => x is Cyclone) ? (Battle.main.effects.Find(x => x is Cyclone) as Cyclone).maximumTileSpacingToTakeEffect * 2 : 0;
+            bool cyclone_active = Battle.main.effects.Exists(x => x is Cyclone);
 
             for (int ti = 0; ti < gun_targetcount; ti++)
             {
@@ -201,8 +201,7 @@ namespace Gameplay
 
                 Effect.AddToStack(attack);
 
-                if (cyclone_size > 0) priority_map = priority_map.AddHeat(target, dist => dist <= cyclone_size ? 0.1f : 1.0f, (original, function) => original * function);
-                else priority_map = priority_map.AddHeat(target, dist => 1 - Mathf.Pow(0.5f, dist), (original, function) => original * function);
+                priority_map = priority_map.AddHeat(target, dist => 1 - Mathf.Pow(0.5f, dist), (original, function) => original * function);
             }
 
             for (int ti = 0; ti < torpedo_targetcount; ti++)
